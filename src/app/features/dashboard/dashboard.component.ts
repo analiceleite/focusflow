@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, OnDestroy, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -29,6 +29,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   sessions = signal<Session[]>([]);
   period = signal<'7d' | '30d' | 'all'>('7d');
+  
+  // Paginação
+  currentPage = signal(0);
+  readonly pageSize = 15; // Sessões por página
 
   private sub?: Subscription;
 
@@ -46,6 +50,22 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     return all.filter(s => s.date >= cutoffStr);
   });
+
+  // Sessões paginadas
+  readonly paginatedSessions = computed(() => {
+    const filtered = this.filteredSessions();
+    const start = this.currentPage() * this.pageSize;
+    const end = start + this.pageSize;
+    return filtered.slice(start, end);
+  });
+
+  // Info da paginação
+  readonly totalPages = computed(() => 
+    Math.ceil(this.filteredSessions().length / this.pageSize)
+  );
+  
+  readonly hasPrevPage = computed(() => this.currentPage() > 0);
+  readonly hasNextPage = computed(() => this.currentPage() < this.totalPages() - 1);
 
   readonly totalSeconds = computed(() =>
     this.filteredSessions().reduce((acc, s) => acc + s.durationSeconds, 0)
@@ -145,6 +165,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.sub = this.sessionSvc.getSessions$().subscribe(s => this.sessions.set(s));
+    
+    // Reset página quando período muda
+    effect(() => {
+      this.period(); // trigger on period change
+      this.currentPage.set(0);
+    });
   }
 
   ngOnDestroy(): void {
@@ -171,6 +197,30 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   async deleteSession(id: string): Promise<void> {
     await this.sessionSvc.deleteSession(id);
+  }
+
+  // Paginação
+  nextPage(): void {
+    if (this.hasNextPage()) {
+      this.currentPage.set(this.currentPage() + 1);
+    }
+  }
+
+  prevPage(): void {
+    if (this.hasPrevPage()) {
+      this.currentPage.set(this.currentPage() - 1);
+    }
+  }
+
+  goToPage(page: number): void {
+    if (page >= 0 && page < this.totalPages()) {
+      this.currentPage.set(page);
+    }
+  }
+
+  // TrackBy para performance
+  trackBySessionId(index: number, session: Session): string | undefined {
+    return session.id;
   }
 
   logout(): void {
