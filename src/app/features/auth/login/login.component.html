@@ -1,0 +1,38 @@
+<div class="auth-page">
+    <div class="auth-card">
+        <div class="logo">
+            <span class="logo-icon"><fa-icon [icon]="faClock" size="3x" [style.color]="'#6C63FF'"></fa-icon></span>
+            <h1>FocusFlow</h1>
+            <p>Seu tempo, seu foco.</p>
+        </div>
+
+        <div class="tabs">
+            <button [class.active]="!isRegister()" (click)="isRegister.set(false)">
+                Entrar
+            </button>
+            <button [class.active]="isRegister()" (click)="isRegister.set(true)">
+                Criar conta
+            </button>
+        </div>
+
+        <form (ngSubmit)="submit()">
+            <div class="field">
+                <label>E-mail</label>
+                <input type="email" [(ngModel)]="email" name="email" placeholder="seu@email.com" required />
+            </div>
+
+            <div class="field">
+                <label>Senha</label>
+                <input type="password" [(ngModel)]="password" name="password" placeholder="••••••••" required />
+            </div>
+
+            @if (error()) {
+            <div class="error-msg">{{ error() }}</div>
+            }
+
+            <button type="submit" class="btn-submit" [disabled]="loading()">
+                {{ loading() ? 'Aguarde...' : (isRegister() ? 'Criar conta' : 'Entrar') }}
+            </button>
+        </form>
+    </div>
+</div>
