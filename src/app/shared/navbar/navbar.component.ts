@@ -3,8 +3,7 @@ import { AuthService } from 'src/app/core/services/auth.service';
 import { TimerService } from 'src/app/core/services/timer.service';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faClock } from '@fortawesome/free-solid-svg-icons';
-
+import { faClock, faBullseye, faChartSimple} from '@fortawesome/free-solid-svg-icons';
 @Component({
   selector: 'app-navbar',
   standalone: true,
@@ -14,6 +13,8 @@ import { faClock } from '@fortawesome/free-solid-svg-icons';
 })
 export class NavbarComponent {
   faClock = faClock;
+  faBullseye = faBullseye;
+  faChartSimple = faChartSimple;
 
   timerSvc = inject(TimerService);
   authSvc = inject(AuthService);

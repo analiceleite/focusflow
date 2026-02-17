@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 
 import { NavbarComponent } from 'src/app/shared/navbar/navbar.component';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 import { TimerService, TimerMode } from '../../core/services/timer.service';
 import { SessionService } from '../../core/services/session.service';
