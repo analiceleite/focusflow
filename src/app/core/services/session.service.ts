@@ -14,37 +14,9 @@ import {
   deleteDoc,
   DocumentReference
 } from '@angular/fire/firestore';
+import { ActivityType, Preset, Session} from '../interfaces/timer.interface';
 import { AuthService } from './auth.service';
-import { Observable, of } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
-
-export interface ActivityType {
-  id?: string;
-  name: string;
-  icon: string;
-  color: string;
-  userId: string;
-}
-
-export interface Preset {
-  id?: string;
-  label: string;
-  minutes: number;
-  userId: string;
-}
-
-export interface Session {
-  id?: string;
-  userId: string;
-  activityTypeId: string;
-  activityTypeName: string;
-  activityColor: string;
-  durationSeconds: number;
-  mode: 'pomodoro' | 'stopwatch';
-  date: string; // YYYY-MM-DD
-  startedAt: number; // timestamp
-  completedAt: number; // timestamp
-}
+import { Observable } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class SessionService {

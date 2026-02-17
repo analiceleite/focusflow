@@ -1,0 +1,112 @@
+<div class="app-shell">
+    <app-navbar></app-navbar>
+    <!-- Main -->
+    <main class="main">
+        <header class="header">
+            <h2>Dashboard</h2>
+            <div class="header-filters">
+                <button [class.active]="period() === '7d'" (click)="period.set('7d')">7 dias</button>
+                <button [class.active]="period() === '30d'" (click)="period.set('30d')">30 dias</button>
+                <button [class.active]="period() === 'all'" (click)="period.set('all')">Tudo</button>
+            </div>
+        </header>
+
+        <!-- Summary Cards -->
+        <div class="cards-grid">
+            <div class="card card-total">
+                <div class="card-icon">⏳</div>
+                <div class="card-value">{{ formatDuration(totalSeconds()) }}</div>
+                <div class="card-label">Tempo total</div>
+            </div>
+            <div class="card card-streak">
+                <div class="card-icon">🔥</div>
+                <div class="card-value">{{ currentStreak() }}<span class="unit">dias</span></div>
+                <div class="card-label">Ofensiva atual</div>
+            </div>
+            <div class="card card-sessions">
+                <div class="card-icon">✅</div>
+                <div class="card-value">{{ filteredSessions().length }}</div>
+                <div class="card-label">Sessões</div>
+            </div>
+            <div class="card card-avg">
+                <div class="card-icon">📈</div>
+                <div class="card-value">{{ formatDuration(avgSessionSeconds()) }}</div>
+                <div class="card-label">Média/sessão</div>
+            </div>
+        </div>
+
+        <!-- Activity Breakdown -->
+        @if (activityStats().length > 0) {
+        <div class="section">
+            <div class="section-label">Por tipo de atividade</div>
+            <div class="activity-bars">
+                @for (stat of activityStats(); track stat.name) {
+                <div class="activity-bar-item">
+                    <div class="bar-header">
+                        <div class="bar-info">
+                            <span class="bar-icon">{{ stat.icon }}</span>
+                            <span class="bar-name">{{ stat.name }}</span>
+                            <span class="bar-sessions">{{ stat.sessionCount }} sessão(ões)</span>
+                        </div>
+                        <span class="bar-time">{{ formatDuration(stat.totalSeconds) }}</span>
+                    </div>
+                    <div class="bar-track">
+                        <div class="bar-fill" [style.width.%]="getBarPercent(stat.totalSeconds)"
+                            [style.background]="stat.color">
+                        </div>
+                    </div>
+                </div>
+                }
+            </div>
+        </div>
+        }
+
+        <!-- Streak Calendar -->
+        <div class="section">
+            <div class="section-label">
+                🔥 Ofensiva — {{ currentStreak() }} dia(s) consecutivo(s)
+                @if (bestStreak() > 0) {
+                · Recorde: {{ bestStreak() }} dias
+                }
+            </div>
+            <div class="calendar-grid">
+                @for (day of calendarDays(); track day.date) {
+                <div class="cal-day" [class.has-session]="day.hasSession" [class.today]="day.isToday"
+                    [title]="day.date + (day.seconds > 0 ? (' — ' + formatDuration(day.seconds)) : '')">
+                </div>
+                }
+            </div>
+            <div class="calendar-legend">
+                <span class="legend-dot empty"></span> Sem sessão
+                <span class="legend-dot filled"></span> Com sessão
+            </div>
+        </div>
+
+        <!-- Recent Sessions -->
+        @if (filteredSessions().length > 0) {
+        <div class="section">
+            <div class="section-label">Sessões recentes</div>
+            <div class="sessions-list">
+                @for (session of filteredSessions().slice(0, 20); track session.id) {
+                <div class="session-item">
+                    <div class="session-dot" [style.background]="session.activityColor">
+                    </div>
+                    <div class="session-info">
+                        <span class="session-name">{{ session.activityTypeName }}</span>
+                        <span class="session-date">{{ formatDate(session.date) }}</span>
+                    </div>
+                    <span class="session-duration">{{ formatDuration(session.durationSeconds) }}</span>
+                    <span class="session-mode">{{ session.mode === 'pomodoro' ? '🍅' : '⏱' }}</span>
+                </div>
+                }
+            </div>
+        </div>
+        } @else {
+        <div class="empty-state">
+            <div class="empty-icon">🎯</div>
+            <p>Nenhuma sessão registrada ainda.</p>
+            <a routerLink="/timer" class="btn-start">Começar agora →</a>
+        </div>
+        }
+    </main>
+</div>
