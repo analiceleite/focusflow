@@ -1,7 +1,7 @@
 .sidebar {
     width: 64px;
-    background: #0a0a10;
-    border-right: 1px solid #1e1e2e;
+    background: var(--bg-card);
+    border-right: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -28,7 +28,7 @@
     border-radius: 12px;
     text-decoration: none;
     font-size: 1.25rem;
-    color: #555;
+    color: var(--text-muted);
     border: none;
     background: transparent;
     cursor: pointer;
@@ -36,17 +36,17 @@
 
     &:hover,
     &.active {
-        background: #1e1e2e;
-        color: #fff;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
     }
 }
 
 .nav-logout {
     margin-top: auto;
-    color: #666;
+    color: var(--text-muted);
 
     &:hover {
-        color: #ff6584;
+        color: var(--accent-error);
         background: rgba(255, 101, 132, 0.1);
     }
 }
