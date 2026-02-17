@@ -430,6 +430,28 @@
     font-size: 1rem;
 }
 
+.session-delete {
+    margin-left: 0.5rem;
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 4px;
+    transition: all 0.2s;
+    line-height: 1;
+    flex-shrink: 0;
+    
+    &:hover {
+        color: var(--accent-error);
+        background: color-mix(in srgb, var(--accent-error) 10%, transparent);
+    }
+    
+    @media (max-width: 480px) {
+        font-size: 1rem;
+        padding: 0.2rem;
+    }
+}
+
 .empty-state {
     text-align: center;
     padding: 3rem 1rem;

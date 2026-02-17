@@ -169,6 +169,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
   }
 
+  async deleteSession(id: string): Promise<void> {
+    await this.sessionSvc.deleteSession(id);
+  }
+
   logout(): void {
     this.authSvc.logout();
   }

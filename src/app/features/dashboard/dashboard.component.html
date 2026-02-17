@@ -100,7 +100,8 @@
                         <span class="session-date">{{ formatDate(session.date) }}</span>
                     </div>
                     <span class="session-duration">{{ formatDuration(session.durationSeconds) }}</span>
-                    <span class="session-mode">{{ session.mode === 'pomodoro' ? '🍅' : '⏱' }}</span>
+                    <span class="session-mode">{{ session.mode === 'pomodoro' ? '🍅' : '⏰' }}</span>
+                    <span class="session-delete" (click)="deleteSession(session.id!)" title="Excluir sessão">×</span>
                 </div>
                 }
             </div>

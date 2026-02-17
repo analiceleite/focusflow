@@ -78,6 +78,10 @@ export class SessionService {
     await addDoc(col, { ...session, userId: this.uid });
   }
 
+  async deleteSession(id: string): Promise<void> {
+    await deleteDoc(doc(this.firestore, 'sessions', id));
+  }
+
   // ─── Seed default data ────────────────────────────────────────────────────────
 
   async seedDefaultData(): Promise<void> {
