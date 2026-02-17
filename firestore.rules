@@ -1,0 +1,38 @@
+// firestore.rules
+// Copie e cole no Console Firebase > Firestore Database > Rules
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Activity Types: cada usuário acessa apenas os seus
+    match /activityTypes/{docId} {
+      allow read, write: if request.auth != null
+        && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null
+        && request.auth.uid == request.resource.data.userId;
+    }
+
+    // Presets: cada usuário acessa apenas os seus
+    match /presets/{docId} {
+      allow read, write: if request.auth != null
+        && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null
+        && request.auth.uid == request.resource.data.userId;
+    }
+
+    // Sessions: cada usuário acessa apenas as suas
+    match /sessions/{docId} {
+      allow read, write: if request.auth != null
+        && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null
+        && request.auth.uid == request.resource.data.userId;
+    }
+
+    // UserMeta: controle de seed de dados iniciais
+    match /userMeta/{userId} {
+      allow read, write: if request.auth != null
+        && request.auth.uid == userId;
+    }
+  }
+}
