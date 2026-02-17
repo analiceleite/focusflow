@@ -1,85 +1,150 @@
 # FocusFlow
 
-Timer de produtividade pessoal com foco em consistência e clareza.
+Personal productivity timer focused on consistency and clarity.
 
+![Login](./src/assets/demo/login.png)
+
+![Timer](./src/assets/demo/timer.png)
+
+![Statistics](./src/assets/demo/stats.png)
 ---
 
 ## Features — v1.0
 
 **Timer**
-- Modo Pomodoro com duração configurável
-- Modo cronômetro livre (sem tempo definido)
-- Presets salvos pelo usuário (ex.: 25 min, 50 min, 90 min)
-- Seleção de tipo de atividade por sessão
-- Barra de progresso animada
-- Som de notificação ao fim do Pomodoro
-- Picture-in-Picture — bloquinho flutuante com tempo e progresso enquanto usa outras janelas
+- Pomodoro mode with configurable duration
+- Free stopwatch mode (no time limit)
+- User-saved presets (e.g., 25 min, 50 min, 90 min)
+- Activity type selection per session
+- Animated progress bar
+- Notification sound at Pomodoro completion
+- Picture-in-Picture — floating mini window with time and progress while using other applications
 
-**Tipos de atividade**
-- Tipos padrão: Estudo, Trabalho, Exercício, Leitura, Meditação, Projeto Pessoal
-- Criação de tipos customizados com nome, emoji e cor
-- Cada sessão registrada com o tipo selecionado
+**Activity Types**
+- Default types: Study, Work, Exercise, Reading, Meditation, Personal Project
+- Custom type creation with name, emoji, and color
+- Each session recorded with selected type
 
 **Dashboard**
-- Tempo total por tipo de atividade com barras de progresso
-- Ofensiva atual (dias consecutivos) e recorde pessoal
-- Calendário visual dos últimos 70 dias
-- Total de sessões, média por sessão e tempo acumulado
-- Filtros por 7 dias, 30 dias ou todo o histórico
-- Lista das sessões recentes
+- Total time per activity type with progress bars
+- Current streak (consecutive days) and personal record
+- Visual calendar of the last 70 days
+- Total sessions, average per session, and accumulated time
+- Filters for 7 days, 30 days, or all history
+- Recent sessions list
 
-**Autenticação**
-- Cadastro e login com e-mail e senha
-- Dados isolados por usuário — cada conta vê apenas o seu histórico
+**Authentication**
+- Email and password registration and login
+- User-isolated data — each account sees only their own history
 
 ---
 
-## Tecnologias
+## Technologies
 
-| Camada | Tecnologia |
+| Layer | Technology |
 |---|---|
 | Framework | Angular 17 (Standalone Components) |
-| Estado | Angular Signals |
-| Autenticação | Firebase Authentication |
-| Banco de dados | Cloud Firestore |
-| Hospedagem | Firebase Hosting |
-| PWA | @angular/pwa (instalável como app desktop) |
-| Estilo | SCSS inline (CSS modular por componente) |
-| PiP | Canvas API + Picture-in-Picture API (nativas do browser) |
+| State | Angular Signals |
+| Authentication | Firebase Authentication |
+| Database | Cloud Firestore |
+| Hosting | Firebase Hosting |
+| PWA | @angular/pwa (installable as desktop app) |
+| Styling | SCSS inline (modular CSS per component) |
+| PiP | Canvas API + Picture-in-Picture API (native browser APIs) |
 
 ---
 
-## Estrutura
-
-```
-src/app/
-├── core/
-│   ├── services/
-│   │   ├── auth.service.ts
-│   │   ├── session.service.ts
-│   │   ├── timer.service.ts
-│   │   └── pip.service.ts
-│   └── guards/
-│       ├── auth.guard.ts
-│       └── public.guard.ts
-└── features/
-    ├── auth/login/
-    ├── timer/
-    └── dashboard/
-```
-
----
-
-## Rodar localmente
+## Run Locally
 
 ```bash
 npm install
 ng serve
 ```
 
-Para testar o PWA (requer build de produção):
+To test the PWA (requires production build):
 
 ```bash
 ng build
 serve dist/focusflow/browser
 ```
+
+---
+
+## Live Demo
+
+🚀 **[https://focusflow-io.web.app](https://focusflow-io.web.app)**
+
+---
+
+## Features in Detail
+
+### 🍅 **Pomodoro Timer**
+- Customizable work sessions (default 25 minutes)
+- Visual progress ring with smooth animations
+- Audio notifications when sessions complete
+- Pause/resume functionality
+- Activity type tracking for each session
+
+### ⏱️ **Stopwatch Mode**
+- Free-running timer for flexible work sessions
+- Track unlimited time without preset boundaries
+- Perfect for creative work or open-ended tasks
+
+### 📊 **Analytics Dashboard**
+- Visual activity breakdown with color-coded progress bars
+- Daily streak tracking with personal records
+- Interactive calendar heatmap (70-day history)
+- Session statistics with averages and totals
+- Time period filtering (7d, 30d, all time)
+
+### 🖼️ **Picture-in-Picture**
+- Ultra-compact floating timer (110x120px)
+- Works across all applications and browser tabs
+- Real-time progress display
+- Light/dark theme support
+- Minimal CPU usage with canvas optimization
+
+### 🎨 **Theme System**
+- Seamless light/dark mode switching
+- Persistent user preference storage
+- System theme detection
+- Consistent theming across all components including PiP
+
+### 📱 **Progressive Web App**
+- Install as native desktop/mobile app
+- Offline functionality with service worker
+- Native app-like experience
+- Custom app icons and splash screens
+
+---
+
+## Technical Highlights
+
+- **Modern Angular 17**: Standalone components, signals-based state management
+- **Firebase Integration**: Authentication, Firestore database, hosting
+- **Performance Optimized**: Lazy loading, OnPush change detection
+- **Responsive Design**: Mobile-first approach with desktop enhancements
+- **Accessibility**: ARIA labels, keyboard navigation support
+- **Type Safety**: Full TypeScript implementation
+- **Component Architecture**: Modular, reusable components with SCSS styling
+
+---
+
+## Browser Compatibility
+
+- **Chrome/Edge**: Full support including Picture-in-Picture
+- **Firefox**: Full support (PiP support varies)
+- **Safari**: Full support on macOS/iOS
+- **PWA Install**: Supported on all modern browsers
+
+---
+
+## Contributing
+
+This is a personal productivity project built for learning modern Angular patterns and Firebase integration. Feel free to fork and customize for your own needs!
+
+---
+
+## License
+
+MIT License - Feel free to use and modify as needed.
