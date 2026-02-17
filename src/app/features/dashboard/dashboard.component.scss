@@ -1,7 +1,7 @@
  :host {
      display: block;
      min-height: 100vh;
-     background: #0f0f14;
+     background: var(--bg-primary);
  }
 
  .app-shell {
@@ -11,8 +11,8 @@
 
  .sidebar {
      width: 64px;
-     background: #0a0a10;
-     border-right: 1px solid #1e1e2e;
+     background: var(--bg-card);
+     border-right: 1px solid var(--border-color);
      display: flex;
      flex-direction: column;
      align-items: center;
@@ -39,7 +39,7 @@
      border-radius: 12px;
      text-decoration: none;
      font-size: 1.25rem;
-     color: #555;
+     color: var(--text-muted);
      border: none;
      background: transparent;
      cursor: pointer;
@@ -47,17 +47,17 @@
 
      &:hover,
      &.active {
-         background: #1e1e2e;
-         color: #fff;
+         background: var(--bg-secondary);
+         color: var(--text-primary);
      }
  }
 
  .nav-logout {
      margin-top: auto;
-     color: #666;
+     color: var(--text-muted);
 
      &:hover {
-         color: #ff6584;
+         color: var(--accent-error);
          background: rgba(255, 101, 132, 0.1);
      }
  }
@@ -81,7 +81,7 @@
      gap: 0.5rem;
 
      h2 {
-         color: #fff;
+         color: var(--text-primary);
          font-size: 1.25rem;
          font-weight: 600;
          margin: 0;
@@ -94,17 +94,22 @@
          button {
              padding: 0.4rem 0.875rem;
              border-radius: 8px;
-             border: 1px solid #2a2a3a;
+             border: 1px solid var(--border-color);
              background: transparent;
-             color: #666;
+             color: var(--text-muted);
              font-size: 0.8rem;
              cursor: pointer;
              transition: all 0.2s;
 
              &.active {
-                 background: #1e1e2e;
-                 border-color: #3a3a5a;
-                 color: #fff;
+                 background: var(--bg-secondary);
+                 border-color: var(--accent-primary);
+                 color: var(--text-primary);
+             }
+
+             &:hover:not(.active) {
+                 background: var(--bg-tertiary);
+                 color: var(--text-secondary);
              }
          }
      }
@@ -117,8 +122,8 @@
  }
 
  .card {
-     background: #12121a;
-     border: 1px solid #1e1e2e;
+     background: var(--bg-tertiary);
+     border: 1px solid var(--border-color);
      border-radius: 14px;
      padding: 1.25rem;
      display: flex;
@@ -131,7 +136,7 @@
      }
 
      .card-value {
-         color: #fff;
+         color: var(--text-primary);
          font-size: 1.75rem;
          font-weight: 700;
          letter-spacing: -0.5px;
@@ -139,14 +144,14 @@
 
          .unit {
              font-size: 1rem;
-             color: #666;
+             color: var(--text-muted);
              font-weight: 400;
              margin-left: 0.25rem;
          }
      }
 
      .card-label {
-         color: #555;
+         color: var(--text-muted);
          font-size: 0.75rem;
          font-weight: 500;
          text-transform: uppercase;
@@ -161,7 +166,7 @@
  }
 
  .section-label {
-     color: #555;
+     color: var(--text-muted);
      font-size: 0.75rem;
      font-weight: 600;
      text-transform: uppercase;
@@ -196,26 +201,26 @@
      }
 
      .bar-name {
-         color: #ddd;
+         color: var(--text-secondary);
          font-size: 0.9rem;
          font-weight: 500;
      }
 
      .bar-sessions {
-         color: #444;
+         color: var(--text-disabled);
          font-size: 0.75rem;
      }
  }
 
  .bar-time {
-     color: #888;
+     color: var(--text-muted);
      font-size: 0.875rem;
      font-weight: 500;
  }
 
  .bar-track {
      height: 6px;
-     background: #1a1a28;
+     background: var(--border-color);
      border-radius: 3px;
      overflow: hidden;
  }
@@ -236,17 +241,17 @@
      width: 14px;
      height: 14px;
      border-radius: 3px;
-     background: #1a1a28;
+     background: var(--border-color);
      cursor: default;
      transition: transform 0.15s;
 
      &.has-session {
-         background: #6C63FF;
+         background: var(--accent-primary);
          opacity: 0.8;
      }
 
      &.today {
-         outline: 2px solid #fff;
+         outline: 2px solid var(--text-primary);
          outline-offset: 1px;
      }
 
@@ -264,7 +269,7 @@
      align-items: center;
      gap: 1rem;
      font-size: 0.75rem;
-     color: #555;
+     color: var(--text-muted);
 
      .legend-dot {
          display: inline-block;
@@ -274,11 +279,11 @@
          margin-right: 4px;
 
          &.empty {
-             background: #1a1a28;
+             background: var(--border-color);
          }
 
          &.filled {
-             background: #6C63FF;
+             background: var(--accent-primary);
          }
      }
  }
@@ -294,8 +299,8 @@
      align-items: center;
      gap: 0.75rem;
      padding: 0.75rem 1rem;
-     background: #12121a;
-     border: 1px solid #1e1e2e;
+     background: var(--bg-tertiary);
+     border: 1px solid var(--border-color);
      border-radius: 10px;
  }
 
@@ -313,18 +318,18 @@
      gap: 0.1rem;
 
      .session-name {
-         color: #ccc;
+         color: var(--text-secondary);
          font-size: 0.875rem;
      }
 
      .session-date {
-         color: #444;
+         color: var(--text-disabled);
          font-size: 0.75rem;
      }
  }
 
  .session-duration {
-     color: #888;
+     color: var(--text-muted);
      font-size: 0.875rem;
      font-weight: 500;
  }
@@ -346,15 +351,15 @@
      }
 
      p {
-         color: #555;
+         color: var(--text-muted);
          margin: 0;
      }
  }
 
  .btn-start {
      padding: 0.7rem 1.5rem;
-     background: #6C63FF;
-     color: #fff;
+     background: var(--accent-primary);
+     color: white;
      border-radius: 50px;
      text-decoration: none;
      font-size: 0.875rem;
@@ -362,6 +367,7 @@
      transition: all 0.2s;
 
      &:hover {
-         background: #7B73FF;
+         filter: brightness(1.1);
+         transform: translateY(-1px);
      }
  }

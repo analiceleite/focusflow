@@ -6,6 +6,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faClock } from '@fortawesome/free-solid-svg-icons';
 
 import { NavbarComponent } from 'src/app/shared/navbar/navbar.component';
+import { ThemeToggleComponent } from 'src/app/shared/theme-toggle/theme-toggle.component';
 
 import { ActivityStat } from 'src/app/core/interfaces/dashboard.interface';
 import { SessionService } from '../../core/services/session.service';
@@ -15,7 +16,7 @@ import { AuthService } from '../../core/services/auth.service';
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, FontAwesomeModule, NavbarComponent],
+  imports: [CommonModule, RouterLink, FontAwesomeModule, NavbarComponent, ThemeToggleComponent],
   styleUrls: ['./dashboard.component.scss'],
   templateUrl: './dashboard.component.html',
 })
