@@ -1,10 +1,12 @@
 import { Injectable, inject } from '@angular/core';
 import { TimerService } from './timer.service';
+import { ThemeService } from './theme.service';
 import { effect } from '@angular/core';
 
 @Injectable({ providedIn: 'root' })
 export class PipService {
   private timerSvc = inject(TimerService);
+  private themeService = inject(ThemeService);
 
   private videoEl: HTMLVideoElement | null = null;
   private onEnterPiP: ((ev: Event) => void) | null = null;
@@ -15,9 +17,21 @@ export class PipService {
   private animFrameId: number | null = null;
   private isActive = false;
 
-  // Canvas base size — larger for Windows 11 clock-like resizable PiP with high quality
-  private readonly W = 320;
-  private readonly H = 180;
+  // Canvas base size — very compact mini PiP
+  private readonly W = 220;
+  private readonly H = 130;
+
+  private getThemeColors() {
+    const isDark = this.themeService.isDarkMode();
+    return {
+      background: isDark ? '#0f0f14' : '#ffffff',
+      border: isDark ? '#2a2a3a' : '#e0e0e0',
+      textPrimary: isDark ? '#ffffff' : '#1a1a1a',
+      textSecondary: isDark ? '#cccccc' : '#333333',
+      textMuted: isDark ? '#888888' : '#666666',
+      progressTrack: isDark ? '#1e1e2e' : '#f1f3f4'
+    };
+  }
 
   async toggle(activityColor: string = '#6C63FF'): Promise<void> {
     console.log('[PipService] toggle called — active=', this.isActive);
@@ -149,20 +163,21 @@ export class PipService {
     const time = this.timerSvc.formattedTime();
     const progress = this.timerSvc.progress();
     const state = this.timerSvc.state();
+    const themeColors = this.getThemeColors();
 
     // Background
-    ctx.fillStyle = '#0f0f14';
+    ctx.fillStyle = themeColors.background;
     ctx.fillRect(0, 0, this.W, this.H);
 
     // Subtle border
-    ctx.strokeStyle = '#2a2a3a';
+    ctx.strokeStyle = themeColors.border;
     ctx.lineWidth = 1;
     ctx.strokeRect(0.5, 0.5, this.W - 1, this.H - 1);
 
     if (mode === 'pomodoro') {
-      this.drawPomodoro(ctx, color, time, progress, state);
+      this.drawPomodoro(ctx, color, time, progress, state, themeColors);
     } else {
-      this.drawStopwatch(ctx, time, state);
+      this.drawStopwatch(ctx, time, state, themeColors);
     }
   }
 
@@ -171,21 +186,22 @@ export class PipService {
     color: string,
     time: string,
     progress: number,
-    state: string
+    state: string,
+    themeColors: any
   ): void {
     const W = this.W;
     const H = this.H;
-    const scale = this.W / 320; // Adjust scale for new base size
-    const PAD = Math.max(12, Math.round(24 * scale));
-    const barY = H - Math.round(32 * scale);
-    const barH = Math.max(4, Math.round(8 * scale));
+    const scale = this.W / 220; // Adjust scale for very small base size
+    const PAD = Math.max(8, Math.round(16 * scale));
+    const barY = H - Math.round(22 * scale);
+    const barH = Math.max(2, Math.round(4 * scale));
     const barW = W - PAD * 2;
 
     // Mode label
-    ctx.fillStyle = '#555';
-    ctx.font = `500 ${Math.max(14, Math.round(18 * scale))}px system-ui, sans-serif`;
+    ctx.fillStyle = themeColors.textMuted;
+    ctx.font = `500 ${Math.max(10, Math.round(13 * scale))}px system-ui, sans-serif`;
     ctx.textAlign = 'left';
-    ctx.fillText('🍅 POMODORO', PAD, Math.round(32 * scale));
+    ctx.fillText('🍅 POMODORO', PAD, Math.round(22 * scale));
 
     // State indicator
     const stateLabel: Record<string, string> = {
@@ -194,19 +210,19 @@ export class PipService {
       idle: '○ PRONTO',
       finished: '✓ CONCLUÍDO'
     };
-    ctx.fillStyle = state === 'running' ? color : '#555';
-    ctx.font = `600 ${Math.max(13, Math.round(16 * scale))}px system-ui, sans-serif`;
+    ctx.fillStyle = state === 'running' ? color : themeColors.textMuted;
+    ctx.font = `600 ${Math.max(9, Math.round(11 * scale))}px system-ui, sans-serif`;
     ctx.textAlign = 'right';
-    ctx.fillText(stateLabel[state] ?? '', W - PAD, Math.round(32 * scale));
+    ctx.fillText(stateLabel[state] ?? '', W - PAD, Math.round(22 * scale));
 
     // Time display
-    ctx.fillStyle = '#ffffff';
-    ctx.font = `700 ${Math.max(36, Math.round(64 * scale))}px system-ui, monospace, sans-serif`;
+    ctx.fillStyle = themeColors.textPrimary;
+    ctx.font = `700 ${Math.max(22, Math.round(36 * scale))}px system-ui, monospace, sans-serif`;
     ctx.textAlign = 'center';
-    ctx.fillText(time, W / 2, Math.round(110 * scale));
+    ctx.fillText(time, W / 2, Math.round(78 * scale));
 
     // Progress bar track
-    ctx.fillStyle = '#1e1e2e';
+    ctx.fillStyle = themeColors.progressTrack;
     ctx.beginPath();
     this.roundRect(ctx, PAD, barY, barW, barH, Math.max(2, Math.round(3 * scale)));
     ctx.fill();
@@ -246,17 +262,18 @@ export class PipService {
   private drawStopwatch(
     ctx: CanvasRenderingContext2D,
     time: string,
-    state: string
+    state: string,
+    themeColors: any
   ): void {
     const W = this.W;
-    const scale = this.W / 320; // Match new base size
-    const PAD = Math.max(12, Math.round(24 * scale));
+    const scale = this.W / 220; // Match very small base size
+    const PAD = Math.max(8, Math.round(16 * scale));
 
     // Mode label
-    ctx.fillStyle = '#555';
-    ctx.font = `500 ${Math.max(14, Math.round(18 * scale))}px system-ui, sans-serif`;
+    ctx.fillStyle = themeColors.textMuted;
+    ctx.font = `500 ${Math.max(10, Math.round(13 * scale))}px system-ui, sans-serif`;
     ctx.textAlign = 'left';
-    ctx.fillText('⏱ CRONÔMETRO', PAD, Math.round(32 * scale));
+    ctx.fillText('⏱ CRONÔMETRO', PAD, Math.round(22 * scale));
 
     // State
     const stateLabel: Record<string, string> = {
@@ -265,16 +282,16 @@ export class PipService {
       idle: '○ PRONTO',
       finished: '✓ CONCLUÍDO'
     };
-    ctx.fillStyle = state === 'running' ? '#43D9AD' : '#555';
-    ctx.font = `600 ${Math.max(13, Math.round(16 * scale))}px system-ui, sans-serif`;
+    ctx.fillStyle = state === 'running' ? '#43D9AD' : themeColors.textMuted;
+    ctx.font = `600 ${Math.max(9, Math.round(11 * scale))}px system-ui, sans-serif`;
     ctx.textAlign = 'right';
-    ctx.fillText(stateLabel[state] ?? '', W - PAD, Math.round(32 * scale));
+    ctx.fillText(stateLabel[state] ?? '', W - PAD, Math.round(22 * scale));
 
     // Time — centered, large
-    ctx.fillStyle = '#ffffff';
-    ctx.font = `700 ${Math.max(36, Math.round(72 * scale))}px system-ui, monospace, sans-serif`;
+    ctx.fillStyle = themeColors.textPrimary;
+    ctx.font = `700 ${Math.max(24, Math.round(42 * scale))}px system-ui, monospace, sans-serif`;
     ctx.textAlign = 'center';
-    ctx.fillText(time, W / 2, Math.round(120 * scale));
+    ctx.fillText(time, W / 2, Math.round(85 * scale));
   }
 
   private cleanup(): void {
