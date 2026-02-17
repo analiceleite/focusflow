@@ -2,17 +2,15 @@
 
 Personal productivity timer focused on consistency and clarity.
 
+## Login screen
 ![Login](./src/assets/demo/login.png)
 
-**Login screen:** Login screen with email and password fields, a "Sign in" button, and links to create an account or reset password.
-
+## Timer screen
 ![Timer](./src/assets/demo/timer.png)
 
-**Timer screen:** Main timer view with a progress ring, controls (start/pause/stop), activity type selector, and Picture-in-Picture option.
-
+## Statistics screen
 ![Statistics](./src/assets/demo/stats.png)
 
-**Statistics screen:** Statistics dashboard showing accumulated time per activity, streaks, a 70-day heatmap, and a recent sessions list.
 ---
 
 ## Features — v1.0
