@@ -81,7 +81,11 @@
 
 .nav-icon {
     display: block;
-    font-size: 1.25rem;
+
+    img {
+        width: 28px;
+        height: 28px;
+    }
     
     @media (max-width: 768px) {
         font-size: 1.1rem;
