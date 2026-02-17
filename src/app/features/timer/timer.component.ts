@@ -5,6 +5,8 @@ import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 
 import { NavbarComponent } from 'src/app/shared/navbar/navbar.component';
+import { ToastComponent } from 'src/app/shared/toast/toast.component';
+import { ToastService } from 'src/app/core/services/toast.service';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 import { TimerService, TimerMode } from '../../core/services/timer.service';
@@ -16,7 +18,7 @@ import { PipService } from '../../core/services/pip.service';
 @Component({
   selector: 'app-timer',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, NavbarComponent],
+  imports: [CommonModule, FormsModule, RouterLink, NavbarComponent, ToastComponent],
   templateUrl: './timer.component.html',
   styleUrls: ['./timer.component.scss'],
 })
@@ -25,6 +27,7 @@ export class TimerComponent implements OnInit, OnDestroy {
   timerSvc = inject(TimerService);
   private sessionSvc = inject(SessionService);
   private authSvc = inject(AuthService);
+  private toastService = inject(ToastService);
   pipSvc = inject(PipService)
 
   activityTypes = signal<ActivityType[]>([]);
@@ -83,7 +86,46 @@ export class TimerComponent implements OnInit, OnDestroy {
   }
 
   setMode(mode: TimerMode): void {
+    // Verificar se há um timer rodando
+    const currentState = this.timerSvc.state();
+    if (currentState === 'running' || currentState === 'paused') {
+      this.toastService.warning(
+        'Finalize o ciclo atual antes de trocar de modo. Salve ou pare o timer primeiro.',
+        5000
+      );
+      return;
+    }
+    
     this.timerSvc.setMode(mode);
+    this.toastService.success(
+      `Modo alterado para ${mode === 'pomodoro' ? 'Pomodoro' : 'Cronômetro'}`,
+      2000
+    );
+  }
+
+  stopTimer(): void {
+    const elapsed = this.timerSvc.elapsedSeconds();
+    const state = this.timerSvc.state();
+    
+    // Se há tempo decorrido e timer está rodando/pausado
+    if ((state === 'running' || state === 'paused') && elapsed > 0) {
+      if (elapsed >= 60) {
+        // Se tem mais de 1 minuto, perguntar se quer salvar
+        this.toastService.show(
+          'warning',
+          `Você tem ${this.formatDuration(elapsed)} de atividade. Clique em "Salvar" antes de parar para não perder o progresso.`,
+          8000
+        );
+      } else {
+        // Menos de 1 minuto, só avisar que será perdido
+        this.toastService.warning(
+          `Timer parado. Sessão de ${elapsed}s muito curta para ser salva.`,
+          3000
+        );
+      }
+    }
+    
+    this.timerSvc.stop();
   }
 
   startTimer(): void {
@@ -98,8 +140,8 @@ export class TimerComponent implements OnInit, OnDestroy {
   }
 
   stopAndSave(): void {
-    this.timerSvc.stop();
     this.saveCurrentSession();
+    this.timerSvc.stop();
   }
 
   applyPreset(minutes: number): void {
@@ -151,28 +193,52 @@ export class TimerComponent implements OnInit, OnDestroy {
 
   private async saveCurrentSession(): Promise<void> {
     const elapsed = this.timerSvc.elapsedSeconds();
-    if (elapsed < 10 || !this.selectedType()) return;
+    
+    if (!this.selectedType()) {
+      this.toastService.error('Nenhum tipo de atividade selecionado!');
+      return;
+    }
+
+    // Validar duração mínima de 1 minuto (60 segundos)
+    if (elapsed < 60) {
+      this.toastService.error(
+        'Sessão muito curta! É necessário pelo menos 1 minuto para salvar nas estatísticas.',
+        5000
+      );
+      return;
+    }
 
     const now = Date.now();
     const today = new Date().toISOString().split('T')[0];
 
-    await this.sessionSvc.saveSession({
-      activityTypeId: this.selectedType()!.id!,
-      activityTypeName: this.selectedType()!.name,
-      activityColor: this.selectedType()!.color,
-      durationSeconds: elapsed,
-      mode: this.timerSvc.mode(),
-      date: today,
-      startedAt: now - elapsed * 1000,
-      completedAt: now,
-    });
+    try {
+      await this.sessionSvc.saveSession({
+        activityTypeId: this.selectedType()!.id!,
+        activityTypeName: this.selectedType()!.name,
+        activityColor: this.selectedType()!.color,
+        durationSeconds: elapsed,
+        mode: this.timerSvc.mode(),
+        date: today,
+        startedAt: now - elapsed * 1000,
+        completedAt: now,
+      });
 
-    // Show banner
-    this.savedDuration.set(this.formatDuration(elapsed));
-    this.savedActivity.set(this.selectedType()!.name);
-    this.showSaveBanner.set(true);
-    if (this.bannerTimeout) clearTimeout(this.bannerTimeout);
-    this.bannerTimeout = setTimeout(() => this.showSaveBanner.set(false), 4000);
+      // Show success banner
+      this.savedDuration.set(this.formatDuration(elapsed));
+      this.savedActivity.set(this.selectedType()!.name);
+      this.showSaveBanner.set(true);
+      if (this.bannerTimeout) clearTimeout(this.bannerTimeout);
+      this.bannerTimeout = setTimeout(() => this.showSaveBanner.set(false), 4000);
+
+      // Show success toast
+      this.toastService.success(
+        `Sessão de ${this.formatDuration(elapsed)} salva com sucesso!`,
+        3000
+      );
+    } catch (error) {
+      console.error('Error saving session:', error);
+      this.toastService.error('Erro ao salvar a sessão. Tente novamente.');
+    }
   }
 
   private formatDuration(seconds: number): string {

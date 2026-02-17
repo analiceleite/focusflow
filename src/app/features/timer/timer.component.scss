@@ -223,6 +223,23 @@
     }
 }
 
+.btn-tertiary {
+    padding: 0.875rem 1.5rem;
+    background: transparent;
+    color: #ff6b6b;
+    border: 1px solid #4a2a2a;
+    border-radius: 50px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+        border-color: #ff6b6b;
+        background: rgba(255, 107, 107, 0.1);
+        transform: translateY(-1px);
+    }
+}
+
 .presets-row {
     display: flex;
     flex-wrap: wrap;

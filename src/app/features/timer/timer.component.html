@@ -1,5 +1,9 @@
 <div class="app-shell">
     <app-navbar></app-navbar>
+    
+    <!-- Toast Notifications -->
+    <app-toast></app-toast>
+    
     <!-- Main Content -->
     <main class="main">
         <!-- Header -->
@@ -68,10 +72,12 @@
                 } @else if (timerSvc.state() === 'running') {
                 <button class="btn-main btn-pause" (click)="timerSvc.pause()">⏸ Pausar</button>
                 <button class="btn-secondary" (click)="stopAndSave()">✅ Salvar</button>
+                <button class="btn-tertiary" (click)="stopTimer()" title="Parar timer sem salvar">🛑 Parar</button>
                 } @else if (timerSvc.state() === 'paused') {
                 <button class="btn-main" [style.background]="selectedType()?.color || '#6C63FF'"
                     (click)="timerSvc.resume()">▶ Continuar</button>
                 <button class="btn-secondary" (click)="stopAndSave()">✅ Salvar</button>
+                <button class="btn-tertiary" (click)="stopTimer()" title="Parar timer sem salvar">🛑 Parar</button>
                 }
             </div>
 
