@@ -34,6 +34,7 @@
                     [class.selected]="selectedType()?.id === type.id" (click)="selectedType.set(type)">
                     <span>{{ type.icon }}</span>
                     <span class="chip-name">{{ type.name }}</span>
+                    <span class="activity-delete" (click)="$event.stopPropagation(); deleteActivityType(type.id!)">×</span>
                 </button>
                 }
                 <button class="activity-chip add-chip" (click)="showAddType.set(true)">

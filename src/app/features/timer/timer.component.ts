@@ -172,6 +172,14 @@ export class TimerComponent implements OnInit, OnDestroy {
     await this.sessionSvc.deletePreset(id);
   }
 
+  async deleteActivityType(id: string): Promise<void> {
+    // Se estiver selecionado, desselecionar
+    if (this.selectedType()?.id === id) {
+      this.selectedType.set(null);
+    }
+    await this.sessionSvc.deleteActivityType(id);
+  }
+
   async addPreset(): Promise<void> {
     const mins = Math.max(1, Math.min(480, Number(this.presetMinutesInput)));
     const label = this.presetLabel.trim() || `${mins} min`;
