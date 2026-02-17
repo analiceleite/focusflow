@@ -4,11 +4,11 @@
 export const environment = {
   production: false,
   firebase: {
-    apiKey: "AIzaSyBZCzF4oQDOw_T2LX3kt0rczeN-mxjxp9Q",
-    authDomain: "tempora-10cc5.firebaseapp.com",
-    projectId: "tempora-10cc5",
-    storageBucket: "tempora-10cc5.firebasestorage.app",
-    messagingSenderId: "1059884082604",
-    appId: "1:1059884082604:web:54d5d66ddec9a467e90609",
+    apiKey: "AIzaSyALZ3wX_CuwNxmT5o_gLpQcV1UzmSHwfIs",
+    authDomain: "focusflow-io.firebaseapp.com",
+    projectId: "focusflow-io",
+    storageBucket: "focusflow-io.firebasestorage.app",
+    messagingSenderId: "681412684287",
+    appId: "1:681412684287:web:3a532aff393e9eb92bdfca",
   }
 };

@@ -1,63 +1,85 @@
-# FocusFlow — Timer App com Angular + Firebase
+# FocusFlow
 
-## Estrutura do Projeto
+Timer de produtividade pessoal com foco em consistência e clareza.
+
+---
+
+## Features — v1.0
+
+**Timer**
+- Modo Pomodoro com duração configurável
+- Modo cronômetro livre (sem tempo definido)
+- Presets salvos pelo usuário (ex.: 25 min, 50 min, 90 min)
+- Seleção de tipo de atividade por sessão
+- Barra de progresso animada
+- Som de notificação ao fim do Pomodoro
+- Picture-in-Picture — bloquinho flutuante com tempo e progresso enquanto usa outras janelas
+
+**Tipos de atividade**
+- Tipos padrão: Estudo, Trabalho, Exercício, Leitura, Meditação, Projeto Pessoal
+- Criação de tipos customizados com nome, emoji e cor
+- Cada sessão registrada com o tipo selecionado
+
+**Dashboard**
+- Tempo total por tipo de atividade com barras de progresso
+- Ofensiva atual (dias consecutivos) e recorde pessoal
+- Calendário visual dos últimos 70 dias
+- Total de sessões, média por sessão e tempo acumulado
+- Filtros por 7 dias, 30 dias ou todo o histórico
+- Lista das sessões recentes
+
+**Autenticação**
+- Cadastro e login com e-mail e senha
+- Dados isolados por usuário — cada conta vê apenas o seu histórico
+
+---
+
+## Tecnologias
+
+| Camada | Tecnologia |
+|---|---|
+| Framework | Angular 17 (Standalone Components) |
+| Estado | Angular Signals |
+| Autenticação | Firebase Authentication |
+| Banco de dados | Cloud Firestore |
+| Hospedagem | Firebase Hosting |
+| PWA | @angular/pwa (instalável como app desktop) |
+| Estilo | SCSS inline (CSS modular por componente) |
+| PiP | Canvas API + Picture-in-Picture API (nativas do browser) |
+
+---
+
+## Estrutura
 
 ```
-focusflow/
-├── src/
-│   ├── app/
-│   │   ├── core/
-│   │   │   ├── services/
-│   │   │   │   ├── auth.service.ts
-│   │   │   │   ├── timer.service.ts
-│   │   │   │   └── session.service.ts
-│   │   │   └── guards/
-│   │   │       └── auth.guard.ts
-│   │   ├── features/
-│   │   │   ├── auth/
-│   │   │   │   ├── login/
-│   │   │   │   └── register/
-│   │   │   ├── timer/
-│   │   │   │   └── timer.component.ts
-│   │   │   └── dashboard/
-│   │   │       └── dashboard.component.ts
-│   │   ├── shared/
-│   │   │   └── components/
-│   │   ├── app.routes.ts
-│   │   └── app.config.ts
-│   ├── environments/
-│   │   └── environment.ts
-│   └── styles.scss
-├── angular.json
-└── package.json
+src/app/
+├── core/
+│   ├── services/
+│   │   ├── auth.service.ts
+│   │   ├── session.service.ts
+│   │   ├── timer.service.ts
+│   │   └── pip.service.ts
+│   └── guards/
+│       ├── auth.guard.ts
+│       └── public.guard.ts
+└── features/
+    ├── auth/login/
+    ├── timer/
+    └── dashboard/
 ```
 
-## Setup
+---
 
-### 1. Instalar dependências
+## Rodar localmente
+
 ```bash
 npm install
-```
-
-### 2. Configurar Firebase
-1. Acesse https://console.firebase.google.com
-2. Crie um novo projeto
-3. Ative **Authentication** → Email/Password
-4. Ative **Firestore Database**
-5. Copie as credenciais do projeto
-6. Cole em `src/environments/environment.ts`
-
-### 3. Rodar o projeto
-```bash
 ng serve
 ```
 
-## Funcionalidades
-- ✅ Autenticação com Firebase (email + senha)
-- ✅ Timer Pomodoro configurável
-- ✅ Cronômetro livre
-- ✅ Tipos de atividade customizáveis (Estudo, Trabalho, Exercício, Leitura, Meditação, Projeto pessoal...)
-- ✅ Presets salvos por usuário
-- ✅ Dashboard com tempo por tipo de atividade
-- ✅ Dias de ofensiva (streak)
-- ✅ Dados isolados por usuário no Firestore
+Para testar o PWA (requer build de produção):
+
+```bash
+ng build
+serve dist/focusflow/browser
+```
