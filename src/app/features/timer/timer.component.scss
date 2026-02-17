@@ -21,7 +21,7 @@
     
     @media (max-width: 768px) {
         margin-left: 0;
-        margin-bottom: 64px; // Space for bottom nav
+        margin-bottom: 64px;
         padding: 1rem;
         gap: 1rem;
         max-width: none;
@@ -167,12 +167,10 @@
     position: relative;
     width: 220px;
     height: 220px;
-    
     @media (max-width: 768px) {
         width: 200px;
         height: 200px;
     }
-    
     @media (max-width: 480px) {
         width: 180px;
         height: 180px;
@@ -188,10 +186,7 @@
         fill: none;
         stroke: var(--border-color);
         stroke-width: 8;
-        
-        @media (max-width: 480px) {
-            stroke-width: 6;
-        }
+        @media (max-width: 480px) { stroke-width: 6; }
     }
 
     .ring-progress {
@@ -201,10 +196,7 @@
         stroke-dasharray: 553;
         stroke-dashoffset: 0;
         transition: stroke-dashoffset 0.4s ease, stroke 0.3s;
-        
-        @media (max-width: 480px) {
-            stroke-width: 6;
-        }
+        @media (max-width: 480px) { stroke-width: 6; }
     }
 }
 
@@ -223,34 +215,21 @@
         font-weight: 700;
         letter-spacing: -1px;
         font-variant-numeric: tabular-nums;
-        
-        @media (max-width: 768px) {
-            font-size: 2.5rem;
-        }
-        
-        @media (max-width: 480px) {
-            font-size: 2.25rem;
-        }
+        @media (max-width: 768px) { font-size: 2.5rem; }
+        @media (max-width: 480px) { font-size: 2.25rem; }
     }
 
     .timer-sub {
         color: var(--text-muted);
         font-size: 0.75rem;
-        
-        @media (max-width: 480px) {
-            font-size: 0.7rem;
-        }
+        @media (max-width: 480px) { font-size: 0.7rem; }
     }
 }
 
 .controls {
     display: flex;
     gap: 0.75rem;
-    
-    @media (max-width: 480px) {
-        flex-direction: column;
-        width: 100%;
-    }
+    @media (max-width: 480px) { flex-direction: column; width: 100%; }
 }
 
 .btn-main {
@@ -263,12 +242,7 @@
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
-    
-    @media (max-width: 480px) {
-        padding: 0.75rem 2rem;
-        font-size: 0.9rem;
-        width: 100%;
-    }
+    @media (max-width: 480px) { padding: 0.75rem 2rem; font-size: 0.9rem; width: 100%; }
 
     &:hover {
         filter: brightness(1.1);
@@ -290,12 +264,7 @@
     font-size: 0.9rem;
     cursor: pointer;
     transition: all 0.2s;
-    
-    @media (max-width: 480px) {
-        padding: 0.75rem 1.25rem;
-        font-size: 0.8rem;
-        width: 100%;
-    }
+    @media (max-width: 480px) { padding: 0.75rem 1.25rem; font-size: 0.8rem; width: 100%; }
 
     &:hover {
         border-color: var(--accent-success);
@@ -312,12 +281,7 @@
     font-size: 0.9rem;
     cursor: pointer;
     transition: all 0.2s;
-    
-    @media (max-width: 480px) {
-        padding: 0.75rem 1.25rem;
-        font-size: 0.8rem;
-        width: 100%;
-    }
+    @media (max-width: 480px) { padding: 0.75rem 1.25rem; font-size: 0.8rem; width: 100%; }
 
     &:hover {
         border-color: var(--accent-error);
@@ -458,12 +422,7 @@
     padding: 1.75rem;
     width: 100%;
     max-width: 360px;
-    
-    @media (max-width: 480px) {
-        margin: 1rem;
-        max-width: calc(100vw - 2rem);
-        padding: 1.5rem;
-    }
+    @media (max-width: 480px) { margin: 1rem; max-width: calc(100vw - 2rem); padding: 1.5rem; }
 
     h3 {
         color: var(--text-primary);
