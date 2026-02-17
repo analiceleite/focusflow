@@ -120,11 +120,7 @@
     cursor: pointer;
     font-size: 0.875rem;
     transition: all 0.2s;
-    
-    @media (max-width: 480px) {
-        padding: 0.4rem 0.75rem;
-        font-size: 0.8rem;
-    }
+    @media (max-width: 480px) { padding: 0.4rem 0.75rem; font-size: 0.8rem; }
 
     &.selected {
         background: color-mix(in srgb, var(--color) 20%, transparent);
@@ -140,10 +136,7 @@
 
     .chip-name {
         font-size: 0.8rem;
-        
-        @media (max-width: 480px) {
-            font-size: 0.75rem;
-        }
+        @media (max-width: 480px) { font-size: 0.75rem; }
     }
 }
 
@@ -393,18 +386,9 @@
 }
 
 @keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
-
-/* Modal */
 .modal-overlay {
     position: fixed;
     inset: 0;
@@ -430,7 +414,6 @@
         font-size: 1.1rem;
     }
 }
-
 .modal-field {
     margin-bottom: 1rem;
 
