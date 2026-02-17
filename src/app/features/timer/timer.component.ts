@@ -6,6 +6,7 @@ import { Subscription } from 'rxjs';
 
 import { NavbarComponent } from 'src/app/shared/navbar/navbar.component';
 import { ToastComponent } from 'src/app/shared/toast/toast.component';
+import { ThemeToggleComponent } from 'src/app/shared/theme-toggle/theme-toggle.component';
 import { ToastService } from 'src/app/core/services/toast.service';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
@@ -18,7 +19,7 @@ import { PipService } from '../../core/services/pip.service';
 @Component({
   selector: 'app-timer',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, NavbarComponent, ToastComponent],
+  imports: [CommonModule, FormsModule, RouterLink, NavbarComponent, ToastComponent, ThemeToggleComponent],
   templateUrl: './timer.component.html',
   styleUrls: ['./timer.component.scss'],
 })
