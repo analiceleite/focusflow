@@ -1,6 +1,15 @@
 <nav class="sidebar">
     <div class="sidebar-logo">⏰</div>
-    <a routerLink="/timer" routerLinkActive="active" class="nav-item" title="Timer">⌛</a>
-    <a routerLink="/dashboard" routerLinkActive="active" class="nav-item" title="Dashboard">📊</a>
-    <button class="nav-item nav-logout" (click)="logout()" title="Sair">↩</button>
+    <a routerLink="/timer" routerLinkActive="active" class="nav-item" title="Timer">
+        <span class="nav-icon">⌛</span>
+        <span class="nav-label">Timer</span>
+    </a>
+    <a routerLink="/dashboard" routerLinkActive="active" class="nav-item" title="Dashboard">
+        <span class="nav-icon">📊</span>
+        <span class="nav-label">Dashboard</span>
+    </a>
+    <button class="nav-item nav-logout" (click)="logout()" title="Sair">
+        <span class="nav-icon">↩</span>
+        <span class="nav-label">Sair</span>
+    </button>
 </nav>

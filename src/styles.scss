@@ -7,6 +7,7 @@
   --bg-secondary: #1a1a2e;
   --bg-tertiary: #12121a;
   --bg-card: #0a0a10;
+  --bg-card-rgb: 10, 10, 16;
   
   --text-primary: #ffffff;
   --text-secondary: #cccccc;
@@ -24,6 +25,11 @@
   --shadow-light: rgba(0, 0, 0, 0.1);
   --shadow-medium: rgba(0, 0, 0, 0.2);
   --shadow-strong: rgba(0, 0, 0, 0.3);
+  
+  /* Breakpoints */
+  --mobile: 480px;
+  --tablet: 768px;
+  --desktop: 1024px;
 }
 
 /* Light Theme */
@@ -32,6 +38,7 @@
   --bg-secondary: #f8f9fa;
   --bg-tertiary: #f1f3f4;
   --bg-card: #ffffff;
+  --bg-card-rgb: 255, 255, 255;
   
   --text-primary: #1a1a1a;
   --text-secondary: #333333;
@@ -57,6 +64,7 @@
   --bg-secondary: #1a1a2e;
   --bg-tertiary: #12121a;
   --bg-card: #0a0a10;
+  --bg-card-rgb: 10, 10, 16;
   
   --text-primary: #ffffff;
   --text-secondary: #cccccc;
