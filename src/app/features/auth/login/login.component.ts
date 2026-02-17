@@ -2,13 +2,14 @@ import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../core/services/auth.service';
+import { ThemeToggleComponent } from '../../../shared/theme-toggle/theme-toggle.component';
 import { faClock } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [FormsModule, CommonModule, FontAwesomeModule],
+  imports: [FormsModule, CommonModule, FontAwesomeModule, ThemeToggleComponent],
   styleUrls: ['./login.component.scss'],
   templateUrl: './login.component.html',
 })
