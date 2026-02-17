@@ -84,7 +84,7 @@
                 }
             </div>
 
-            <button class="btn-pip" [class.pip-active]="pipSvc.active" (click)="togglePip()" title="Picture-in-Picture">
+            <button *ngIf="pipSvc.isSupported" class="btn-pip" [class.pip-active]="pipSvc.active" (click)="togglePip()" title="Picture-in-Picture">
                 {{ pipSvc.active ? '✕ Fechar PiP' : '⧉ Picture-in-Picture' }}
             </button>
         </div>

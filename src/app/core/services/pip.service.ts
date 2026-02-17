@@ -1,12 +1,13 @@
 import { Injectable, inject } from '@angular/core';
 import { TimerService } from './timer.service';
 import { ThemeService } from './theme.service';
-import { effect } from '@angular/core';
+import { DeviceService } from './device.service';
 
 @Injectable({ providedIn: 'root' })
 export class PipService {
   private timerSvc = inject(TimerService);
   private themeService = inject(ThemeService);
+  private deviceService = inject(DeviceService);
 
   private videoEl: HTMLVideoElement | null = null;
   private onEnterPiP: ((ev: Event) => void) | null = null;
@@ -34,6 +35,11 @@ export class PipService {
   }
 
   async toggle(activityColor: string = '#6C63FF'): Promise<void> {
+    if (!this.isSupported) {
+      console.warn('[PipService] Picture-in-Picture não suportado neste dispositivo');
+      return;
+    }
+
     console.log('[PipService] toggle called — active=', this.isActive);
     if (this.isActive) {
       console.log('[PipService] stopping PiP');
@@ -48,7 +54,16 @@ export class PipService {
     return this.isActive;
   }
 
+  get isSupported(): boolean {
+    return this.deviceService.isPictureInPictureSupported();
+  }
+
   async start(activityColor: string): Promise<void> {
+    if (!this.isSupported) {
+      console.warn('[PipService] Picture-in-Picture não suportado neste dispositivo');
+      return;
+    }
+
     console.log('[PipService] start() invoked');
     if (!document.pictureInPictureEnabled) {
       alert('Picture-in-Picture não é suportado neste navegador.');
