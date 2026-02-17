@@ -1,53 +1,63 @@
 {
-  "name": "focusflow",
-  "short_name": "focusflow",
-  "theme_color": "#1976d2",
-  "background_color": "#fafafa",
+  "name": "FocusFlow - Timer Pomodoro",
+  "short_name": "FocusFlow",
+  "description": "Seu tempo, seu foco. Timer Pomodoro e cronômetro para produtividade.",
+  "theme_color": "#6C63FF",
+  "background_color": "#0f0f14",
   "display": "standalone",
+  "orientation": "portrait",
   "scope": "./",
   "start_url": "./",
   "icons": [
     {
-      "src": "assets/icons/icon-72x72.png",
+      "src": "assets/icons/alarm_clock_3d.png",
       "sizes": "72x72",
       "type": "image/png",
       "purpose": "maskable any"
     },
     {
-      "src": "assets/icons/icon-96x96.png",
+      "src": "assets/icons/alarm_clock_3d.png",
       "sizes": "96x96",
       "type": "image/png",
       "purpose": "maskable any"
     },
     {
-      "src": "assets/icons/icon-128x128.png",
+      "src": "assets/icons/alarm_clock_3d.png",
       "sizes": "128x128",
       "type": "image/png",
       "purpose": "maskable any"
     },
     {
-      "src": "assets/icons/icon-144x144.png",
+      "src": "assets/icons/alarm_clock_3d.png",
       "sizes": "144x144",
       "type": "image/png",
       "purpose": "maskable any"
     },
     {
-      "src": "assets/icons/icon-152x152.png",
+      "src": "assets/icons/alarm_clock_3d.png",
       "sizes": "152x152",
       "type": "image/png",
       "purpose": "maskable any"
     },
     {
-      "src": "assets/icons/icon-384x384.png",
+      "src": "assets/icons/alarm_clock_3d.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "assets/icons/alarm_clock_3d.png",
       "sizes": "384x384",
       "type": "image/png",
       "purpose": "maskable any"
     },
     {
-      "src": "assets/icons/icon-512x512.png",
+      "src": "assets/icons/alarm_clock_3d.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable any"
     }
-  ]
+  ],
+  "categories": ["productivity", "utilities", "business"],
+  "lang": "pt-BR"
 }
