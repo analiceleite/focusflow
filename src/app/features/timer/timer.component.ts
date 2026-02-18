@@ -108,6 +108,8 @@ export class TimerComponent implements OnInit, OnDestroy {
 
   private subs: Subscription[] = [];
   private bannerTimeout?: ReturnType<typeof setTimeout>;
+  private audioContext: AudioContext | null = null;
+  private audioInitialized = false;
 
   readonly userEmail = computed(() => this.authSvc.currentUser?.email ?? '');
   readonly currentMinutes = computed(() => Math.round(this.timerSvc.totalSeconds() / 60));
@@ -119,6 +121,9 @@ export class TimerComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.sessionSvc.seedDefaultData();
+
+    // Tentar inicializar áudio context (pode não funcionar antes de interação do usuário no mobile)
+    this.initializeAudioContext();
 
     this.subs.push(
       this.sessionSvc.getActivityTypes$().subscribe(types => {
@@ -137,6 +142,11 @@ export class TimerComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.subs.forEach(s => s.unsubscribe());
     if (this.bannerTimeout) clearTimeout(this.bannerTimeout);
+    
+    // Limpar AudioContext para evitar vazamentos de memória
+    if (this.audioContext && this.audioContext.state !== 'closed') {
+      this.audioContext.close();
+    }
   }
 
   isTimerRunning(): boolean {
@@ -153,6 +163,9 @@ export class TimerComponent implements OnInit, OnDestroy {
       );
       return;
     }
+    
+    // Garantir que áudio esteja pronto para mobile
+    this.ensureAudioReady();
     
     this.selectedType.set(type);
     // Persistir atividade selecionada no localStorage
@@ -216,6 +229,9 @@ export class TimerComponent implements OnInit, OnDestroy {
       this.timerSvc.reset();
     }
     
+    // Garantir que áudio esteja pronto para mobile
+    this.ensureAudioReady();
+    
     // Capturar tipo de atividade NO INÍCIO do ciclo
     this.currentCycleActivity = this.selectedType();
     this.currentCycleSaved = false;
@@ -229,6 +245,9 @@ export class TimerComponent implements OnInit, OnDestroy {
   }
 
   stopAndSave(): void {
+    // Garantir que áudio esteja pronto para mobile
+    this.ensureAudioReady();
+    
     // Salvamento manual - captura atividade atual se não tiver sido capturada
     if (!this.currentCycleActivity) {
       this.currentCycleActivity = this.selectedType();
@@ -243,6 +262,18 @@ export class TimerComponent implements OnInit, OnDestroy {
       });
     }
     this.timerSvc.stop();
+  }
+
+  pauseTimer(): void {
+    // Garantir que áudio esteja pronto para mobile
+    this.ensureAudioReady();
+    this.timerSvc.pause();
+  }
+
+  resumeTimer(): void {
+    // Garantir que áudio esteja pronto para mobile
+    this.ensureAudioReady();
+    this.timerSvc.resume();
   }
 
   applyPreset(minutes: number): void {
@@ -431,27 +462,162 @@ export class TimerComponent implements OnInit, OnDestroy {
   }
 
   private playNotificationSound(): void {
+    // Tentar Web Audio API primeiro (melhor qualidade)
+    if (this.tryWebAudioNotification()) {
+      return;
+    }
+
+    // Fallback para HTMLAudioElement (melhor compatibilidade mobile)
+    this.tryHTMLAudioNotification();
+  }
+
+  private tryWebAudioNotification(): boolean {
     try {
-      // Som simples usando Web Audio API
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
+      if (!this.audioContext) {
+        this.initializeAudioContext();
+      }
+
+      if (!this.audioContext) {
+        return false;
+      }
+
+      // Verificar se o contexto precisa ser resumido (política de autoplay)
+      if (this.audioContext.state === 'suspended') {
+        this.audioContext.resume().then(() => {
+          this.playWebAudioBeep();
+        }).catch(() => {
+          console.warn('Não foi possível resumir o AudioContext');
+        });
+      } else {
+        this.playWebAudioBeep();
+      }
       
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      
-      oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-      oscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.1);
-      oscillator.frequency.setValueAtTime(800, audioContext.currentTime + 0.2);
-      
-      gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-      gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.01);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-      
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.3);
+      return true;
     } catch (error) {
-      console.warn('Não foi possível reproduzir som de notificação:', error);
+      console.warn('Web Audio API falhou:', error);
+      return false;
+    }
+  }
+
+  private playWebAudioBeep(): void {
+    if (!this.audioContext) return;
+
+    const oscillator = this.audioContext.createOscillator();
+    const gainNode = this.audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(this.audioContext.destination);
+    
+    // Sequência de tons para notificação 
+    oscillator.frequency.setValueAtTime(800, this.audioContext.currentTime);
+    oscillator.frequency.setValueAtTime(600, this.audioContext.currentTime + 0.15);
+    oscillator.frequency.setValueAtTime(800, this.audioContext.currentTime + 0.3);
+    
+    gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
+    gainNode.gain.linearRampToValueAtTime(0.3, this.audioContext.currentTime + 0.01);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.5);
+    
+    oscillator.start(this.audioContext.currentTime);
+    oscillator.stop(this.audioContext.currentTime + 0.5);
+  }
+
+  private tryHTMLAudioNotification(): void {
+    try {
+      // Criar beep sintético usando data URL
+      const beepData = this.generateBeepDataURL();
+      const audio = new Audio(beepData);
+      
+      audio.volume = 0.3;
+      audio.play().catch((error) => {
+        console.warn('HTMLAudioElement também falhou:', error);
+        // Último recurso: vibração no mobile
+        this.tryVibrationFallback();
+      });
+    } catch (error) {
+      console.warn('Erro ao criar HTMLAudioElement:', error);
+      this.tryVibrationFallback();
+    }
+  }
+
+  private generateBeepDataURL(): string {
+    // Gerar um beep simples como data URL
+    const sampleRate = 8000;
+    const duration = 0.3;
+    const frequency = 800;
+    const samples = sampleRate * duration;
+    const buffer = new ArrayBuffer(44 + samples * 2);
+    const view = new DataView(buffer);
+    
+    // WAV header
+    const writeString = (offset: number, string: string) => {
+      for (let i = 0; i < string.length; i++) {
+        view.setUint8(offset + i, string.charCodeAt(i));
+      }
+    };
+    
+    writeString(0, 'RIFF');
+    view.setUint32(4, 36 + samples * 2, true);
+    writeString(8, 'WAVE');
+    writeString(12, 'fmt ');
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true);
+    view.setUint16(22, 1, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * 2, true);
+    view.setUint16(32, 2, true);
+    view.setUint16(34, 16, true);
+    writeString(36, 'data');
+    view.setUint32(40, samples * 2, true);
+    
+    // Generate beep samples
+    for (let i = 0; i < samples; i++) {
+      const sample = Math.sin(2 * Math.PI * frequency * i / sampleRate) * 0.3;
+      view.setInt16(44 + i * 2, sample * 0x7FFF, true);
+    }
+    
+    const blob = new Blob([buffer], { type: 'audio/wav' });
+    return URL.createObjectURL(blob);
+  }
+
+  private tryVibrationFallback(): void {
+    // Último recurso: vibração no mobile se disponível
+    if ('vibrate' in navigator) {
+      try {
+        navigator.vibrate([200, 100, 200, 100, 200]);
+        console.log('Usando vibração como fallback para notificação sonora');
+      } catch (error) {
+        console.warn('Vibração também não disponível:', error);
+      }
+    }
+  }
+
+  private initializeAudioContext(): void {
+    try {
+      this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      console.log('AudioContext inicializado para notificações');
+    } catch (error) {
+      console.warn('Não foi possível criar AudioContext:', error);
+      this.audioContext = null;
+    }
+  }
+
+  // Método para ser chamado em interações do usuário (destravar audio no mobile)
+  private ensureAudioReady(): void {
+    if (!this.audioInitialized) {
+      if (!this.audioContext) {
+        this.initializeAudioContext();
+      }
+      
+      if (this.audioContext && this.audioContext.state === 'suspended') {
+        this.audioContext.resume().then(() => {
+          this.audioInitialized = true;
+          console.log('AudioContext desbloqueado para mobile');
+        }).catch((error) => {
+          console.warn('Erro ao desbloquear AudioContext:', error);
+        });
+      } else {
+        this.audioInitialized = true;
+      }
     }
   }
 

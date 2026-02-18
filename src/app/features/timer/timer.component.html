@@ -76,12 +76,12 @@
                     {{ timerSvc.state() === 'finished' ? '🔄 Nova sessão' : '▶ Iniciar' }}
                 </button>
                 } @else if (timerSvc.state() === 'running') {
-                <button class="btn-main btn-pause" (click)="timerSvc.pause()">⏸ Pausar</button>
+                <button class="btn-main btn-pause" (click)="pauseTimer()">⏸ Pausar</button>
                 <button class="btn-secondary" (click)="stopAndSave()">✅ Salvar</button>
                 <button class="btn-tertiary" (click)="stopTimer()" title="Parar timer sem salvar">🛑 Parar</button>
                 } @else if (timerSvc.state() === 'paused') {
                 <button class="btn-main" [style.background]="selectedType()?.color || '#6C63FF'"
-                    (click)="timerSvc.resume()">▶ Continuar</button>
+                    (click)="resumeTimer()">▶ Continuar</button>
                 <button class="btn-secondary" (click)="stopAndSave()">✅ Salvar</button>
                 <button class="btn-tertiary" (click)="stopTimer()" title="Parar timer sem salvar">🛑 Parar</button>
                 }
