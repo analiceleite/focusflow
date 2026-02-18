@@ -860,8 +860,10 @@ export class TimerComponent implements OnInit, OnDestroy {
     // Tentar adquirir wake lock
     this.acquireWakeLock();
     
-    // Service worker já gerenciado pelo Angular PWA
-    console.log('Recursos de background configurados (usando Angular SW)');
+    // Registrar service worker adicional para notification clicks
+    this.registerNotificationServiceWorker();
+    
+    console.log('Recursos de background configurados');
   }
 
   private async requestNotificationPermission(): Promise<void> {
@@ -980,6 +982,23 @@ export class TimerComponent implements OnInit, OnDestroy {
     }
   }
 
+  private async registerNotificationServiceWorker(): Promise<void> {
+    if (!('serviceWorker' in navigator)) {
+      console.warn('Service Workers não suportados neste navegador');
+      return;
+    }
+
+    try {
+      // Registrar service worker adicional para notification clicks (não conflita com Angular SW)
+      const registration = await navigator.serviceWorker.register('/notification-sw.js', {
+        scope: '/'
+      });
+      console.log('✅ Notification Service Worker registrado:', registration.scope);
+    } catch (error) {
+      console.warn('Falha ao registrar Notification Service Worker:', error);
+    }
+  }
+
   private showSystemNotification(mode: TimerMode, activity: string, elapsed: number): void {
     if (!this.notificationPermissionGranted) {
       console.log('Permissão de notificação não concedida, pulando notificação do sistema');
@@ -996,26 +1015,54 @@ export class TimerComponent implements OnInit, OnDestroy {
         navigator.vibrate([200, 100, 200, 100, 200]);
       }
 
-      // Usar API de notificação direta (funciona com Angular Service Worker)
+      // Tentar usar Service Worker para notificações em background (funciona com tela bloqueada)
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.ready.then(registration => {
+          // Service Worker notification - funciona mesmo com tela bloqueada
+          registration.showNotification(title, {
+            body,
+            icon,
+            badge: icon,
+            tag: 'timer-complete',
+            requireInteraction: true,
+            silent: false
+          });
+          console.log('📱 Notificação de Service Worker enviada (funciona com tela bloqueada)');
+        }).catch(() => {
+          // Fallback para notificação direta se Service Worker falhar
+          this.showDirectNotification(title, body, icon);
+        });
+      } else {
+        // Fallback para notificação direta se Service Worker não suportado
+        this.showDirectNotification(title, body, icon);
+      }
+    } catch (error) {
+      console.error('Erro ao mostrar notificação do sistema:', error);
+      // Fallback em caso de erro
+      this.showDirectNotification(title, body, icon);
+    }
+  }
+
+  private showDirectNotification(title: string, body: string, icon: string): void {
+    try {
       const notification = new Notification(title, {
         body,
         icon,
         badge: icon,
         tag: 'timer-complete',
-        requireInteraction: true, // Força interação manual para dismissar
-        silent: false // Permitir som nativo da notificação
+        requireInteraction: true,
+        silent: false
       });
 
       notification.onclick = () => {
-        // Focar na janela quando clickar, mas não fechar automaticamente
         if (window.focus) {
           window.focus();
         }
       };
 
-      console.log('📱 Notificação persistente do sistema enviada');
+      console.log('📱 Notificação direta enviada (apenas com app ativo)');
     } catch (error) {
-      console.error('Erro ao mostrar notificação do sistema:', error);
+      console.error('Erro ao mostrar notificação direta:', error);
     }
   }
 }
