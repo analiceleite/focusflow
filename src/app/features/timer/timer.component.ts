@@ -37,6 +37,7 @@ export class TimerComponent implements OnInit, OnDestroy {
   // Key para localStorage da atividade selecionada
   private readonly SELECTED_ACTIVITY_KEY = 'focusflow_selected_activity';
   private readonly CYCLE_ACTIVITY_KEY = 'focusflow_cycle_activity';
+  private readonly NOTIFICATION_ACK_KEY = 'focusflow_notification_ack';
 
   // Flag simples para evitar salvamento duplo POR CICLO
   private currentCycleSaved = false;
@@ -110,6 +111,11 @@ export class TimerComponent implements OnInit, OnDestroy {
   private bannerTimeout?: ReturnType<typeof setTimeout>;
   private audioContext: AudioContext | null = null;
   private audioInitialized = false;
+  
+  // Background notifications e wake lock
+  private wakeLock: WakeLockSentinel | null = null;
+  private isAppVisible = true;
+  private notificationPermissionGranted = false;
 
   readonly userEmail = computed(() => this.authSvc.currentUser?.email ?? '');
   readonly currentMinutes = computed(() => Math.round(this.timerSvc.totalSeconds() / 60));
@@ -124,6 +130,9 @@ export class TimerComponent implements OnInit, OnDestroy {
 
     // Tentar inicializar áudio context (pode não funcionar antes de interação do usuário no mobile)
     this.initializeAudioContext();
+
+    // Configurar notificações e APIs de background
+    this.setupBackgroundFeatures();
 
     this.subs.push(
       this.sessionSvc.getActivityTypes$().subscribe(types => {
@@ -147,6 +156,10 @@ export class TimerComponent implements OnInit, OnDestroy {
     if (this.audioContext && this.audioContext.state !== 'closed') {
       this.audioContext.close();
     }
+
+    // Liberar wake lock e limpar listeners
+    this.releaseWakeLock();
+    this.removeBackgroundListeners();
   }
 
   isTimerRunning(): boolean {
@@ -217,6 +230,10 @@ export class TimerComponent implements OnInit, OnDestroy {
     this.currentCycleActivity = null; // Limpar atividade capturada
     this.clearCurrentCycleActivity(); // Limpar do localStorage
     this.lastTimerState = 'idle';
+    
+    // Liberar wake lock quando timer para
+    this.releaseWakeLock();
+    
     this.timerSvc.stop();
   }
 
@@ -232,6 +249,11 @@ export class TimerComponent implements OnInit, OnDestroy {
     // Garantir que áudio esteja pronto para mobile
     this.ensureAudioReady();
     
+    // Configurar notificações se ainda não foram solicitadas
+    if (!this.notificationPermissionGranted && Notification.permission === 'default') {
+      this.requestNotificationPermission();
+    }
+    
     // Capturar tipo de atividade NO INÍCIO do ciclo
     this.currentCycleActivity = this.selectedType();
     this.currentCycleSaved = false;
@@ -240,6 +262,11 @@ export class TimerComponent implements OnInit, OnDestroy {
     
     // Salvar currentCycleActivity no localStorage
     this.saveCurrentCycleActivity(this.currentCycleActivity!);
+    
+    // Adquirir wake lock se app não estiver visível
+    if (!this.isAppVisible) {
+      this.acquireWakeLock();
+    }
     
     this.timerSvc.start();
   }
@@ -443,22 +470,19 @@ export class TimerComponent implements OnInit, OnDestroy {
     const elapsed = this.timerSvc.elapsedSeconds();
     const activity = this.currentCycleActivity?.name || 'Atividade';
 
-    // Notificação sonora
+    // Notificação sonora (sempre tenta tocar)
     this.playNotificationSound();
 
-    // Toast notification
-    this.toastService.success(
-      `🎉 ${mode === 'pomodoro' ? 'Pomodoro' : 'Cronômetro'} concluído! ${activity} - ${this.formatDuration(elapsed)}`,
-      5000
-    );
-
-    // Browser notification (se permitido)
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification(`🍅 ${mode === 'pomodoro' ? 'Pomodoro' : 'Cronômetro'} Concluído!`, {
-        body: `${activity} - ${this.formatDuration(elapsed)}`,
-        icon: '/assets/icons/alarm_clock_3d.png'
-      });
+    // Toast notification (só se app estiver visível)
+    if (this.isAppVisible) {
+      this.toastService.success(
+        `🎉 ${mode === 'pomodoro' ? 'Pomodoro' : 'Cronômetro'} concluído! ${activity} - ${this.formatDuration(elapsed)}`,
+        5000
+      );
     }
+
+    // Notificação do sistema (funciona em background)
+    this.showSystemNotification(mode, activity, elapsed);
   }
 
   private playNotificationSound(): void {
@@ -819,6 +843,193 @@ export class TimerComponent implements OnInit, OnDestroy {
       }
     } catch (error) {
       console.warn('Erro ao restaurar atividade do ciclo:', error);
+    }
+  }
+
+  // ===== MÉTODOS PARA NOTIFICAÇÕES EM BACKGROUND =====
+
+  private setupBackgroundFeatures(): void {
+    console.log('Configurando funcionalidades de background...');
+    
+    // Solicitar permissão para notificações
+    this.requestNotificationPermission();
+    
+    // Configurar Page Visibility API
+    this.setupVisibilityListener();
+    
+    // Tentar adquirir wake lock
+    this.acquireWakeLock();
+    
+    // Service worker já gerenciado pelo Angular PWA
+    console.log('Recursos de background configurados (usando Angular SW)');
+  }
+
+  private async requestNotificationPermission(): Promise<void> {
+    if (!('Notification' in window)) {
+      console.warn('Este navegador não suporta notificações');
+      return;
+    }
+
+    try {
+      const ackShown = localStorage.getItem(this.NOTIFICATION_ACK_KEY) === '1';
+      const currentPermission = Notification.permission;
+
+      // Já concedido
+      if (currentPermission === 'granted') {
+        this.notificationPermissionGranted = true;
+        if (!ackShown) {
+          localStorage.setItem(this.NOTIFICATION_ACK_KEY, '1');
+          this.toastService.success('Notificações habilitadas! Você será avisado mesmo em segundo plano.', 4000);
+        }
+        return;
+      }
+
+      // Usuário ainda não decidiu — solicitar
+      if (currentPermission === 'default') {
+        const permission = await Notification.requestPermission();
+        this.notificationPermissionGranted = permission === 'granted';
+
+        if (this.notificationPermissionGranted && !ackShown) {
+          localStorage.setItem(this.NOTIFICATION_ACK_KEY, '1');
+          this.toastService.success('Notificações habilitadas! Você será avisado mesmo em segundo plano.', 4000);
+        } else if (!this.notificationPermissionGranted && !ackShown) {
+          // Opcional: avisar uma vez quando negar
+          localStorage.setItem(this.NOTIFICATION_ACK_KEY, '1');
+          this.toastService.warning('Permita notificações para ser avisado quando o timer terminar em segundo plano.', 6000);
+        }
+        return;
+      }
+
+      // Negado
+      if (currentPermission === 'denied') {
+        this.notificationPermissionGranted = false;
+        if (!ackShown) {
+          localStorage.setItem(this.NOTIFICATION_ACK_KEY, '1');
+          this.toastService.warning('Permita notificações para ser avisado quando o timer terminar em segundo plano.', 6000);
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao solicitar permissão de notificação:', error);
+    }
+  }
+
+  private setupVisibilityListener(): void {
+    const handleVisibilityChange = () => {
+      this.isAppVisible = !document.hidden;
+      console.log('App visibility:', this.isAppVisible ? 'visible' : 'hidden');
+      
+      if (!this.isAppVisible && this.isTimerRunning()) {
+        // App foi para background com timer rodando
+        this.acquireWakeLock();
+      } else if (this.isAppVisible) {
+        // App voltou para foreground
+        this.releaseWakeLock();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // Também detectar foco/blur da janela
+    window.addEventListener('blur', () => {
+      this.isAppVisible = false;
+      if (this.isTimerRunning()) {
+        this.acquireWakeLock();
+      }
+    });
+
+    window.addEventListener('focus', () => {
+      this.isAppVisible = true;
+      this.releaseWakeLock();
+    });
+  }
+
+  private removeBackgroundListeners(): void {
+    // Remove listeners para evitar vazamentos de memória
+    document.removeEventListener('visibilitychange', this.setupVisibilityListener);
+    window.removeEventListener('blur', () => {});
+    window.removeEventListener('focus', () => {});
+  }
+
+  private async acquireWakeLock(): Promise<void> {
+    if (!('wakeLock' in navigator) || this.wakeLock) {
+      return;
+    }
+
+    try {
+      this.wakeLock = await navigator.wakeLock!.request('screen');
+      console.log('🔒 Wake Lock ativado - tela não irá bloquear o timer');
+      
+      this.wakeLock.addEventListener('release', () => {
+        console.log('🔓 Wake Lock liberado');
+        this.wakeLock = null;
+      });
+    } catch (error) {
+      console.warn('Não foi possível ativar Wake Lock:', error);
+    }
+  }
+
+  private async releaseWakeLock(): Promise<void> {
+    if (this.wakeLock) {
+      try {
+        await this.wakeLock.release();
+        this.wakeLock = null;
+        console.log('🔓 Wake Lock liberado voluntariamente');
+      } catch (error) {
+        console.warn('Erro ao liberar Wake Lock:', error);
+      }
+    }
+  }
+
+  /*
+  private async registerServiceWorker(): Promise<void> {
+    if (!('serviceWorker' in navigator)) {
+      console.warn('Service Workers não suportados neste navegador');
+      return;
+    }
+
+    try {
+      const registration = await navigator.serviceWorker.register('/sw.js');
+      console.log('✅ Service Worker registrado:', registration.scope);
+    } catch (error) {
+      console.warn('Falha ao registrar Service Worker:', error);
+    }
+  }
+  */
+
+  private showSystemNotification(mode: TimerMode, activity: string, elapsed: number): void {
+    if (!this.notificationPermissionGranted) {
+      console.log('Permissão de notificação não concedida, pulando notificação do sistema');
+      return;
+    }
+
+    const title = `🍅 ${mode === 'pomodoro' ? 'Pomodoro' : 'Cronômetro'} Concluído!`;
+    const body = `${activity} - ${this.formatDuration(elapsed)}`;
+    const icon = '/assets/icons/icon-192x192.png';
+
+    try {
+      // Usar API de notificação direta (funciona com Angular Service Worker)
+      const notification = new Notification(title, {
+        body,
+        icon,
+        badge: icon,
+        tag: 'timer-complete',
+        requireInteraction: true,
+        silent: false // Permitir som nativo da notificação
+      });
+
+      // Auto-close after 10 seconds
+      setTimeout(() => {
+        notification.close();
+      }, 10000);
+
+      notification.onclick = () => {
+        window.focus();
+        notification.close();
+      };
+
+      console.log('📱 Notificação do sistema enviada');
+    } catch (error) {
+      console.error('Erro ao mostrar notificação do sistema:', error);
     }
   }
 }
