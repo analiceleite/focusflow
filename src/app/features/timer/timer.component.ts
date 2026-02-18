@@ -980,22 +980,6 @@ export class TimerComponent implements OnInit, OnDestroy {
     }
   }
 
-  /*
-  private async registerServiceWorker(): Promise<void> {
-    if (!('serviceWorker' in navigator)) {
-      console.warn('Service Workers não suportados neste navegador');
-      return;
-    }
-
-    try {
-      const registration = await navigator.serviceWorker.register('/sw.js');
-      console.log('✅ Service Worker registrado:', registration.scope);
-    } catch (error) {
-      console.warn('Falha ao registrar Service Worker:', error);
-    }
-  }
-  */
-
   private showSystemNotification(mode: TimerMode, activity: string, elapsed: number): void {
     if (!this.notificationPermissionGranted) {
       console.log('Permissão de notificação não concedida, pulando notificação do sistema');
@@ -1007,27 +991,29 @@ export class TimerComponent implements OnInit, OnDestroy {
     const icon = '/assets/icons/icon-192x192.png';
 
     try {
+      // Vibração separada para mobile (se suportado)
+      if ('vibrate' in navigator) {
+        navigator.vibrate([200, 100, 200, 100, 200]);
+      }
+
       // Usar API de notificação direta (funciona com Angular Service Worker)
       const notification = new Notification(title, {
         body,
         icon,
         badge: icon,
         tag: 'timer-complete',
-        requireInteraction: true,
+        requireInteraction: true, // Força interação manual para dismissar
         silent: false // Permitir som nativo da notificação
       });
 
-      // Auto-close after 10 seconds
-      setTimeout(() => {
-        notification.close();
-      }, 10000);
-
       notification.onclick = () => {
-        window.focus();
-        notification.close();
+        // Focar na janela quando clickar, mas não fechar automaticamente
+        if (window.focus) {
+          window.focus();
+        }
       };
 
-      console.log('📱 Notificação do sistema enviada');
+      console.log('📱 Notificação persistente do sistema enviada');
     } catch (error) {
       console.error('Erro ao mostrar notificação do sistema:', error);
     }
