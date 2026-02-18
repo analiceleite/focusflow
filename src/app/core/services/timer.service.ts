@@ -3,8 +3,18 @@ import { Injectable, signal, computed } from '@angular/core';
 export type TimerMode = 'pomodoro' | 'stopwatch';
 export type TimerState = 'idle' | 'running' | 'paused' | 'finished';
 
+interface TimerStateData {
+  mode: TimerMode;
+  state: TimerState;
+  totalSeconds: number;
+  elapsedSeconds: number;
+  startTimestamp: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class TimerService {
+  private readonly TIMER_STATE_KEY = 'focusflow_timer_state';
+  
   // Signals
   readonly mode = signal<TimerMode>('pomodoro');
   readonly state = signal<TimerState>('idle');
@@ -33,37 +43,36 @@ export class TimerService {
   private intervalId: ReturnType<typeof setInterval> | null = null;
   private startTimestamp: number = 0;
 
+  constructor() {
+    this.restoreState();
+  }
+
   setMode(mode: TimerMode): void {
     this.stop();
     this.mode.set(mode);
     this.reset();
+    this.saveState();
   }
 
   setPomodoroDuration(minutes: number): void {
     this.totalSeconds.set(minutes * 60);
     this.reset();
+    this.saveState();
   }
 
   start(): void {
     if (this.state() === 'running') return;
     this.startTimestamp = Date.now() - this.elapsedSeconds() * 1000;
     this.state.set('running');
-
-    this.intervalId = setInterval(() => {
-      const elapsed = Math.floor((Date.now() - this.startTimestamp) / 1000);
-      this.elapsedSeconds.set(elapsed);
-
-      if (this.mode() === 'pomodoro' && elapsed >= this.totalSeconds()) {
-        this.elapsedSeconds.set(this.totalSeconds());
-        this.finish();
-      }
-    }, 250);
+    this.saveState();
+    this.startTimer(); // Usar método privado para evitar duplicação
   }
 
   pause(): void {
     if (this.state() !== 'running') return;
     this.clearInterval();
     this.state.set('paused');
+    this.saveState();
   }
 
   resume(): void {
@@ -74,17 +83,20 @@ export class TimerService {
   stop(): void {
     this.clearInterval();
     this.state.set('idle');
+    this.saveState();
   }
 
   reset(): void {
     this.clearInterval();
     this.elapsedSeconds.set(0);
     this.state.set('idle');
+    this.saveState();
   }
 
   private finish(): void {
     this.clearInterval();
     this.state.set('finished');
+    this.saveState();
     this.playNotificationSound();
   }
 
@@ -121,5 +133,76 @@ export class TimerService {
       oscillator.start(ctx.currentTime);
       oscillator.stop(ctx.currentTime + 0.5);
     } catch {}
+  }
+
+  private saveState(): void {
+    try {
+      const stateData: TimerStateData = {
+        mode: this.mode(),
+        state: this.state(),
+        totalSeconds: this.totalSeconds(),
+        elapsedSeconds: this.elapsedSeconds(),
+        startTimestamp: this.startTimestamp
+      };
+      localStorage.setItem(this.TIMER_STATE_KEY, JSON.stringify(stateData));
+    } catch (error) {
+      console.warn('Erro ao salvar estado do timer:', error);
+    }
+  }
+
+  private restoreState(): void {
+    try {
+      const saved = localStorage.getItem(this.TIMER_STATE_KEY);
+      if (!saved) return;
+
+      const stateData: TimerStateData = JSON.parse(saved);
+      
+      // Restaurar estados básicos
+      this.mode.set(stateData.mode);
+      this.totalSeconds.set(stateData.totalSeconds);
+      this.elapsedSeconds.set(stateData.elapsedSeconds);
+      this.startTimestamp = stateData.startTimestamp;
+
+      // Se estava rodando, verificar se ainda é válido e continuar
+      if (stateData.state === 'running') {
+        const timeSinceLastUpdate = Date.now() - this.startTimestamp;
+        const currentElapsed = Math.floor(timeSinceLastUpdate / 1000);
+        
+        // Verificar se ainda está dentro dos limites válidos
+        if (stateData.mode === 'pomodoro' && currentElapsed >= stateData.totalSeconds) {
+          // Timer já terminou enquanto estava fora
+          this.elapsedSeconds.set(stateData.totalSeconds);
+          this.state.set('finished');
+        } else {
+          // Continuar de onde parou
+          this.elapsedSeconds.set(currentElapsed);
+          this.state.set('running');
+          this.startTimer(); // Reiniciar o interval
+        }
+      } else {
+        // Restaurar outros estados (paused, finished, idle)
+        this.state.set(stateData.state);
+      }
+
+      console.log('Estado do timer restaurado:', stateData);
+    } catch (error) {
+      console.warn('Erro ao restaurar estado do timer:', error);
+      // Em caso de erro, manter estado padrão
+    }
+  }
+
+  private startTimer(): void {
+    if (this.intervalId) this.clearInterval();
+    
+    this.intervalId = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - this.startTimestamp) / 1000);
+      this.elapsedSeconds.set(elapsed);
+      this.saveState();
+
+      if (this.mode() === 'pomodoro' && elapsed >= this.totalSeconds()) {
+        this.elapsedSeconds.set(this.totalSeconds());
+        this.finish();
+      }
+    }, 250);
   }
 }

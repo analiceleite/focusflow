@@ -31,7 +31,9 @@
             <div class="activity-grid">
                 @for (type of activityTypes(); track type.id) {
                 <button class="activity-chip" [style.--color]="type.color"
-                    [class.selected]="selectedType()?.id === type.id" (click)="selectedType.set(type)">
+                    [class.selected]="selectedType()?.id === type.id" 
+                    [class.disabled]="isTimerRunning() && selectedType()?.id !== type.id"
+                    (click)="selectActivityType(type)">
                     <span>{{ type.icon }}</span>
                     <span class="chip-name">{{ type.name }}</span>
                     <span class="activity-delete" (click)="$event.stopPropagation(); deleteActivityType(type.id!)">×</span>

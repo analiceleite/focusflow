@@ -33,6 +33,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // Paginação
   currentPage = signal(0);
   readonly pageSize = 15; // Sessões por página
+  
+  // Modal de confirmação
+  showDeleteModal = signal(false);
+  sessionToDelete = signal<string | null>(null);
 
   private sub?: Subscription;
 
@@ -66,6 +70,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
   
   readonly hasPrevPage = computed(() => this.currentPage() > 0);
   readonly hasNextPage = computed(() => this.currentPage() < this.totalPages() - 1);
+
+  private pageResetEffect = effect(() => {
+    this.period(); 
+    this.currentPage.set(0);
+  }, { allowSignalWrites: true });
 
   readonly totalSeconds = computed(() =>
     this.filteredSessions().reduce((acc, s) => acc + s.durationSeconds, 0)
@@ -165,12 +174,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.sub = this.sessionSvc.getSessions$().subscribe(s => this.sessions.set(s));
-    
-    // Reset página quando período muda
-    effect(() => {
-      this.period(); // trigger on period change
-      this.currentPage.set(0);
-    });
   }
 
   ngOnDestroy(): void {
@@ -196,7 +199,31 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   async deleteSession(id: string): Promise<void> {
-    await this.sessionSvc.deleteSession(id);
+    this.sessionToDelete.set(id);
+    this.showDeleteModal.set(true);
+  }
+
+  confirmDelete(): void {
+    const id = this.sessionToDelete();
+    if (id) {
+      this.performDeletion(id);
+    }
+    this.closeDeleteModal();
+  }
+
+  closeDeleteModal(): void {
+    this.showDeleteModal.set(false);
+    this.sessionToDelete.set(null);
+  }
+
+  private async performDeletion(id: string): Promise<void> {
+    try {
+      await this.sessionSvc.deleteSession(id);
+      // Opcional: mostrar toast de sucesso
+    } catch (error) {
+      console.error('Erro ao excluir sessão:', error);
+      alert('Erro ao excluir a sessão. Tente novamente.');
+    }
   }
 
   // Paginação

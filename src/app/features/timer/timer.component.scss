@@ -129,9 +129,19 @@
         font-weight: 600;
     }
 
-    &:hover:not(.selected) {
+    &:hover:not(.selected):not(.disabled) {
         border-color: var(--text-disabled);
         color: var(--text-secondary);
+    }
+
+    &.disabled:not(.selected) {
+        opacity: 0.5;
+        cursor: not-allowed;
+        
+        &:hover {
+            border-color: var(--border-color);
+            color: var(--text-muted);
+        }
     }
 
     .chip-name {

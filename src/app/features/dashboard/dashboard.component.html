@@ -143,3 +143,27 @@
         }
     </main>
 </div>
+
+<!-- Modal de Confirmação de Exclusão -->
+@if (showDeleteModal()) {
+<div class="modal-overlay" (click)="closeDeleteModal()">
+    <div class="delete-modal" (click)="$event.stopPropagation()">
+        <div class="modal-icon">
+            🗑️
+        </div>
+        <h3 class="modal-title">Excluir Sessão</h3>
+        <p class="modal-message">
+            Tem certeza que deseja excluir esta sessão?<br>
+            <span class="modal-warning">Esta ação não pode ser desfeita.</span>
+        </p>
+        <div class="modal-actions">
+            <button class="btn-cancel" (click)="closeDeleteModal()">
+                Cancelar
+            </button>
+            <button class="btn-delete" (click)="confirmDelete()">
+                Excluir
+            </button>
+        </div>
+    </div>
+</div>
+}
