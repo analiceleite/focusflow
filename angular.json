@@ -27,7 +27,7 @@
               "src/favicon.ico",
               "src/assets",
               "src/manifest.webmanifest",
-              "public/notification-sw.js"
+              "src/notification-sw.js"
             ],
             "styles": ["src/styles.scss"],
             "scripts": [],
