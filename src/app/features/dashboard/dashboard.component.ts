@@ -42,15 +42,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   readonly filteredSessions = computed(() => {
     const all = this.sessions();
-    const now = new Date();
-    const today = now.toISOString().split('T')[0];
+    const today = this.getLocalDateString(); // Usar timezone local
 
     if (this.period() === 'all') return all;
 
     const days = this.period() === '7d' ? 7 : 30;
-    const cutoff = new Date(now);
+    const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - days);
-    const cutoffStr = cutoff.toISOString().split('T')[0];
+    const cutoffStr = this.getLocalDateString(cutoff); // Usar timezone local
 
     return all.filter(s => s.date >= cutoffStr);
   });
@@ -112,13 +111,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
     let current = new Date(today);
 
     while (true) {
-      const dateStr = current.toISOString().split('T')[0];
+      const dateStr = this.getLocalDateString(current); // Usar timezone local
       if (dates.has(dateStr)) {
         streak++;
         current.setDate(current.getDate() - 1);
       } else {
         // Allow one day gap for today if no session yet
-        if (streak === 0 && dateStr === today.toISOString().split('T')[0]) {
+        if (streak === 0 && dateStr === this.getLocalDateString(today)) { // Usar timezone local
           current.setDate(current.getDate() - 1);
           continue;
         }
@@ -147,6 +146,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return best;
   });
 
+  private getLocalDateString(date: Date = new Date()): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
   readonly calendarDays = computed(() => {
     const dateMap = new Map<string, number>();
     for (const s of this.sessions()) {
@@ -154,14 +160,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
 
     const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
+    const todayStr = this.getLocalDateString(today); // Usar timezone local
     const days = [];
 
     // Show last 70 days (10 weeks)
     for (let i = 69; i >= 0; i--) {
       const d = new Date(today);
       d.setDate(d.getDate() - i);
-      const dateStr = d.toISOString().split('T')[0];
+      const dateStr = this.getLocalDateString(d); // Usar timezone local
       days.push({
         date: dateStr,
         hasSession: dateMap.has(dateStr),

@@ -348,7 +348,7 @@ export class TimerComponent implements OnInit, OnDestroy {
 
   private async performSave(selectedType: ActivityType, elapsed: number, silent: boolean = false): Promise<boolean> {
     const now = Date.now();
-    const today = new Date().toISOString().split('T')[0];
+    const today = this.getLocalDateString(); 
 
     try {
       await this.sessionSvc.saveSession({
@@ -399,6 +399,14 @@ export class TimerComponent implements OnInit, OnDestroy {
     return `${s}s`;
   }
 
+  // Helper para gerar data local no formato YYYY-MM-DD (evita problemas de timezone)
+  private getLocalDateString(date: Date = new Date()): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
   private showCompletionNotification(): void {
     const mode = this.timerSvc.mode();
     const elapsed = this.timerSvc.elapsedSeconds();
@@ -417,7 +425,7 @@ export class TimerComponent implements OnInit, OnDestroy {
     if ('Notification' in window && Notification.permission === 'granted') {
       new Notification(`🍅 ${mode === 'pomodoro' ? 'Pomodoro' : 'Cronômetro'} Concluído!`, {
         body: `${activity} - ${this.formatDuration(elapsed)}`,
-        icon: '/assets/icons/icon-192x192.png'
+        icon: '/assets/icons/alarm_clock_3d.png'
       });
     }
   }
