@@ -14,9 +14,9 @@
 .main {
     margin-left: 64px;
     flex: 1;
-    max-width: 700px;
+    max-width: 1400px;
     margin-inline: auto;
-    padding: 1.5rem;
+    padding: 1.5rem 2rem;
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
@@ -26,49 +26,60 @@
         margin-bottom: 64px;
         padding: 1rem;
         gap: 1rem;
+        margin-inline: 0;
     }
 }
 
 // ─── Header ───────────────────────────────────────────────────────────────────
 
 .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+
     h2 {
         color: var(--text-primary);
         font-size: 1.25rem;
         font-weight: 600;
         margin: 0;
+        white-space: nowrap;
     }
 }
 
-// ─── Filter Bar ───────────────────────────────────────────────────────────────
-// Bloco próprio, separado do header, empilha verticalmente
+// ─── Filter bar (inline no header) ───────────────────────────────────────────
 
 .filter-bar {
     display: flex;
-    flex-direction: column;
+    align-items: center;
     gap: 0.75rem;
+    flex-wrap: wrap;
+
+    @media (max-width: 600px) {
+        width: 100%;
+    }
 }
 
-// Tabs Rápido / Personalizado
 .view-mode-tabs {
     display: flex;
     background: var(--bg-secondary);
     border-radius: 8px;
     padding: 2px;
     gap: 2px;
-    width: fit-content;
 }
 
 .mode-tab {
-    padding: 0.45rem 1.1rem;
+    padding: 0.4rem 1rem;
     border: none;
     background: transparent;
     color: var(--text-muted);
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s;
-    font-size: 0.9rem;
+    font-size: 0.875rem;
     font-weight: 500;
+    white-space: nowrap;
 
     &:hover {
         background: var(--bg-card);
@@ -82,21 +93,20 @@
     }
 }
 
-// Filtros rápidos
 .quick-filters {
     display: flex;
     gap: 0.25rem;
-    flex-wrap: wrap;
 
     button {
-        padding: 0.4rem 0.875rem;
+        padding: 0.4rem 0.8rem;
         border-radius: 8px;
         border: 1px solid var(--border-color);
         background: transparent;
         color: var(--text-muted);
-        font-size: 0.85rem;
+        font-size: 0.825rem;
         cursor: pointer;
         transition: all 0.2s;
+        white-space: nowrap;
 
         &.active {
             background: var(--bg-secondary);
@@ -111,33 +121,32 @@
     }
 }
 
-// Filtro personalizado
 .custom-filters {
     display: flex;
-    flex-direction: column;
+    align-items: center;
     gap: 0.5rem;
+    flex-wrap: wrap;
 }
 
-// Seletor Dia / Semana / Mês
 .period-type-selector {
     display: flex;
     background: var(--bg-secondary);
     border-radius: 8px;
     padding: 2px;
     gap: 2px;
-    width: fit-content;
 }
 
 .period-btn {
-    padding: 0.35rem 0.85rem;
+    padding: 0.35rem 0.75rem;
     border: none;
     background: transparent;
     color: var(--text-muted);
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s;
-    font-size: 0.85rem;
+    font-size: 0.825rem;
     font-weight: 500;
+    white-space: nowrap;
 
     &:hover {
         background: var(--bg-card);
@@ -151,26 +160,19 @@
     }
 }
 
-// Navegação de data: ‹ [título clicável] › | Hoje
 .date-navigation {
     display: flex;
     align-items: center;
-    gap: 0.25rem;
+    gap: 0.2rem;
     background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    padding: 0.3rem 0.4rem;
-    width: fit-content;
-
-    @media (max-width: 480px) {
-        width: 100%;
-        justify-content: space-between;
-    }
+    padding: 0.25rem 0.35rem;
 }
 
 .nav-btn {
-    width: 30px;
-    height: 30px;
+    width: 28px;
+    height: 28px;
     border: none;
     background: transparent;
     color: var(--text-secondary);
@@ -182,7 +184,6 @@
     justify-content: center;
     font-size: 1.2rem;
     flex-shrink: 0;
-    line-height: 1;
 
     &:hover:not(:disabled) {
         background: var(--bg-secondary);
@@ -195,30 +196,24 @@
     }
 }
 
-// O título da data vira um label clicável que abre o date picker escondido
 .date-display {
     position: relative;
     font-weight: 500;
     color: var(--text-primary);
-    min-width: 170px;
+    min-width: 160px;
     text-align: center;
-    font-size: 0.9rem;
-    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    padding: 0.2rem 0.4rem;
     border-radius: 6px;
     cursor: pointer;
     transition: background 0.2s;
+    white-space: nowrap;
 
     &:hover {
         background: var(--bg-secondary);
     }
-
-    @media (max-width: 480px) {
-        min-width: 0;
-        flex: 1;
-    }
 }
 
-// Input de data escondido dentro do label — abre o picker nativo ao clicar no título
 .date-picker-hidden {
     position: absolute;
     opacity: 0;
@@ -227,35 +222,73 @@
     top: 0;
     left: 0;
     cursor: pointer;
-    font-size: 0; // evita que ocupe espaço visível em alguns browsers
+    font-size: 0;
 }
 
 .nav-divider {
     width: 1px;
-    height: 20px;
+    height: 18px;
     background: var(--border-color);
-    margin: 0 0.15rem;
+    margin: 0 0.1rem;
     flex-shrink: 0;
 }
 
 .today-btn {
-    padding: 0.25rem 0.65rem;
+    padding: 0.2rem 0.6rem;
     border: none;
     background: transparent;
     color: var(--accent-color);
-    font-size: 0.8rem;
+    font-size: 0.775rem;
     font-weight: 600;
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s;
-    flex-shrink: 0;
+    white-space: nowrap;
 
     &:hover {
         background: color-mix(in srgb, var(--accent-color) 10%, transparent);
     }
 }
 
-// ─── Cards ────────────────────────────────────────────────────────────────────
+// ─── Grid de duas colunas ─────────────────────────────────────────────────────
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 380px;  // Esquerda flexível, direita fixa
+    gap: 1.5rem;
+    align-items: start;
+
+    @media (max-width: 1024px) {
+        grid-template-columns: 1fr 320px;
+    }
+
+    @media (max-width: 768px) {
+        grid-template-columns: 1fr;     // Coluna única em mobile
+    }
+}
+
+.col-left,
+.col-right {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+
+    @media (max-width: 768px) {
+        gap: 1rem;
+    }
+}
+
+// A coluna direita fica "grudada" ao topo ao fazer scroll
+.col-right {
+    position: sticky;
+    top: 1.5rem;
+
+    @media (max-width: 768px) {
+        position: static;
+    }
+}
+
+// ─── Cards de métricas ────────────────────────────────────────────────────────
 
 .cards-grid {
     display: grid;
@@ -263,7 +296,6 @@
     gap: 0.75rem;
 
     @media (max-width: 480px) {
-        grid-template-columns: 1fr;
         gap: 0.5rem;
     }
 }
@@ -277,11 +309,6 @@
     flex-direction: column;
     gap: 0.25rem;
 
-    @media (max-width: 480px) {
-        padding: 1rem;
-        border-radius: 12px;
-    }
-
     .card-icon {
         font-size: 1.5rem;
         margin-bottom: 0.25rem;
@@ -294,19 +321,11 @@
         letter-spacing: -0.5px;
         line-height: 1;
 
-        @media (max-width: 480px) {
-            font-size: 1.5rem;
-        }
-
         .unit {
             font-size: 1rem;
             color: var(--text-muted);
             font-weight: 400;
             margin-left: 0.25rem;
-
-            @media (max-width: 480px) {
-                font-size: 0.875rem;
-            }
         }
     }
 
@@ -340,53 +359,57 @@
 .activity-bars {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 0.875rem;
 }
 
 .activity-bar-item {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.4rem;
 }
 
 .bar-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-
-    @media (max-width: 480px) {
-        flex-wrap: wrap;
-        gap: 0.25rem;
-    }
+    gap: 0.5rem;
 }
 
 .bar-info {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.4rem;
+    min-width: 0;
 
-    .bar-icon { font-size: 1rem; }
+    .bar-icon { font-size: 0.95rem; flex-shrink: 0; }
 
     .bar-name {
         color: var(--text-secondary);
-        font-size: 0.9rem;
+        font-size: 0.875rem;
         font-weight: 500;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     .bar-sessions {
         color: var(--text-disabled);
-        font-size: 0.75rem;
+        font-size: 0.72rem;
+        white-space: nowrap;
+        flex-shrink: 0;
     }
 }
 
 .bar-time {
     color: var(--text-muted);
-    font-size: 0.875rem;
+    font-size: 0.825rem;
     font-weight: 500;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .bar-track {
-    height: 6px;
+    height: 5px;
     background: var(--border-color);
     border-radius: 3px;
     overflow: hidden;
@@ -398,17 +421,12 @@
     transition: width 0.6s ease;
 }
 
-// ─── Calendar ─────────────────────────────────────────────────────────────────
+// ─── Calendário ───────────────────────────────────────────────────────────────
 
 .calendar-grid {
     display: flex;
     flex-wrap: wrap;
     gap: 3px;
-
-    @media (max-width: 480px) {
-        gap: 2px;
-        justify-content: center;
-    }
 }
 
 .cal-day {
@@ -417,16 +435,11 @@
     border-radius: 3px;
     background: var(--border-color);
     transition: transform 0.15s;
-
-    @media (max-width: 480px) {
-        width: 12px;
-        height: 12px;
-        border-radius: 2px;
-    }
+    cursor: default;
 
     &.has-session {
         background: var(--accent-primary);
-        opacity: 0.8;
+        opacity: 0.85;
     }
 
     &.today {
@@ -443,14 +456,8 @@
     display: flex;
     align-items: center;
     gap: 1rem;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     color: var(--text-muted);
-
-    @media (max-width: 480px) {
-        justify-content: center;
-        gap: 0.75rem;
-        font-size: 0.7rem;
-    }
 
     .legend-dot {
         display: inline-block;
@@ -476,15 +483,19 @@
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    padding: 0.75rem 1rem;
+    padding: 0.7rem 1rem;
     background: var(--bg-tertiary);
     border: 1px solid var(--border-color);
     border-radius: 10px;
+    transition: border-color 0.2s;
+
+    &:hover {
+        border-color: color-mix(in srgb, var(--accent-primary) 40%, var(--border-color));
+    }
 
     @media (max-width: 480px) {
         padding: 0.5rem 0.75rem;
         gap: 0.5rem;
-        border-radius: 8px;
     }
 }
 
@@ -500,15 +511,19 @@
     display: flex;
     flex-direction: column;
     gap: 0.1rem;
+    min-width: 0;
 
     .session-name {
         color: var(--text-secondary);
         font-size: 0.875rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     .session-date {
         color: var(--text-disabled);
-        font-size: 0.75rem;
+        font-size: 0.72rem;
     }
 }
 
@@ -516,20 +531,28 @@
     color: var(--text-muted);
     font-size: 0.875rem;
     font-weight: 500;
+    white-space: nowrap;
 }
 
-.session-mode { font-size: 1rem; }
+.session-mode {
+    font-size: 1rem;
+    flex-shrink: 0;
+}
 
 .session-delete {
-    margin-left: 0.5rem;
     color: var(--text-muted);
     font-size: 1.1rem;
     cursor: pointer;
-    padding: 0.25rem;
+    padding: 0.2rem 0.35rem;
     border-radius: 4px;
     transition: all 0.2s;
     line-height: 1;
     flex-shrink: 0;
+    opacity: 0.5;
+
+    .session-item:hover & {
+        opacity: 1;
+    }
 
     &:hover {
         color: var(--accent-error);
@@ -538,19 +561,18 @@
 }
 
 .sessions-count {
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     color: var(--text-disabled);
     font-weight: 400;
 }
 
-// ─── Pagination ───────────────────────────────────────────────────────────────
+// ─── Paginação ────────────────────────────────────────────────────────────────
 
 .pagination {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 1rem;
-    padding: 0.75rem 0;
+    padding: 0.75rem 0 0;
     border-top: 1px solid var(--border-color);
 }
 
@@ -558,10 +580,10 @@
     background: var(--bg-primary);
     border: 1px solid var(--border-color);
     color: var(--text-secondary);
-    padding: 0.5rem 0.875rem;
+    padding: 0.45rem 0.875rem;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 0.875rem;
+    font-size: 0.825rem;
     transition: all 0.2s;
 
     &:hover:not(:disabled) {
@@ -571,15 +593,14 @@
     }
 
     &:disabled {
-        opacity: 0.4;
+        opacity: 0.35;
         cursor: not-allowed;
-        color: var(--text-disabled);
     }
 }
 
 .page-info {
     color: var(--text-muted);
-    font-size: 0.875rem;
+    font-size: 0.825rem;
     font-weight: 500;
 }
 
@@ -593,9 +614,7 @@
     align-items: center;
     gap: 0.75rem;
 
-    .empty-icon {
-        font-size: 3rem;
-    }
+    .empty-icon { font-size: 3rem; }
 
     p {
         color: var(--text-muted);
@@ -653,11 +672,6 @@
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15), 0 8px 16px rgba(0, 0, 0, 0.1);
     animation: modalIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     text-align: center;
-
-    @media (max-width: 480px) {
-        padding: 1.5rem;
-        border-radius: 12px;
-    }
 }
 
 .modal-icon {

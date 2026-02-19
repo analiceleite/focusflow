@@ -4,215 +4,172 @@
 
     <main class="main">
 
-        <!-- Header simples, só título -->
+        <!-- Header + Filtros (largura total) -->
         <header class="header">
-            <h2>Dashboard</h2>
+            <h2>📊 Dashboard</h2>
+
+            <div class="filter-bar">
+                <div class="view-mode-tabs">
+                    <button [class.active]="viewMode() === 'quick'" (click)="switchToQuickView()" class="mode-tab">Rápido</button>
+                    <button [class.active]="viewMode() === 'custom'" (click)="switchToCustomView()" class="mode-tab">Personalizado</button>
+                </div>
+
+                @if (viewMode() === 'quick') {
+                <div class="quick-filters">
+                    <button [class.active]="period() === 'today'" (click)="period.set('today')">Hoje</button>
+                    <button [class.active]="period() === '7d'" (click)="period.set('7d')">7 dias</button>
+                    <button [class.active]="period() === '30d'" (click)="period.set('30d')">30 dias</button>
+                    <button [class.active]="period() === 'all'" (click)="period.set('all')">Tudo</button>
+                </div>
+                }
+
+                @if (viewMode() === 'custom') {
+                <div class="custom-filters">
+                    <div class="period-type-selector">
+                        <button [class.active]="dateFilterType() === 'day'" (click)="dateFilterType.set('day')" class="period-btn">Dia</button>
+                        <button [class.active]="dateFilterType() === 'week'" (click)="dateFilterType.set('week')" class="period-btn">Semana</button>
+                        <button [class.active]="dateFilterType() === 'month'" (click)="dateFilterType.set('month')" class="period-btn">Mês</button>
+                    </div>
+                    <div class="date-navigation">
+                        <button (click)="goToPreviousPeriod()" class="nav-btn" title="Período anterior">‹</button>
+                        <label class="date-display" title="Clique para escolher uma data">
+                            {{ formatPeriodTitle() }}
+                            <input type="date" [value]="selectedDate()" (input)="selectedDate.set($any($event.target).value)" class="date-picker-hidden">
+                        </label>
+                        <button (click)="goToNextPeriod()" class="nav-btn" title="Próximo período" [disabled]="isNextPeriodDisabled()">›</button>
+                        <div class="nav-divider"></div>
+                        <button (click)="selectedDate.set(getLocalDateString())" class="today-btn">Hoje</button>
+                    </div>
+                </div>
+                }
+            </div>
         </header>
 
-        <!-- Controles de visualização separados do header -->
-        <div class="filter-bar">
+        <!-- Grid principal: esquerda (sessões) + direita (calendário + atividades) -->
+        <div class="dashboard-grid">
 
-            <!-- Tabs Rápido / Personalizado -->
-            <div class="view-mode-tabs">
-                <button
-                    [class.active]="viewMode() === 'quick'"
-                    (click)="switchToQuickView()"
-                    class="mode-tab">
-                    Rápido
-                </button>
-                <button
-                    [class.active]="viewMode() === 'custom'"
-                    (click)="switchToCustomView()"
-                    class="mode-tab">
-                    Personalizado
-                </button>
-            </div>
+            <!-- ── Coluna esquerda ── -->
+            <div class="col-left">
 
-            <!-- Filtros rápidos -->
-            @if (viewMode() === 'quick') {
-            <div class="quick-filters">
-                <button [class.active]="period() === 'today'" (click)="period.set('today')">Hoje</button>
-                <button [class.active]="period() === '7d'" (click)="period.set('7d')">7 dias</button>
-                <button [class.active]="period() === '30d'" (click)="period.set('30d')">30 dias</button>
-                <button [class.active]="period() === 'all'" (click)="period.set('all')">Tudo</button>
-            </div>
-            }
-
-            <!-- Filtro personalizado -->
-            @if (viewMode() === 'custom') {
-            <div class="custom-filters">
-
-                <!-- Tipo de período -->
-                <div class="period-type-selector">
-                    <button
-                        [class.active]="dateFilterType() === 'day'"
-                        (click)="dateFilterType.set('day')"
-                        class="period-btn">
-                        Dia
-                    </button>
-                    <button
-                        [class.active]="dateFilterType() === 'week'"
-                        (click)="dateFilterType.set('week')"
-                        class="period-btn">
-                        Semana
-                    </button>
-                    <button
-                        [class.active]="dateFilterType() === 'month'"
-                        (click)="dateFilterType.set('month')"
-                        class="period-btn">
-                        Mês
-                    </button>
+                <!-- 4 cards de métricas -->
+                <div class="cards-grid">
+                    <div class="card">
+                        <div class="card-icon">⏳</div>
+                        <div class="card-value">{{ formatDuration(totalSeconds()) }}</div>
+                        <div class="card-label">Tempo total</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon">🔥</div>
+                        <div class="card-value">{{ currentStreak() }}<span class="unit">dias</span></div>
+                        <div class="card-label">Ofensiva atual</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon">✅</div>
+                        <div class="card-value">{{ filteredSessions().length }}</div>
+                        <div class="card-label">Sessões</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon">📈</div>
+                        <div class="card-value">{{ formatDuration(avgSessionSeconds()) }}</div>
+                        <div class="card-label">Média/sessão</div>
+                    </div>
                 </div>
 
-                <!-- Navegação de data -->
-                <div class="date-navigation">
-                    <button (click)="goToPreviousPeriod()" class="nav-btn" title="Período anterior">‹</button>
-
-                    <label class="date-display" title="Clique para escolher uma data">
-                        {{ formatPeriodTitle() }}
-                        <input
-                            type="date"
-                            [value]="selectedDate()"
-                            (input)="selectedDate.set($any($event.target).value)"
-                            class="date-picker-hidden">
-                    </label>
-
-                    <button
-                        (click)="goToNextPeriod()"
-                        class="nav-btn"
-                        title="Próximo período"
-                        [disabled]="isNextPeriodDisabled()">
-                        ›
-                    </button>
-
-                    <div class="nav-divider"></div>
-
-                    <button
-                        (click)="selectedDate.set(getLocalDateString())"
-                        class="today-btn"
-                        title="Ir para hoje">
-                        Hoje
-                    </button>
-                </div>
-
-            </div>
-            }
-
-        </div>
-
-        <!-- Summary Cards -->
-        <div class="cards-grid">
-            <div class="card card-total">
-                <div class="card-icon">⏳</div>
-                <div class="card-value">{{ formatDuration(totalSeconds()) }}</div>
-                <div class="card-label">Tempo total</div>
-            </div>
-            <div class="card card-streak">
-                <div class="card-icon">🔥</div>
-                <div class="card-value">{{ currentStreak() }}<span class="unit">dias</span></div>
-                <div class="card-label">Ofensiva atual</div>
-            </div>
-            <div class="card card-sessions">
-                <div class="card-icon">✅</div>
-                <div class="card-value">{{ filteredSessions().length }}</div>
-                <div class="card-label">Sessões</div>
-            </div>
-            <div class="card card-avg">
-                <div class="card-icon">📈</div>
-                <div class="card-value">{{ formatDuration(avgSessionSeconds()) }}</div>
-                <div class="card-label">Média/sessão</div>
-            </div>
-        </div>
-
-        <!-- Activity Breakdown -->
-        @if (activityStats().length > 0) {
-        <div class="section">
-            <div class="section-label">Por tipo de atividade</div>
-            <div class="activity-bars">
-                @for (stat of activityStats(); track stat.name) {
-                <div class="activity-bar-item">
-                    <div class="bar-header">
-                        <div class="bar-info">
-                            <span class="bar-icon">{{ stat.icon }}</span>
-                            <span class="bar-name">{{ stat.name }}</span>
-                            <span class="bar-sessions">{{ stat.sessionCount }} sessão(ões)</span>
+                <!-- Sessões recentes -->
+                @if (filteredSessions().length > 0) {
+                <div class="section">
+                    <div class="section-label">
+                        Sessões recentes
+                        <span class="sessions-count">({{ filteredSessions().length }} total)</span>
+                    </div>
+                    <div class="sessions-list">
+                        @for (session of paginatedSessions(); track trackBySessionId($index, session)) {
+                        <div class="session-item">
+                            <div class="session-dot" [style.background]="session.activityColor"></div>
+                            <div class="session-info">
+                                <span class="session-name">{{ session.activityTypeName }}</span>
+                                <span class="session-date">{{ formatDate(session.date) }}</span>
+                            </div>
+                            <span class="session-duration">{{ formatDuration(session.durationSeconds) }}</span>
+                            <span class="session-mode">{{ session.mode === 'pomodoro' ? '🍅' : '⏰' }}</span>
+                            <span class="session-delete" (click)="deleteSession(session.id!)" title="Excluir sessão">×</span>
                         </div>
-                        <span class="bar-time">{{ formatDuration(stat.totalSeconds) }}</span>
+                        }
                     </div>
-                    <div class="bar-track">
-                        <div class="bar-fill"
-                            [style.width.%]="getBarPercent(stat.totalSeconds)"
-                            [style.background]="stat.color">
+
+                    @if (totalPages() > 1) {
+                    <div class="pagination">
+                        <button class="page-btn" [disabled]="!hasPrevPage()" (click)="prevPage()">← Anterior</button>
+                        <span class="page-info">Página {{ currentPage() + 1 }} de {{ totalPages() }}</span>
+                        <button class="page-btn" [disabled]="!hasNextPage()" (click)="nextPage()">Próximo →</button>
+                    </div>
+                    }
+                </div>
+
+                } @else {
+                <div class="empty-state">
+                    <div class="empty-icon">🎯</div>
+                    <p>Nenhuma sessão registrada ainda.</p>
+                    <a routerLink="/timer" class="btn-start">Começar agora →</a>
+                </div>
+                }
+
+            </div>
+
+            <!-- ── Coluna direita ── -->
+            <div class="col-right">
+
+                <!-- Calendário de ofensiva -->
+                <div class="section">
+                    <div class="section-label">
+                        🔥 Ofensiva — {{ currentStreak() }} dia(s) consecutivo(s)
+                        @if (bestStreak() > 0) { · Recorde: {{ bestStreak() }} dias }
+                    </div>
+                    <div class="calendar-grid">
+                        @for (day of calendarDays(); track day.date) {
+                        <div class="cal-day"
+                            [class.has-session]="day.hasSession"
+                            [class.today]="day.isToday"
+                            [title]="day.date + (day.seconds > 0 ? (' — ' + formatDuration(day.seconds)) : '')">
                         </div>
+                        }
+                    </div>
+                    <div class="calendar-legend">
+                        <span class="legend-dot empty"></span> Sem sessão
+                        <span class="legend-dot filled"></span> Com sessão
+                    </div>
+                </div>
+
+                <!-- Por tipo de atividade -->
+                @if (activityStats().length > 0) {
+                <div class="section">
+                    <div class="section-label">Por tipo de atividade</div>
+                    <div class="activity-bars">
+                        @for (stat of activityStats(); track stat.name) {
+                        <div class="activity-bar-item">
+                            <div class="bar-header">
+                                <div class="bar-info">
+                                    <span class="bar-icon">{{ stat.icon }}</span>
+                                    <span class="bar-name">{{ stat.name }}</span>
+                                    <span class="bar-sessions">{{ stat.sessionCount }} sessão(ões)</span>
+                                </div>
+                                <span class="bar-time">{{ formatDuration(stat.totalSeconds) }}</span>
+                            </div>
+                            <div class="bar-track">
+                                <div class="bar-fill"
+                                    [style.width.%]="getBarPercent(stat.totalSeconds)"
+                                    [style.background]="stat.color">
+                                </div>
+                            </div>
+                        </div>
+                        }
                     </div>
                 </div>
                 }
+
             </div>
+
         </div>
-        }
-
-        <!-- Streak Calendar -->
-        <div class="section">
-            <div class="section-label">
-                🔥 Ofensiva — {{ currentStreak() }} dia(s) consecutivo(s)
-                @if (bestStreak() > 0) {
-                · Recorde: {{ bestStreak() }} dias
-                }
-            </div>
-            <div class="calendar-grid">
-                @for (day of calendarDays(); track day.date) {
-                <div class="cal-day"
-                    [class.has-session]="day.hasSession"
-                    [class.today]="day.isToday"
-                    [title]="day.date + (day.seconds > 0 ? (' — ' + formatDuration(day.seconds)) : '')">
-                </div>
-                }
-            </div>
-            <div class="calendar-legend">
-                <span class="legend-dot empty"></span> Sem sessão
-                <span class="legend-dot filled"></span> Com sessão
-            </div>
-        </div>
-
-        <!-- Recent Sessions -->
-        @if (filteredSessions().length > 0) {
-        <div class="section">
-            <div class="section-label">
-                Sessões recentes
-                <span class="sessions-count">({{ filteredSessions().length }} total)</span>
-            </div>
-            <div class="sessions-list">
-                @for (session of paginatedSessions(); track trackBySessionId($index, session)) {
-                <div class="session-item">
-                    <div class="session-dot" [style.background]="session.activityColor"></div>
-                    <div class="session-info">
-                        <span class="session-name">{{ session.activityTypeName }}</span>
-                        <span class="session-date">{{ formatDate(session.date) }}</span>
-                    </div>
-                    <span class="session-duration">{{ formatDuration(session.durationSeconds) }}</span>
-                    <span class="session-mode">{{ session.mode === 'pomodoro' ? '🍅' : '⏰' }}</span>
-                    <span class="session-delete" (click)="deleteSession(session.id!)" title="Excluir sessão">×</span>
-                </div>
-                }
-            </div>
-
-            @if (totalPages() > 1) {
-            <div class="pagination">
-                <button class="page-btn" [disabled]="!hasPrevPage()" (click)="prevPage()">← Anterior</button>
-                <span class="page-info">Página {{ currentPage() + 1 }} de {{ totalPages() }}</span>
-                <button class="page-btn" [disabled]="!hasNextPage()" (click)="nextPage()">Próximo →</button>
-            </div>
-            }
-        </div>
-
-        } @else {
-        <div class="empty-state">
-            <div class="empty-icon">🎯</div>
-            <p>Nenhuma sessão registrada ainda.</p>
-            <a routerLink="/timer" class="btn-start">Começar agora →</a>
-        </div>
-        }
-
     </main>
 </div>
 
