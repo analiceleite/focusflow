@@ -1,3 +1,5 @@
+// ─── Layout principal ─────────────────────────────────────────────────────────
+
 :host {
     display: block;
     min-height: 100vh;
@@ -7,59 +9,6 @@
 .app-shell {
     display: flex;
     min-height: 100vh;
-}
-
-.sidebar {
-    width: 64px;
-    background: var(--bg-card);
-    border-right: 1px solid var(--border-color);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 1rem 0;
-    gap: 0.5rem;
-    position: fixed;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    z-index: 10;
-}
-
-.sidebar-logo {
-    font-size: 1.5rem;
-    margin-bottom: 1rem;
-}
-
-.nav-item {
-    width: 44px;
-    height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 12px;
-    text-decoration: none;
-    font-size: 1.25rem;
-    color: var(--text-muted);
-    border: none;
-    background: transparent;
-    cursor: pointer;
-    transition: all 0.2s;
-
-    &:hover,
-    &.active {
-        background: var(--bg-secondary);
-        color: var(--text-primary);
-    }
-}
-
-.nav-logout {
-    margin-top: auto;
-    color: var(--text-muted);
-
-    &:hover {
-        color: var(--accent-error);
-        background: rgba(255, 101, 132, 0.1);
-    }
 }
 
 .main {
@@ -74,63 +23,239 @@
 
     @media (max-width: 768px) {
         margin-left: 0;
-        margin-bottom: 64px; // Space for bottom nav
+        margin-bottom: 64px;
         padding: 1rem;
         gap: 1rem;
     }
 }
 
-.header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 0.5rem;
+// ─── Header ───────────────────────────────────────────────────────────────────
 
+.header {
     h2 {
         color: var(--text-primary);
         font-size: 1.25rem;
         font-weight: 600;
         margin: 0;
     }
+}
 
-    .header-filters {
-        display: flex;
-        gap: 0.25rem;
+// ─── Filter Bar ───────────────────────────────────────────────────────────────
+// Bloco próprio, separado do header, empilha verticalmente
 
-        @media (max-width: 480px) {
-            width: 100%;
-            margin-top: 0.5rem;
+.filter-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+// Tabs Rápido / Personalizado
+.view-mode-tabs {
+    display: flex;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    padding: 2px;
+    gap: 2px;
+    width: fit-content;
+}
+
+.mode-tab {
+    padding: 0.45rem 1.1rem;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.9rem;
+    font-weight: 500;
+
+    &:hover {
+        background: var(--bg-card);
+        color: var(--text-primary);
+    }
+
+    &.active {
+        background: var(--bg-card);
+        color: var(--accent-color);
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    }
+}
+
+// Filtros rápidos
+.quick-filters {
+    display: flex;
+    gap: 0.25rem;
+    flex-wrap: wrap;
+
+    button {
+        padding: 0.4rem 0.875rem;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        background: transparent;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.2s;
+
+        &.active {
+            background: var(--bg-secondary);
+            border-color: var(--accent-primary);
+            color: var(--text-primary);
         }
 
-        button {
-            padding: 0.4rem 0.875rem;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            background: transparent;
-            color: var(--text-muted);
-            font-size: 0.8rem;
-            cursor: pointer;
-            transition: all 0.2s;
-
-            @media (max-width: 480px) {
-                flex: 1;
-                text-align: center;
-            }
-
-            &.active {
-                background: var(--bg-secondary);
-                border-color: var(--accent-primary);
-                color: var(--text-primary);
-            }
-
-            &:hover:not(.active) {
-                background: var(--bg-tertiary);
-                color: var(--text-secondary);
-            }
+        &:hover:not(.active) {
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
         }
     }
 }
+
+// Filtro personalizado
+.custom-filters {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+// Seletor Dia / Semana / Mês
+.period-type-selector {
+    display: flex;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    padding: 2px;
+    gap: 2px;
+    width: fit-content;
+}
+
+.period-btn {
+    padding: 0.35rem 0.85rem;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.85rem;
+    font-weight: 500;
+
+    &:hover {
+        background: var(--bg-card);
+        color: var(--text-primary);
+    }
+
+    &.active {
+        background: var(--bg-card);
+        color: var(--accent-color);
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    }
+}
+
+// Navegação de data: ‹ [título clicável] › | Hoje
+.date-navigation {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 0.3rem 0.4rem;
+    width: fit-content;
+
+    @media (max-width: 480px) {
+        width: 100%;
+        justify-content: space-between;
+    }
+}
+
+.nav-btn {
+    width: 30px;
+    height: 30px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+    line-height: 1;
+
+    &:hover:not(:disabled) {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+    }
+
+    &:disabled {
+        opacity: 0.25;
+        cursor: not-allowed;
+    }
+}
+
+// O título da data vira um label clicável que abre o date picker escondido
+.date-display {
+    position: relative;
+    font-weight: 500;
+    color: var(--text-primary);
+    min-width: 170px;
+    text-align: center;
+    font-size: 0.9rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s;
+
+    &:hover {
+        background: var(--bg-secondary);
+    }
+
+    @media (max-width: 480px) {
+        min-width: 0;
+        flex: 1;
+    }
+}
+
+// Input de data escondido dentro do label — abre o picker nativo ao clicar no título
+.date-picker-hidden {
+    position: absolute;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    cursor: pointer;
+    font-size: 0; // evita que ocupe espaço visível em alguns browsers
+}
+
+.nav-divider {
+    width: 1px;
+    height: 20px;
+    background: var(--border-color);
+    margin: 0 0.15rem;
+    flex-shrink: 0;
+}
+
+.today-btn {
+    padding: 0.25rem 0.65rem;
+    border: none;
+    background: transparent;
+    color: var(--accent-color);
+    font-size: 0.8rem;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+
+    &:hover {
+        background: color-mix(in srgb, var(--accent-color) 10%, transparent);
+    }
+}
+
+// ─── Cards ────────────────────────────────────────────────────────────────────
 
 .cards-grid {
     display: grid;
@@ -194,6 +319,8 @@
     }
 }
 
+// ─── Sections ─────────────────────────────────────────────────────────────────
+
 .section {
     display: flex;
     flex-direction: column;
@@ -207,6 +334,8 @@
     text-transform: uppercase;
     letter-spacing: 0.8px;
 }
+
+// ─── Activity bars ────────────────────────────────────────────────────────────
 
 .activity-bars {
     display: flex;
@@ -236,32 +365,17 @@
     align-items: center;
     gap: 0.5rem;
 
-    @media (max-width: 480px) {
-        flex-wrap: wrap;
-        gap: 0.25rem;
-    }
-
-    .bar-icon {
-        font-size: 1rem;
-    }
+    .bar-icon { font-size: 1rem; }
 
     .bar-name {
         color: var(--text-secondary);
         font-size: 0.9rem;
         font-weight: 500;
-
-        @media (max-width: 480px) {
-            font-size: 0.8rem;
-        }
     }
 
     .bar-sessions {
         color: var(--text-disabled);
         font-size: 0.75rem;
-
-        @media (max-width: 480px) {
-            font-size: 0.7rem;
-        }
     }
 }
 
@@ -269,10 +383,6 @@
     color: var(--text-muted);
     font-size: 0.875rem;
     font-weight: 500;
-
-    @media (max-width: 480px) {
-        font-size: 0.8rem;
-    }
 }
 
 .bar-track {
@@ -287,6 +397,8 @@
     border-radius: 3px;
     transition: width 0.6s ease;
 }
+
+// ─── Calendar ─────────────────────────────────────────────────────────────────
 
 .calendar-grid {
     display: flex;
@@ -304,7 +416,6 @@
     height: 14px;
     border-radius: 3px;
     background: var(--border-color);
-    cursor: default;
     transition: transform 0.15s;
 
     @media (max-width: 480px) {
@@ -323,13 +434,9 @@
         outline-offset: 1px;
     }
 
-    &.today.has-session {
-        opacity: 1;
-    }
+    &.today.has-session { opacity: 1; }
 
-    &:hover {
-        transform: scale(1.3);
-    }
+    &:hover { transform: scale(1.3); }
 }
 
 .calendar-legend {
@@ -352,15 +459,12 @@
         border-radius: 2px;
         margin-right: 4px;
 
-        &.empty {
-            background: var(--border-color);
-        }
-
-        &.filled {
-            background: var(--accent-primary);
-        }
+        &.empty  { background: var(--border-color); }
+        &.filled { background: var(--accent-primary); }
     }
 }
+
+// ─── Sessions ─────────────────────────────────────────────────────────────────
 
 .sessions-list {
     display: flex;
@@ -400,19 +504,11 @@
     .session-name {
         color: var(--text-secondary);
         font-size: 0.875rem;
-
-        @media (max-width: 480px) {
-            font-size: 0.8rem;
-        }
     }
 
     .session-date {
         color: var(--text-disabled);
         font-size: 0.75rem;
-
-        @media (max-width: 480px) {
-            font-size: 0.7rem;
-        }
     }
 }
 
@@ -420,15 +516,9 @@
     color: var(--text-muted);
     font-size: 0.875rem;
     font-weight: 500;
-
-    @media (max-width: 480px) {
-        font-size: 0.8rem;
-    }
 }
 
-.session-mode {
-    font-size: 1rem;
-}
+.session-mode { font-size: 1rem; }
 
 .session-delete {
     margin-left: 0.5rem;
@@ -445,11 +535,6 @@
         color: var(--accent-error);
         background: color-mix(in srgb, var(--accent-error) 10%, transparent);
     }
-
-    @media (max-width: 480px) {
-        font-size: 1rem;
-        padding: 0.2rem;
-    }
 }
 
 .sessions-count {
@@ -458,6 +543,8 @@
     font-weight: 400;
 }
 
+// ─── Pagination ───────────────────────────────────────────────────────────────
+
 .pagination {
     display: flex;
     justify-content: space-between;
@@ -465,10 +552,6 @@
     margin-top: 1rem;
     padding: 0.75rem 0;
     border-top: 1px solid var(--border-color);
-
-    @media (max-width: 480px) {
-        padding: 0.5rem 0;
-    }
 }
 
 .page-btn {
@@ -492,22 +575,15 @@
         cursor: not-allowed;
         color: var(--text-disabled);
     }
-
-    @media (max-width: 480px) {
-        padding: 0.4rem 0.7rem;
-        font-size: 0.8rem;
-    }
 }
 
 .page-info {
     color: var(--text-muted);
     font-size: 0.875rem;
     font-weight: 500;
-
-    @media (max-width: 480px) {
-        font-size: 0.8rem;
-    }
 }
+
+// ─── Empty state ──────────────────────────────────────────────────────────────
 
 .empty-state {
     text-align: center;
@@ -517,25 +593,13 @@
     align-items: center;
     gap: 0.75rem;
 
-    @media (max-width: 480px) {
-        padding: 2rem 1rem;
-    }
-
     .empty-icon {
         font-size: 3rem;
-
-        @media (max-width: 480px) {
-            font-size: 2.5rem;
-        }
     }
 
     p {
         color: var(--text-muted);
         margin: 0;
-
-        @media (max-width: 480px) {
-            font-size: 0.9rem;
-        }
     }
 }
 
@@ -549,27 +613,17 @@
     font-weight: 600;
     transition: all 0.2s;
 
-    @media (max-width: 480px) {
-        padding: 0.6rem 1.25rem;
-        font-size: 0.8rem;
-    }
-
     &:hover {
         filter: brightness(1.1);
         transform: translateY(-1px);
     }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// Modal de Confirmação
-// ═══════════════════════════════════════════════════════════════════════════════
+// ─── Modal ────────────────────────────────────────────────────────────────────
 
 .modal-overlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    inset: 0;
     background: rgba(0, 0, 0, 0.6);
     display: flex;
     align-items: center;
@@ -580,25 +634,13 @@
 }
 
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 1;
-    }
+    from { opacity: 0; }
+    to   { opacity: 1; }
 }
 
 @keyframes modalIn {
-    from {
-        opacity: 0;
-        transform: scale(0.9) translateY(-20px);
-    }
-
-    to {
-        opacity: 1;
-        transform: scale(1) translateY(0);
-    }
+    from { opacity: 0; transform: scale(0.9) translateY(-20px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 .delete-modal {
@@ -608,15 +650,12 @@
     padding: 2rem;
     max-width: 400px;
     width: 100%;
-    box-shadow:
-        0 20px 40px rgba(0, 0, 0, 0.15),
-        0 8px 16px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15), 0 8px 16px rgba(0, 0, 0, 0.1);
     animation: modalIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     text-align: center;
 
     @media (max-width: 480px) {
         padding: 1.5rem;
-        margin: 1rem;
         border-radius: 12px;
     }
 }
@@ -632,10 +671,6 @@
     font-size: 1.5rem;
     font-weight: 600;
     margin-bottom: 1rem;
-
-    @media (max-width: 480px) {
-        font-size: 1.3rem;
-    }
 }
 
 .modal-message {
@@ -643,11 +678,6 @@
     font-size: 1rem;
     line-height: 1.5;
     margin-bottom: 2rem;
-
-    @media (max-width: 480px) {
-        font-size: 0.9rem;
-        margin-bottom: 1.5rem;
-    }
 }
 
 .modal-warning {
@@ -661,10 +691,6 @@
     display: flex;
     gap: 1rem;
     justify-content: center;
-
-    @media (max-width: 480px) {
-        gap: 0.75rem;
-    }
 }
 
 .btn-cancel,
@@ -676,12 +702,6 @@
     cursor: pointer;
     transition: all 0.2s;
     min-width: 100px;
-
-    @media (max-width: 480px) {
-        padding: 0.65rem 1.2rem;
-        font-size: 0.85rem;
-        min-width: 80px;
-    }
 }
 
 .btn-cancel {
@@ -691,12 +711,7 @@
 
     &:hover {
         background: var(--bg-tertiary);
-        border-color: var(--text-disabled);
         transform: translateY(-1px);
-    }
-
-    &:active {
-        transform: translateY(0);
     }
 }
 
@@ -709,9 +724,5 @@
         background: color-mix(in srgb, var(--accent-error) 90%, black);
         box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
         transform: translateY(-1px);
-    }
-
-    &:active {
-        transform: translateY(0);
     }
 }

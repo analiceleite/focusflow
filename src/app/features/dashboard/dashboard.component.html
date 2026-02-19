@@ -1,19 +1,104 @@
 <div class="app-shell">
     <app-navbar></app-navbar>
-    
-    <!-- Theme Toggle -->
     <app-theme-toggle></app-theme-toggle>
-    
-    <!-- Main -->
+
     <main class="main">
+
+        <!-- Header simples, só título -->
         <header class="header">
             <h2>Dashboard</h2>
-            <div class="header-filters">
+        </header>
+
+        <!-- Controles de visualização separados do header -->
+        <div class="filter-bar">
+
+            <!-- Tabs Rápido / Personalizado -->
+            <div class="view-mode-tabs">
+                <button
+                    [class.active]="viewMode() === 'quick'"
+                    (click)="switchToQuickView()"
+                    class="mode-tab">
+                    Rápido
+                </button>
+                <button
+                    [class.active]="viewMode() === 'custom'"
+                    (click)="switchToCustomView()"
+                    class="mode-tab">
+                    Personalizado
+                </button>
+            </div>
+
+            <!-- Filtros rápidos -->
+            @if (viewMode() === 'quick') {
+            <div class="quick-filters">
+                <button [class.active]="period() === 'today'" (click)="period.set('today')">Hoje</button>
                 <button [class.active]="period() === '7d'" (click)="period.set('7d')">7 dias</button>
                 <button [class.active]="period() === '30d'" (click)="period.set('30d')">30 dias</button>
                 <button [class.active]="period() === 'all'" (click)="period.set('all')">Tudo</button>
             </div>
-        </header>
+            }
+
+            <!-- Filtro personalizado -->
+            @if (viewMode() === 'custom') {
+            <div class="custom-filters">
+
+                <!-- Tipo de período -->
+                <div class="period-type-selector">
+                    <button
+                        [class.active]="dateFilterType() === 'day'"
+                        (click)="dateFilterType.set('day')"
+                        class="period-btn">
+                        Dia
+                    </button>
+                    <button
+                        [class.active]="dateFilterType() === 'week'"
+                        (click)="dateFilterType.set('week')"
+                        class="period-btn">
+                        Semana
+                    </button>
+                    <button
+                        [class.active]="dateFilterType() === 'month'"
+                        (click)="dateFilterType.set('month')"
+                        class="period-btn">
+                        Mês
+                    </button>
+                </div>
+
+                <!-- Navegação de data -->
+                <div class="date-navigation">
+                    <button (click)="goToPreviousPeriod()" class="nav-btn" title="Período anterior">‹</button>
+
+                    <label class="date-display" title="Clique para escolher uma data">
+                        {{ formatPeriodTitle() }}
+                        <input
+                            type="date"
+                            [value]="selectedDate()"
+                            (input)="selectedDate.set($any($event.target).value)"
+                            class="date-picker-hidden">
+                    </label>
+
+                    <button
+                        (click)="goToNextPeriod()"
+                        class="nav-btn"
+                        title="Próximo período"
+                        [disabled]="isNextPeriodDisabled()">
+                        ›
+                    </button>
+
+                    <div class="nav-divider"></div>
+
+                    <button
+                        (click)="selectedDate.set(getLocalDateString())"
+                        class="today-btn"
+                        title="Ir para hoje">
+                        Hoje
+                    </button>
+                </div>
+
+            </div>
+            }
+
+        </div>
 
         <!-- Summary Cards -->
         <div class="cards-grid">
@@ -55,7 +140,8 @@
                         <span class="bar-time">{{ formatDuration(stat.totalSeconds) }}</span>
                     </div>
                     <div class="bar-track">
-                        <div class="bar-fill" [style.width.%]="getBarPercent(stat.totalSeconds)"
+                        <div class="bar-fill"
+                            [style.width.%]="getBarPercent(stat.totalSeconds)"
                             [style.background]="stat.color">
                         </div>
                     </div>
@@ -75,7 +161,9 @@
             </div>
             <div class="calendar-grid">
                 @for (day of calendarDays(); track day.date) {
-                <div class="cal-day" [class.has-session]="day.hasSession" [class.today]="day.isToday"
+                <div class="cal-day"
+                    [class.has-session]="day.hasSession"
+                    [class.today]="day.isToday"
                     [title]="day.date + (day.seconds > 0 ? (' — ' + formatDuration(day.seconds)) : '')">
                 </div>
                 }
@@ -90,14 +178,13 @@
         @if (filteredSessions().length > 0) {
         <div class="section">
             <div class="section-label">
-                Sessões recentes 
+                Sessões recentes
                 <span class="sessions-count">({{ filteredSessions().length }} total)</span>
             </div>
             <div class="sessions-list">
                 @for (session of paginatedSessions(); track trackBySessionId($index, session)) {
                 <div class="session-item">
-                    <div class="session-dot" [style.background]="session.activityColor">
-                    </div>
+                    <div class="session-dot" [style.background]="session.activityColor"></div>
                     <div class="session-info">
                         <span class="session-name">{{ session.activityTypeName }}</span>
                         <span class="session-date">{{ formatDate(session.date) }}</span>
@@ -108,32 +195,16 @@
                 </div>
                 }
             </div>
-            
-            <!-- Paginação -->
+
             @if (totalPages() > 1) {
             <div class="pagination">
-                <button 
-                    class="page-btn" 
-                    [disabled]="!hasPrevPage()" 
-                    (click)="prevPage()"
-                    title="Página anterior">
-                    ← Anterior
-                </button>
-                
-                <span class="page-info">
-                    Página {{ currentPage() + 1 }} de {{ totalPages() }}
-                </span>
-                
-                <button 
-                    class="page-btn" 
-                    [disabled]="!hasNextPage()" 
-                    (click)="nextPage()"
-                    title="Próxima página">
-                    Próximo →
-                </button>
+                <button class="page-btn" [disabled]="!hasPrevPage()" (click)="prevPage()">← Anterior</button>
+                <span class="page-info">Página {{ currentPage() + 1 }} de {{ totalPages() }}</span>
+                <button class="page-btn" [disabled]="!hasNextPage()" (click)="nextPage()">Próximo →</button>
             </div>
             }
         </div>
+
         } @else {
         <div class="empty-state">
             <div class="empty-icon">🎯</div>
@@ -141,6 +212,7 @@
             <a routerLink="/timer" class="btn-start">Começar agora →</a>
         </div>
         }
+
     </main>
 </div>
 
@@ -148,21 +220,15 @@
 @if (showDeleteModal()) {
 <div class="modal-overlay" (click)="closeDeleteModal()">
     <div class="delete-modal" (click)="$event.stopPropagation()">
-        <div class="modal-icon">
-            🗑️
-        </div>
+        <div class="modal-icon">🗑️</div>
         <h3 class="modal-title">Excluir Sessão</h3>
         <p class="modal-message">
             Tem certeza que deseja excluir esta sessão?<br>
             <span class="modal-warning">Esta ação não pode ser desfeita.</span>
         </p>
         <div class="modal-actions">
-            <button class="btn-cancel" (click)="closeDeleteModal()">
-                Cancelar
-            </button>
-            <button class="btn-delete" (click)="confirmDelete()">
-                Excluir
-            </button>
+            <button class="btn-cancel" (click)="closeDeleteModal()">Cancelar</button>
+            <button class="btn-delete" (click)="confirmDelete()">Excluir</button>
         </div>
     </div>
 </div>
