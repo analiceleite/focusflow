@@ -7,10 +7,12 @@
 
         <!-- Header -->
         <header class="header">
-            <h2>⏰ Timer</h2>
+            <h2>Timer</h2>
             <div class="mode-toggle">
-                <button [class.active]="timerSvc.mode() === 'pomodoro'" (click)="setMode('pomodoro')">🍅 Pomodoro</button>
-                <button [class.active]="timerSvc.mode() === 'stopwatch'" (click)="setMode('stopwatch')">⏱ Cronômetro</button>
+                <button [class.active]="timerSvc.mode() === 'pomodoro'" (click)="setMode('pomodoro')">🍅
+                    Pomodoro</button>
+                <button [class.active]="timerSvc.mode() === 'stopwatch'" (click)="setMode('stopwatch')">⏱
+                    Cronômetro</button>
             </div>
         </header>
 
@@ -32,9 +34,9 @@
                         <div class="timer-time">{{ timerSvc.formattedTime() }}</div>
                         @if (timerSvc.mode() === 'pomodoro') {
                         <div class="timer-sub">
-                            @if (timerSvc.state() === 'idle')     { Pronto para começar }
-                            @else if (timerSvc.state() === 'running')  { Focando... }
-                            @else if (timerSvc.state() === 'paused')   { Pausado }
+                            @if (timerSvc.state() === 'idle') { Pronto para começar }
+                            @else if (timerSvc.state() === 'running') { Focando... }
+                            @else if (timerSvc.state() === 'paused') { Pausado }
                             @else if (timerSvc.state() === 'finished') { ✅ Sessão concluída! }
                         </div>
                         }
@@ -43,7 +45,8 @@
 
                 <div class="controls">
                     @if (timerSvc.state() === 'idle' || timerSvc.state() === 'finished') {
-                    <button class="btn-main" [style.background]="selectedType()?.color || '#6C63FF'" (click)="startTimer()">
+                    <button class="btn-main" [style.background]="selectedType()?.color || '#6C63FF'"
+                        (click)="startTimer()">
                         {{ timerSvc.state() === 'finished' ? '🔄 Nova sessão' : '▶ Iniciar' }}
                     </button>
                     } @else if (timerSvc.state() === 'running') {
@@ -51,13 +54,15 @@
                     <button class="btn-secondary" (click)="stopAndSave()">✅ Salvar</button>
                     <button class="btn-tertiary" (click)="stopTimer()">🛑 Parar</button>
                     } @else if (timerSvc.state() === 'paused') {
-                    <button class="btn-main" [style.background]="selectedType()?.color || '#6C63FF'" (click)="resumeTimer()">▶ Continuar</button>
+                    <button class="btn-main" [style.background]="selectedType()?.color || '#6C63FF'"
+                        (click)="resumeTimer()">▶ Continuar</button>
                     <button class="btn-secondary" (click)="stopAndSave()">✅ Salvar</button>
                     <button class="btn-tertiary" (click)="stopTimer()">🛑 Parar</button>
                     }
                 </div>
 
-                <button *ngIf="pipSvc.isSupported" class="btn-pip" [class.pip-active]="pipSvc.active" (click)="togglePip()">
+                <button *ngIf="pipSvc.isSupported" class="btn-pip" [class.pip-active]="pipSvc.active"
+                    (click)="togglePip()">
                     {{ pipSvc.active ? '✕ Fechar PiP' : '⧉ Picture-in-Picture' }}
                 </button>
 
@@ -72,14 +77,14 @@
                     <div class="section-label">Tipo de atividade</div>
                     <div class="activity-grid">
                         @for (type of activityTypes(); track type.id) {
-                        <button class="activity-chip"
-                            [style.--color]="type.color"
+                        <button class="activity-chip" [style.--color]="type.color"
                             [class.selected]="selectedType()?.id === type.id"
                             [class.disabled]="isTimerRunning() && selectedType()?.id !== type.id"
                             (click)="selectActivityType(type)">
                             <span>{{ type.icon }}</span>
                             <span class="chip-name">{{ type.name }}</span>
-                            <span class="activity-delete" (click)="$event.stopPropagation(); deleteActivityType(type.id!)">×</span>
+                            <span class="activity-delete"
+                                (click)="$event.stopPropagation(); deleteActivityType(type.id!)">×</span>
                         </button>
                         }
                         <button class="activity-chip add-chip" (click)="showAddType.set(true)">
@@ -93,15 +98,19 @@
                     <div class="section-label">Presets de tempo</div>
                     <div class="presets-row">
                         @for (preset of presets(); track preset.id) {
-                        <button class="preset-chip" [class.active]="currentMinutes() === preset.minutes" (click)="applyPreset(preset.minutes)">
+                        <button class="preset-chip" [class.active]="currentMinutes() === preset.minutes"
+                            (click)="applyPreset(preset.minutes)">
                             {{ preset.label }}
-                            <span class="preset-delete" (click)="$event.stopPropagation(); deletePreset(preset.id!)">×</span>
+                            <span class="preset-delete"
+                                (click)="$event.stopPropagation(); deletePreset(preset.id!)">×</span>
                         </button>
                         }
-                        <button class="preset-chip preset-add" (click)="showAddPreset.set(true)">＋ Salvar preset</button>
+                        <button class="preset-chip preset-add" (click)="showAddPreset.set(true)">＋ Salvar
+                            preset</button>
                     </div>
                     <div class="custom-time">
-                        <input type="number" [(ngModel)]="customMinutes" placeholder="Minutos" min="1" max="480" (keyup.enter)="applyCustomTime()" />
+                        <input type="number" [(ngModel)]="customMinutes" placeholder="Minutos" min="1" max="480"
+                            (keyup.enter)="applyCustomTime()" />
                         <button (click)="applyCustomTime()">Aplicar</button>
                     </div>
                 </div>
@@ -109,120 +118,110 @@
             </div>
         </div>
 
-        <!-- ═══════════════════════════════════════════════════════════ -->
-        <!-- Painel de estatísticas de foco                             -->
-        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- ══════════════════════════════════════════════════════════ -->
+        <!-- Painel de estatísticas                                     -->
+        <!-- Layout: [Hoje] [7 dias] [30 dias] [Médias ÷ 3]            -->
+        <!-- ══════════════════════════════════════════════════════════ -->
         <div class="stats-panel">
 
-            <!-- Label da seção -->
-            <div class="stats-panel-header">
-                <span class="section-label">📊 Estatísticas de foco</span>
-            </div>
+            <div class="section-label">📊 Estatísticas de foco</div>
 
             <div class="stats-grid">
 
-                <!-- ── Coluna 1: Atuais ── -->
-                <div class="stats-group">
-                    <div class="stats-group-label">Acumulado</div>
+                <!-- Card 1: Hoje -->
+                <div class="stat-card">
+                    <div class="stat-card-top">
+                        <span class="stat-label">Hoje</span>
+                        <span class="stat-icon">☀️</span>
+                    </div>
+                    <div class="stat-value">{{ formatHours(todayTotalSeconds()) }}</div>
+                    <div class="stat-sub">{{ todayTotalSeconds() === 0 ? 'Nenhuma sessão ainda' : 'acumulado hoje' }}
+                    </div>
+                    <div class="stat-sparkline">
+                        @for (bar of dailySparkline(); track bar.date) {
+                        <div class="spark-col" [class.today]="bar.date === getLocalDateString()">
+                            <div class="spark-bar" [style.height.%]="bar.percent || 4"
+                                [title]="bar.label + ': ' + formatHours(bar.seconds)"></div>
+                            <span class="spark-label">{{ bar.label }}</span>
+                        </div>
+                        }
+                    </div>
+                </div>
 
-                    <div class="stat-card">
+                <!-- Card 2: 7 dias -->
+                <div class="stat-card">
+                    <div class="stat-card-top">
+                        <span class="stat-label">Últimos 7 dias</span>
+                        <span class="stat-icon">📅</span>
+                    </div>
+                    <div class="stat-value">{{ formatHours(last7TotalSeconds()) }}</div>
+                    <div class="stat-sub">acumulado na semana</div>
+                    <div class="stat-sparkline">
+                        @for (bar of dailySparkline(); track bar.date) {
+                        <div class="spark-col" [class.today]="bar.date === getLocalDateString()">
+                            <div class="spark-bar" [style.height.%]="bar.percent || 4"
+                                [title]="bar.label + ': ' + formatHours(bar.seconds)"></div>
+                            <span class="spark-label">{{ bar.label }}</span>
+                        </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Card 3: 30 dias -->
+                <div class="stat-card">
+                    <div class="stat-card-top">
+                        <span class="stat-label">Últimos 30 dias</span>
+                        <span class="stat-icon">🗓️</span>
+                    </div>
+                    <div class="stat-value">{{ formatHours(last30TotalSeconds()) }}</div>
+                    <div class="stat-sub">acumulado no mês</div>
+                    <div class="stat-sparkline">
+                        @for (bar of weeklySparkline(); track bar.label) {
+                        <div class="spark-col">
+                            <div class="spark-bar" [style.height.%]="bar.percent || 4"
+                                [title]="bar.label + ': ' + formatHours(bar.seconds)"></div>
+                            <span class="spark-label">{{ bar.label }}</span>
+                        </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Card 4: coluna de médias (3 mini-cards empilhados) -->
+                <div class="stat-averages-col">
+
+                    <div class="stat-card stat-card-avg">
                         <div class="stat-card-top">
-                            <span class="stat-label">Hoje</span>
+                            <span class="stat-label">Média diária</span>
                             <span class="stat-icon">☀️</span>
                         </div>
-                        <div class="stat-value">{{ formatHours(todayTotalSeconds()) }}</div>
-                        <div class="stat-sparkline">
-                            @for (bar of dailySparkline(); track bar.date) {
-                            <div class="spark-col" [class.today]="bar.date === getLocalDateString()">
-                                <div class="spark-bar" [style.height.%]="bar.percent || 4" [title]="bar.label + ': ' + formatHours(bar.seconds)"></div>
-                                <span class="spark-label">{{ bar.label }}</span>
-                            </div>
-                            }
+                        <div class="stat-value-row">
+                            <span class="stat-value stat-value-sm">{{ formatHours(avgDailyLast7Seconds()) }}</span>
+                            <span class="stat-value-hint">/ dia · últimos 7d</span>
                         </div>
                     </div>
 
-                    <div class="stat-row-pair">
-                        <div class="stat-card stat-card-sm">
-                            <div class="stat-card-top">
-                                <span class="stat-label">7 dias</span>
-                                <span class="stat-icon">📅</span>
-                            </div>
-                            <div class="stat-value">{{ formatHours(last7TotalSeconds()) }}</div>
-                        </div>
-                        <div class="stat-card stat-card-sm">
-                            <div class="stat-card-top">
-                                <span class="stat-label">30 dias</span>
-                                <span class="stat-icon">🗓️</span>
-                            </div>
-                            <div class="stat-value">{{ formatHours(last30TotalSeconds()) }}</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ── Coluna 2: Média diária ── -->
-                <div class="stats-group">
-                    <div class="stats-group-label">Média diária</div>
-
-                    <div class="stat-card">
+                    <div class="stat-card stat-card-avg">
                         <div class="stat-card-top">
-                            <span class="stat-label">Últimos 7 dias</span>
-                            <span class="stat-icon">📈</span>
+                            <span class="stat-label">Média semanal</span>
+                            <span class="stat-icon">📅</span>
                         </div>
-                        <div class="stat-value">{{ formatHours(avgDailyLast7Seconds()) }}</div>
-                        <div class="stat-sub">por dia em média</div>
-                        <div class="stat-sparkline">
-                            @for (bar of dailySparkline(); track bar.date) {
-                            <div class="spark-col" [class.today]="bar.date === getLocalDateString()">
-                                <div class="spark-bar" [style.height.%]="bar.percent || 4" [title]="bar.label + ': ' + formatHours(bar.seconds)"></div>
-                                <span class="spark-label">{{ bar.label }}</span>
-                            </div>
-                            }
+                        <div class="stat-value-row">
+                            <span class="stat-value stat-value-sm">{{ formatHours(avgWeeklyLast4Seconds()) }}</span>
+                            <span class="stat-value-hint">/ semana · últimas 4</span>
                         </div>
                     </div>
-                </div>
 
-                <!-- ── Coluna 3: Média semanal ── -->
-                <div class="stats-group">
-                    <div class="stats-group-label">Média semanal</div>
-
-                    <div class="stat-card">
+                    <div class="stat-card stat-card-avg">
                         <div class="stat-card-top">
-                            <span class="stat-label">Últimas 4 semanas</span>
-                            <span class="stat-icon">📊</span>
+                            <span class="stat-label">Média mensal</span>
+                            <span class="stat-icon">📅</span>
                         </div>
-                        <div class="stat-value">{{ formatHours(avgWeeklyLast4Seconds()) }}</div>
-                        <div class="stat-sub">por semana em média</div>
-                        <div class="stat-sparkline">
-                            @for (bar of weeklySparkline(); track bar.label) {
-                            <div class="spark-col">
-                                <div class="spark-bar" [style.height.%]="bar.percent || 4" [title]="bar.label + ': ' + formatHours(bar.seconds)"></div>
-                                <span class="spark-label">{{ bar.label }}</span>
-                            </div>
-                            }
+                        <div class="stat-value-row">
+                            <span class="stat-value stat-value-sm">{{ formatHours(avgMonthlyLast12Seconds()) }}</span>
+                            <span class="stat-value-hint">/ mês · últimos 12</span>
                         </div>
                     </div>
-                </div>
 
-                <!-- ── Coluna 4: Média mensal ── -->
-                <div class="stats-group">
-                    <div class="stats-group-label">Média mensal</div>
-
-                    <div class="stat-card">
-                        <div class="stat-card-top">
-                            <span class="stat-label">Últimos 12 meses</span>
-                            <span class="stat-icon">🗃️</span>
-                        </div>
-                        <div class="stat-value">{{ formatHours(avgMonthlyLast12Seconds()) }}</div>
-                        <div class="stat-sub">por mês em média</div>
-                        <div class="stat-sparkline">
-                            @for (bar of monthlySparkline(); track bar.label) {
-                            <div class="spark-col">
-                                <div class="spark-bar" [style.height.%]="bar.percent || 4" [title]="bar.label + ': ' + formatHours(bar.seconds)"></div>
-                                <span class="spark-label">{{ bar.label }}</span>
-                            </div>
-                            }
-                        </div>
-                    </div>
                 </div>
 
             </div>
@@ -237,7 +236,8 @@
     <div class="modal" (click)="$event.stopPropagation()">
         <h3>Novo tipo de atividade</h3>
         <div class="modal-field"><label>Nome</label><input [(ngModel)]="newTypeName" placeholder="Ex.: Idiomas" /></div>
-        <div class="modal-field"><label>Ícone (emoji)</label><input [(ngModel)]="newTypeIcon" placeholder="Ex.: 🌍" maxlength="2" /></div>
+        <div class="modal-field"><label>Ícone (emoji)</label><input [(ngModel)]="newTypeIcon" placeholder="Ex.: 🌍"
+                maxlength="2" /></div>
         <div class="modal-field"><label>Cor</label><input type="color" [(ngModel)]="newTypeColor" /></div>
         <div class="modal-actions">
             <button class="btn-cancel" (click)="showAddType.set(false)">Cancelar</button>
@@ -252,8 +252,10 @@
 <div class="modal-overlay" (click)="showAddPreset.set(false)">
     <div class="modal" (click)="$event.stopPropagation()">
         <h3>Salvar preset</h3>
-        <div class="modal-field"><label>Minutos atuais</label><input type="number" [(ngModel)]="presetMinutesInput" min="1" max="480" /></div>
-        <div class="modal-field"><label>Label (ex.: "25 min")</label><input [(ngModel)]="presetLabel" placeholder="25 min" /></div>
+        <div class="modal-field"><label>Minutos atuais</label><input type="number" [(ngModel)]="presetMinutesInput"
+                min="1" max="480" /></div>
+        <div class="modal-field"><label>Label (ex.: "25 min")</label><input [(ngModel)]="presetLabel"
+                placeholder="25 min" /></div>
         <div class="modal-actions">
             <button class="btn-cancel" (click)="showAddPreset.set(false)">Cancelar</button>
             <button class="btn-confirm" (click)="addPreset()">Salvar</button>

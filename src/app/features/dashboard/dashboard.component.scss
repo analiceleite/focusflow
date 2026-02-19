@@ -254,7 +254,7 @@
 
 .dashboard-grid {
     display: grid;
-    grid-template-columns: 1fr 380px;  // Esquerda flexível, direita fixa
+    grid-template-columns: 1fr 380px; // Esquerda flexível, direita fixa
     gap: 1.5rem;
     align-items: start;
 
@@ -263,7 +263,7 @@
     }
 
     @media (max-width: 768px) {
-        grid-template-columns: 1fr;     // Coluna única em mobile
+        grid-template-columns: 1fr; // Coluna única em mobile
     }
 }
 
@@ -381,7 +381,10 @@
     gap: 0.4rem;
     min-width: 0;
 
-    .bar-icon { font-size: 0.95rem; flex-shrink: 0; }
+    .bar-icon {
+        font-size: 0.95rem;
+        flex-shrink: 0;
+    }
 
     .bar-name {
         color: var(--text-secondary);
@@ -447,9 +450,13 @@
         outline-offset: 1px;
     }
 
-    &.today.has-session { opacity: 1; }
+    &.today.has-session {
+        opacity: 1;
+    }
 
-    &:hover { transform: scale(1.3); }
+    &:hover {
+        transform: scale(1.3);
+    }
 }
 
 .calendar-legend {
@@ -466,8 +473,13 @@
         border-radius: 2px;
         margin-right: 4px;
 
-        &.empty  { background: var(--border-color); }
-        &.filled { background: var(--accent-primary); }
+        &.empty {
+            background: var(--border-color);
+        }
+
+        &.filled {
+            background: var(--accent-primary);
+        }
     }
 }
 
@@ -614,7 +626,9 @@
     align-items: center;
     gap: 0.75rem;
 
-    .empty-icon { font-size: 3rem; }
+    .empty-icon {
+        font-size: 3rem;
+    }
 
     p {
         color: var(--text-muted);
@@ -653,13 +667,25 @@
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to   { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 @keyframes modalIn {
-    from { opacity: 0; transform: scale(0.9) translateY(-20px); }
-    to   { opacity: 1; transform: scale(1) translateY(0); }
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
 }
 
 .delete-modal {

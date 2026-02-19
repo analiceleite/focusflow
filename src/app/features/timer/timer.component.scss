@@ -78,7 +78,7 @@
     }
 }
 
-// ─── Grid de duas colunas ─────────────────────────────────────────────────────
+// ─── Grid principal ───────────────────────────────────────────────────────────
 
 .timer-grid {
     display: grid;
@@ -86,8 +86,13 @@
     gap: 1.5rem;
     align-items: start;
 
-    @media (max-width: 1024px) { grid-template-columns: 1fr 320px; }
-    @media (max-width: 768px)  { grid-template-columns: 1fr; }
+    @media (max-width: 1024px) {
+        grid-template-columns: 1fr 320px;
+    }
+
+    @media (max-width: 768px) {
+        grid-template-columns: 1fr;
+    }
 }
 
 .col-timer {
@@ -100,7 +105,10 @@
     border-radius: 20px;
     padding: 2.5rem 2rem;
 
-    @media (max-width: 768px) { padding: 2rem 1.25rem; gap: 1.25rem; }
+    @media (max-width: 768px) {
+        padding: 2rem 1.25rem;
+        gap: 1.25rem;
+    }
 }
 
 .col-config {
@@ -110,7 +118,10 @@
     position: sticky;
     top: 1.5rem;
 
-    @media (max-width: 768px) { position: static; gap: 1rem; }
+    @media (max-width: 768px) {
+        position: static;
+        gap: 1rem;
+    }
 }
 
 // ─── Timer ring ───────────────────────────────────────────────────────────────
@@ -120,8 +131,15 @@
     width: 240px;
     height: 240px;
 
-    @media (max-width: 1024px) { width: 210px; height: 210px; }
-    @media (max-width: 480px)  { width: 190px; height: 190px; }
+    @media (max-width: 1024px) {
+        width: 210px;
+        height: 210px;
+    }
+
+    @media (max-width: 480px) {
+        width: 190px;
+        height: 190px;
+    }
 }
 
 .timer-ring {
@@ -129,7 +147,12 @@
     height: 100%;
     transform: rotate(-90deg);
 
-    .ring-bg { fill: none; stroke: var(--border-color); stroke-width: 8; }
+    .ring-bg {
+        fill: none;
+        stroke: var(--border-color);
+        stroke-width: 8;
+    }
+
     .ring-progress {
         fill: none;
         stroke-width: 8;
@@ -156,11 +179,20 @@
         letter-spacing: -1.5px;
         font-variant-numeric: tabular-nums;
 
-        @media (max-width: 1024px) { font-size: 2.6rem; }
-        @media (max-width: 480px)  { font-size: 2.25rem; }
+        @media (max-width: 1024px) {
+            font-size: 2.6rem;
+        }
+
+        @media (max-width: 480px) {
+            font-size: 2.25rem;
+        }
     }
 
-    .timer-sub { color: var(--text-muted); font-size: 0.75rem; letter-spacing: 0.3px; }
+    .timer-sub {
+        color: var(--text-muted);
+        font-size: 0.75rem;
+        letter-spacing: 0.3px;
+    }
 }
 
 // ─── Controles ────────────────────────────────────────────────────────────────
@@ -171,7 +203,10 @@
     flex-wrap: wrap;
     justify-content: center;
 
-    @media (max-width: 480px) { flex-direction: column; width: 100%; }
+    @media (max-width: 480px) {
+        flex-direction: column;
+        width: 100%;
+    }
 }
 
 .btn-main {
@@ -185,10 +220,21 @@
     cursor: pointer;
     transition: all 0.2s;
 
-    &:hover { filter: brightness(1.1); transform: translateY(-1px); }
-    &.btn-pause { background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color); }
+    &:hover {
+        filter: brightness(1.1);
+        transform: translateY(-1px);
+    }
 
-    @media (max-width: 480px) { width: 100%; padding: 0.75rem; }
+    &.btn-pause {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
+    }
+
+    @media (max-width: 480px) {
+        width: 100%;
+        padding: 0.75rem;
+    }
 }
 
 .btn-secondary {
@@ -201,8 +247,15 @@
     cursor: pointer;
     transition: all 0.2s;
 
-    &:hover { border-color: var(--accent-success); color: var(--accent-success); }
-    @media (max-width: 480px) { width: 100%; padding: 0.75rem; }
+    &:hover {
+        border-color: var(--accent-success);
+        color: var(--accent-success);
+    }
+
+    @media (max-width: 480px) {
+        width: 100%;
+        padding: 0.75rem;
+    }
 }
 
 .btn-tertiary {
@@ -215,8 +268,15 @@
     cursor: pointer;
     transition: all 0.2s;
 
-    &:hover { background: rgba(255, 107, 107, 0.08); transform: translateY(-1px); }
-    @media (max-width: 480px) { width: 100%; padding: 0.75rem; }
+    &:hover {
+        background: rgba(255, 107, 107, 0.08);
+        transform: translateY(-1px);
+    }
+
+    @media (max-width: 480px) {
+        width: 100%;
+        padding: 0.75rem;
+    }
 }
 
 .btn-pip {
@@ -229,8 +289,16 @@
     cursor: pointer;
     transition: all 0.2s;
 
-    &:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
-    &.pip-active { border-color: var(--accent-error); color: var(--accent-error); border-style: solid; }
+    &:hover {
+        border-color: var(--accent-primary);
+        color: var(--accent-primary);
+    }
+
+    &.pip-active {
+        border-color: var(--accent-error);
+        color: var(--accent-error);
+        border-style: solid;
+    }
 }
 
 .save-banner {
@@ -246,13 +314,24 @@
 }
 
 @keyframes slideIn {
-    from { opacity: 0; transform: translateY(8px); }
-    to   { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
-// ─── Sections (col-config) ────────────────────────────────────────────────────
+// ─── Sections col-config ──────────────────────────────────────────────────────
 
-.section { display: flex; flex-direction: column; gap: 0.75rem; }
+.section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
 
 .section-label {
     color: var(--text-muted);
@@ -262,7 +341,11 @@
     letter-spacing: 0.8px;
 }
 
-.activity-grid { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.activity-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
 
 .activity-chip {
     display: flex;
@@ -277,20 +360,60 @@
     font-size: 0.875rem;
     transition: all 0.2s;
 
-    &.selected { background: color-mix(in srgb, var(--color) 15%, transparent); border-color: var(--color); color: var(--color); font-weight: 600; }
-    &:hover:not(.selected):not(.disabled) { border-color: var(--text-disabled); color: var(--text-secondary); }
-    &.disabled:not(.selected) { opacity: 0.4; cursor: not-allowed; }
+    &.selected {
+        background: color-mix(in srgb, var(--color) 15%, transparent);
+        border-color: var(--color);
+        color: var(--color);
+        font-weight: 600;
+    }
 
-    .chip-name { font-size: 0.8rem; }
+    &:hover:not(.selected):not(.disabled) {
+        border-color: var(--text-disabled);
+        color: var(--text-secondary);
+    }
 
-    .activity-delete { display: inline-flex; margin-left: 0.3rem; color: var(--text-muted); font-size: 1rem; line-height: 1; opacity: 0; transition: opacity 0.15s; }
-    &:hover .activity-delete { opacity: 1; }
-    .activity-delete:hover { color: var(--accent-error); }
+    &.disabled:not(.selected) {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+
+    .chip-name {
+        font-size: 0.8rem;
+    }
+
+    .activity-delete {
+        display: inline-flex;
+        margin-left: 0.3rem;
+        color: var(--text-muted);
+        font-size: 1rem;
+        line-height: 1;
+        opacity: 0;
+        transition: opacity 0.15s;
+    }
+
+    &:hover .activity-delete {
+        opacity: 1;
+    }
+
+    .activity-delete:hover {
+        color: var(--accent-error);
+    }
 }
 
-.add-chip { border-style: dashed; &:hover { border-color: var(--accent-primary); color: var(--accent-primary); } }
+.add-chip {
+    border-style: dashed;
 
-.presets-row { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    &:hover {
+        border-color: var(--accent-primary);
+        color: var(--accent-primary);
+    }
+}
+
+.presets-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
 
 .preset-chip {
     position: relative;
@@ -303,15 +426,44 @@
     font-size: 0.825rem;
     transition: all 0.2s;
 
-    &.active { border-color: var(--accent-primary); color: var(--accent-primary); background: color-mix(in srgb, var(--accent-primary) 8%, transparent); }
-    &:hover:not(.active):not(.preset-add) { border-color: var(--text-disabled); color: var(--text-secondary); }
+    &.active {
+        border-color: var(--accent-primary);
+        color: var(--accent-primary);
+        background: color-mix(in srgb, var(--accent-primary) 8%, transparent);
+    }
 
-    .preset-delete { display: inline-flex; margin-left: 0.35rem; color: var(--text-muted); font-size: 0.9rem; line-height: 1; opacity: 0; transition: opacity 0.15s; }
-    &:hover .preset-delete { opacity: 1; }
-    .preset-delete:hover { color: var(--accent-error); }
+    &:hover:not(.active):not(.preset-add) {
+        border-color: var(--text-disabled);
+        color: var(--text-secondary);
+    }
+
+    .preset-delete {
+        display: inline-flex;
+        margin-left: 0.35rem;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        line-height: 1;
+        opacity: 0;
+        transition: opacity 0.15s;
+    }
+
+    &:hover .preset-delete {
+        opacity: 1;
+    }
+
+    .preset-delete:hover {
+        color: var(--accent-error);
+    }
 }
 
-.preset-add { border-style: dashed; &:hover { border-color: var(--accent-primary); color: var(--accent-primary); } }
+.preset-add {
+    border-style: dashed;
+
+    &:hover {
+        border-color: var(--accent-primary);
+        color: var(--accent-primary);
+    }
+}
 
 .custom-time {
     display: flex;
@@ -328,8 +480,13 @@
         outline: none;
         transition: border-color 0.2s;
 
-        &:focus { border-color: var(--accent-primary); }
-        &::placeholder { color: var(--text-disabled); }
+        &:focus {
+            border-color: var(--accent-primary);
+        }
+
+        &::placeholder {
+            color: var(--text-disabled);
+        }
     }
 
     button {
@@ -343,7 +500,10 @@
         transition: all 0.2s;
         white-space: nowrap;
 
-        &:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
+        &:hover {
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+        }
     }
 }
 
@@ -352,69 +512,48 @@
 .stats-panel {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 0.75rem;
 }
 
-.stats-panel-header {
-    display: flex;
-    align-items: center;
-}
-
-// Grid de 4 grupos lado a lado
+// 4 colunas: 3 cards grandes + 1 coluna de médias
+// A coluna de médias ocupa o mesmo espaço que um card grande
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr) 1fr;
     gap: 1rem;
+    align-items: stretch; // garante que a última coluna estique até a altura dos outros
 
-    @media (max-width: 1100px) { grid-template-columns: repeat(2, 1fr); }
-    @media (max-width: 560px)  { grid-template-columns: 1fr; }
+    @media (max-width: 1100px) {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    @media (max-width: 560px) {
+        grid-template-columns: 1fr;
+    }
 }
 
-// Grupo (label + um ou mais cards)
-.stats-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
+// ─── Card base (os 3 grandes) ─────────────────────────────────────────────────
 
-.stats-group-label {
-    font-size: 0.7rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.9px;
-    color: var(--text-disabled);
-    padding-left: 0.1rem;
-}
-
-// Card base
 .stat-card {
     background: var(--bg-tertiary);
     border: 1px solid var(--border-color);
     border-radius: 14px;
-    padding: 1rem 1.1rem;
+    padding: 1.1rem 1.25rem;
     display: flex;
     flex-direction: column;
-    gap: 0.4rem;
+    gap: 0.35rem;
     transition: border-color 0.2s;
 
-    &:hover { border-color: color-mix(in srgb, var(--accent-primary) 40%, var(--border-color)); }
-}
-
-// Card pequeno (par lado a lado)
-.stat-row-pair {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.5rem;
-}
-
-.stat-card-sm {
-    padding: 0.75rem 0.875rem;
+    &:hover {
+        border-color: color-mix(in srgb, var(--accent-primary) 35%, var(--border-color));
+    }
 }
 
 .stat-card-top {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    margin-bottom: 0.1rem;
 }
 
 .stat-label {
@@ -427,22 +566,21 @@
 
 .stat-icon {
     font-size: 1rem;
-    opacity: 0.7;
+    opacity: 0.65;
 }
 
 .stat-value {
-    font-size: 1.6rem;
+    font-size: 1.75rem;
     font-weight: 700;
     color: var(--text-primary);
     letter-spacing: -0.5px;
     line-height: 1;
-
-    .stat-card-sm & { font-size: 1.2rem; }
 }
 
 .stat-sub {
     font-size: 0.7rem;
     color: var(--text-disabled);
+    margin-bottom: 0.25rem;
 }
 
 // ─── Sparkline ────────────────────────────────────────────────────────────────
@@ -451,9 +589,9 @@
     display: flex;
     align-items: flex-end;
     gap: 3px;
-    height: 44px;
-    margin-top: 0.25rem;
-    padding-top: 4px;
+    height: 40px;
+    margin-top: auto; // empurra para o fundo do card, alinhando os 3 cards visualmente
+    padding-top: 6px;
 }
 
 .spark-col {
@@ -465,7 +603,6 @@
     gap: 3px;
     height: 100%;
 
-    // Destaque para coluna de hoje
     &.today .spark-bar {
         background: var(--accent-primary);
         opacity: 1;
@@ -475,16 +612,16 @@
 .spark-bar {
     width: 100%;
     min-height: 3px;
-    max-height: 28px;
+    max-height: 24px;
     background: var(--border-color);
     border-radius: 2px 2px 0 0;
-    opacity: 0.6;
-    transition: height 0.4s ease, background 0.2s;
+    opacity: 0.55;
+    transition: height 0.4s ease, background 0.2s, opacity 0.2s;
     cursor: default;
 
     .spark-col:hover & {
         opacity: 1;
-        background: color-mix(in srgb, var(--accent-primary) 60%, var(--border-color));
+        background: color-mix(in srgb, var(--accent-primary) 55%, var(--border-color));
     }
 
     .spark-col.today:hover & {
@@ -493,7 +630,7 @@
 }
 
 .spark-label {
-    font-size: 0.6rem;
+    font-size: 0.58rem;
     color: var(--text-disabled);
     white-space: nowrap;
     line-height: 1;
@@ -502,6 +639,47 @@
         color: var(--accent-primary);
         font-weight: 600;
     }
+}
+
+// ─── Coluna de médias (4ª coluna) ─────────────────────────────────────────────
+
+.stat-averages-col {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    // Estica para preencher exatamente a altura dos 3 cards grandes
+    align-self: stretch;
+}
+
+// Os 3 mini-cards dividem igualmente a altura da coluna
+.stat-card-avg {
+    flex: 1; // cada um ocupa 1/3 da coluna
+    padding: 0.75rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    min-height: 0; // permite que o flex comprima corretamente
+}
+
+.stat-value-row {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
+
+.stat-value-sm {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.3px;
+    line-height: 1;
+}
+
+.stat-value-hint {
+    font-size: 0.68rem;
+    color: var(--text-disabled);
+    white-space: nowrap;
 }
 
 // ─── Modais ───────────────────────────────────────────────────────────────────
@@ -519,13 +697,25 @@
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to   { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 @keyframes modalIn {
-    from { opacity: 0; transform: scale(0.92) translateY(-16px); }
-    to   { opacity: 1; transform: scale(1) translateY(0); }
+    from {
+        opacity: 0;
+        transform: scale(0.92) translateY(-16px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
 }
 
 .modal {
@@ -538,15 +728,31 @@
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
     animation: modalIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 
-    @media (max-width: 480px) { max-width: calc(100vw - 2rem); padding: 1.5rem; }
+    @media (max-width: 480px) {
+        max-width: calc(100vw - 2rem);
+        padding: 1.5rem;
+    }
 
-    h3 { color: var(--text-primary); margin: 0 0 1.25rem; font-size: 1.1rem; font-weight: 600; }
+    h3 {
+        color: var(--text-primary);
+        margin: 0 0 1.25rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
 }
 
 .modal-field {
     margin-bottom: 1rem;
 
-    label { display: block; color: var(--text-muted); font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.4rem; }
+    label {
+        display: block;
+        color: var(--text-muted);
+        font-size: 0.72rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.4rem;
+    }
 
     input {
         width: 100%;
@@ -560,12 +766,23 @@
         box-sizing: border-box;
         transition: border-color 0.2s;
 
-        &:focus { border-color: var(--accent-primary); }
-        &[type="color"] { height: 42px; padding: 2px; cursor: pointer; }
+        &:focus {
+            border-color: var(--accent-primary);
+        }
+
+        &[type="color"] {
+            height: 42px;
+            padding: 2px;
+            cursor: pointer;
+        }
     }
 }
 
-.modal-actions { display: flex; gap: 0.75rem; margin-top: 1.25rem; }
+.modal-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+}
 
 .btn-cancel {
     flex: 1;
@@ -578,7 +795,10 @@
     font-size: 0.875rem;
     transition: all 0.2s;
 
-    &:hover { border-color: var(--text-disabled); color: var(--text-secondary); }
+    &:hover {
+        border-color: var(--text-disabled);
+        color: var(--text-secondary);
+    }
 }
 
 .btn-confirm {
@@ -593,5 +813,7 @@
     cursor: pointer;
     transition: all 0.2s;
 
-    &:hover { filter: brightness(1.1); }
+    &:hover {
+        filter: brightness(1.1);
+    }
 }
