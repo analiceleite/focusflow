@@ -1,6 +1,5 @@
 <div class="app-shell">
     <app-navbar></app-navbar>
-    <app-theme-toggle></app-theme-toggle>
 
     <main class="main">
 
@@ -10,8 +9,10 @@
 
             <div class="filter-bar">
                 <div class="view-mode-tabs">
-                    <button [class.active]="viewMode() === 'quick'" (click)="switchToQuickView()" class="mode-tab">Rápido</button>
-                    <button [class.active]="viewMode() === 'custom'" (click)="switchToCustomView()" class="mode-tab">Personalizado</button>
+                    <button [class.active]="viewMode() === 'quick'" (click)="switchToQuickView()"
+                        class="mode-tab">Rápido</button>
+                    <button [class.active]="viewMode() === 'custom'" (click)="switchToCustomView()"
+                        class="mode-tab">Personalizado</button>
                 </div>
 
                 @if (viewMode() === 'quick') {
@@ -26,17 +27,22 @@
                 @if (viewMode() === 'custom') {
                 <div class="custom-filters">
                     <div class="period-type-selector">
-                        <button [class.active]="dateFilterType() === 'day'" (click)="dateFilterType.set('day')" class="period-btn">Dia</button>
-                        <button [class.active]="dateFilterType() === 'week'" (click)="dateFilterType.set('week')" class="period-btn">Semana</button>
-                        <button [class.active]="dateFilterType() === 'month'" (click)="dateFilterType.set('month')" class="period-btn">Mês</button>
+                        <button [class.active]="dateFilterType() === 'day'" (click)="dateFilterType.set('day')"
+                            class="period-btn">Dia</button>
+                        <button [class.active]="dateFilterType() === 'week'" (click)="dateFilterType.set('week')"
+                            class="period-btn">Semana</button>
+                        <button [class.active]="dateFilterType() === 'month'" (click)="dateFilterType.set('month')"
+                            class="period-btn">Mês</button>
                     </div>
                     <div class="date-navigation">
                         <button (click)="goToPreviousPeriod()" class="nav-btn" title="Período anterior">‹</button>
                         <label class="date-display" title="Clique para escolher uma data">
                             {{ formatPeriodTitle() }}
-                            <input type="date" [value]="selectedDate()" (input)="selectedDate.set($any($event.target).value)" class="date-picker-hidden">
+                            <input type="date" [value]="selectedDate()"
+                                (input)="selectedDate.set($any($event.target).value)" class="date-picker-hidden">
                         </label>
-                        <button (click)="goToNextPeriod()" class="nav-btn" title="Próximo período" [disabled]="isNextPeriodDisabled()">›</button>
+                        <button (click)="goToNextPeriod()" class="nav-btn" title="Próximo período"
+                            [disabled]="isNextPeriodDisabled()">›</button>
                         <div class="nav-divider"></div>
                         <button (click)="selectedDate.set(getLocalDateString())" class="today-btn">Hoje</button>
                     </div>
@@ -92,7 +98,8 @@
                             </div>
                             <span class="session-duration">{{ formatDuration(session.durationSeconds) }}</span>
                             <span class="session-mode">{{ session.mode === 'pomodoro' ? '🍅' : '⏰' }}</span>
-                            <span class="session-delete" (click)="deleteSession(session.id!)" title="Excluir sessão">×</span>
+                            <span class="session-delete" (click)="deleteSession(session.id!)"
+                                title="Excluir sessão">×</span>
                         </div>
                         }
                     </div>
@@ -127,9 +134,7 @@
                     </div>
                     <div class="calendar-grid">
                         @for (day of calendarDays(); track day.date) {
-                        <div class="cal-day"
-                            [class.has-session]="day.hasSession"
-                            [class.today]="day.isToday"
+                        <div class="cal-day" [class.has-session]="day.hasSession" [class.today]="day.isToday"
                             [title]="day.date + (day.seconds > 0 ? (' — ' + formatDuration(day.seconds)) : '')">
                         </div>
                         }
@@ -156,8 +161,7 @@
                                 <span class="bar-time">{{ formatDuration(stat.totalSeconds) }}</span>
                             </div>
                             <div class="bar-track">
-                                <div class="bar-fill"
-                                    [style.width.%]="getBarPercent(stat.totalSeconds)"
+                                <div class="bar-fill" [style.width.%]="getBarPercent(stat.totalSeconds)"
                                     [style.background]="stat.color">
                                 </div>
                             </div>

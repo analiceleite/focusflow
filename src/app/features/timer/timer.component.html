@@ -1,13 +1,12 @@
 <div class="app-shell">
     <app-navbar></app-navbar>
-    <app-theme-toggle></app-theme-toggle>
     <app-toast></app-toast>
 
     <main class="main">
 
         <!-- Header -->
         <header class="header">
-            <h2>Timer</h2>
+            <h2>⏰ Timer</h2>
             <div class="mode-toggle">
                 <button [class.active]="timerSvc.mode() === 'pomodoro'" (click)="setMode('pomodoro')">🍅
                     Pomodoro</button>

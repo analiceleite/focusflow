@@ -13,7 +13,7 @@
     bottom: 0;
     z-index: 10;
     transition: all 0.3s ease;
-    
+
     // Mobile styles - bottom navigation
     @media (max-width: 768px) {
         width: 100%;
@@ -35,7 +35,7 @@
 .sidebar-logo {
     font-size: 1.5rem;
     margin-bottom: 1rem;
-    
+
     @media (max-width: 768px) {
         display: none;
     }
@@ -63,7 +63,7 @@
         background: var(--bg-secondary);
         color: var(--text-primary);
     }
-    
+
     @media (max-width: 768px) {
         width: auto;
         height: auto;
@@ -71,7 +71,7 @@
         padding: 0.25rem;
         gap: 0.125rem;
         border-radius: 8px;
-        
+
         &.active {
             color: var(--accent-primary);
             background: transparent;
@@ -86,7 +86,7 @@
         width: 28px;
         height: 28px;
     }
-    
+
     @media (max-width: 768px) {
         font-size: 1.1rem;
     }
@@ -94,7 +94,7 @@
 
 .nav-label {
     display: none;
-    
+
     @media (max-width: 768px) {
         display: block;
         font-size: 0.65rem;
@@ -112,18 +112,44 @@
         color: var(--accent-error);
         background: rgba(255, 101, 132, 0.1);
     }
-    
+
     @media (max-width: 768px) {
         margin-top: 0;
         position: absolute;
         right: 1rem;
-        
+
         .nav-label {
             display: none;
         }
-        
+
         .nav-icon {
             font-size: 1.1rem;
         }
+    }
+}
+
+/* Positioning for theme toggle when inside the sidebar */
+.theme-toggle {
+    margin: 0.5rem 0 1rem 0;
+    width: 44px;
+    height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: transparent;
+    color: var(--text-muted);
+    border: none;
+    cursor: pointer;
+}
+
+@media (max-width: 768px) {
+    .theme-toggle {
+        margin: 0 0.5rem;
+        width: auto;
+        height: auto;
+        min-width: 44px;
+        padding: 0.25rem;
+        border-radius: 8px;
     }
 }
