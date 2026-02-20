@@ -303,6 +303,7 @@ export class TimerComponent implements OnInit, OnDestroy {
     this.ensureAudioReady();
     this.selectedType.set(type);
     this.saveSelectedActivity(type);
+    if (this.pipSvc.active) this.pipSvc.updateActivity(type.color, type.name);
   }
 
   setMode(mode: TimerMode): void {
@@ -334,6 +335,7 @@ export class TimerComponent implements OnInit, OnDestroy {
     this.currentCycleSaved = false;
     this.lastTimerState = 'idle';
     this.saveCurrentCycleActivity(this.currentCycleActivity!);
+    if (this.pipSvc.active && this.currentCycleActivity) this.pipSvc.updateActivity(this.currentCycleActivity.color, this.currentCycleActivity.name);
     if (!this.isAppVisible) this.acquireWakeLock();
     this.timerSvc.start();
   }
@@ -392,7 +394,11 @@ export class TimerComponent implements OnInit, OnDestroy {
   }
 
   async togglePip(): Promise<void> {
-    try { await this.pipSvc.toggle(this.selectedType()?.color ?? '#6C63FF'); } catch (err) { console.error(err); }
+    try {
+      await this.pipSvc.toggle(this.selectedType()?.color ?? '#6C63FF', this.selectedType()?.name ?? '');
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   // ─── Save helpers ─────────────────────────────────────────────────────────

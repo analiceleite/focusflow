@@ -8,8 +8,13 @@ Personal productivity timer focused on consistency and clarity.
 ## Timer screen
 ![Timer](./src/assets/demo/timer.png)
 
+
 ## Statistics screen
 ![Statistics](./src/assets/demo/stats.png)
+
+## Picture and picture preview
+
+![Picture and Picture](./src/assets/demo/pip-demo.png)
 
 ---
 
