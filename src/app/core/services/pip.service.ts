@@ -362,7 +362,7 @@ export class PipService {
     // Inner circle fill
     ctx.beginPath();
     ctx.arc(cx, cy, r - 4, 0, TAU);
-    ctx.fillStyle = this.hexToRgba(color, theme.glow ? 0.08 : 0.05);
+    ctx.fillStyle = this.hexToRgba(color, theme.glow ? 0.28 : 0.22);
     ctx.fill();
 
     // Animated second hand when running
@@ -376,23 +376,6 @@ export class PipService {
       ctx.lineWidth = 2;
       ctx.lineCap = 'round';
       ctx.stroke();
-
-      // Pulse ring when running
-      const sinceLastPulse = now - this.lastPulseTime;
-      if (sinceLastPulse > 2000 || this.lastPulseTime === 0) {
-        this.pulseRadius = r - 4;
-        this.pulseAlpha = 0.5;
-        this.lastPulseTime = now;
-      }
-      if (this.pulseAlpha > 0) {
-        ctx.beginPath();
-        ctx.arc(cx, cy, this.pulseRadius, 0, TAU);
-        ctx.strokeStyle = this.hexToRgba(color, this.pulseAlpha);
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-        this.pulseRadius += 0.8;
-        this.pulseAlpha -= 0.008;
-      }
     }
 
     // Center icon
