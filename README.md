@@ -23,6 +23,15 @@ Personal productivity timer focused on consistency and clarity.
 - Animated progress bar
 - Notification sound at Pomodoro completion
 - Picture-in-Picture — floating mini window with time and progress while using other applications
+- Detailed statistics displayed in the timer view, including:
+	- Current focus data:
+		- Hours focused today
+		- Hours focused in the last 7 days
+		- Hours focused in the last 30 days
+	- Averages and trends:
+		- Daily average (last 7 days)
+		- Weekly average (last 4 weeks / 28 days)
+		- Monthly average (last 12 months)
 
 **Activity Types**
 - Default types: Study, Work, Exercise, Reading, Meditation, Personal Project
@@ -99,7 +108,7 @@ serve dist/focusflow/browser
 - Daily streak tracking with personal records
 - Interactive calendar heatmap (70-day history)
 - Session statistics with averages and totals
-- Time period filtering (7d, 30d, all time)
+- Time period filtering (today, 7d, 30d, all time)
 
 ### 🖼️ **Picture-in-Picture**
 - Ultra-compact floating timer (110x120px)
