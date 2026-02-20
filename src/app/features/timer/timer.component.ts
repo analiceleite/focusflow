@@ -46,9 +46,9 @@ export class TimerComponent implements OnInit, OnDestroy {
     const availableTypes = this.activityTypes();
 
     if (currentState === 'finished' &&
-        this.lastTimerState !== 'finished' &&
-        !this.currentCycleSaved &&
-        availableTypes.length > 0) {
+      this.lastTimerState !== 'finished' &&
+      !this.currentCycleSaved &&
+      availableTypes.length > 0) {
       this.ensureValidActivityForSave(availableTypes);
       this.currentCycleSaved = true;
       this.saveCurrentSessionSilently().then((saved) => {
@@ -316,21 +316,13 @@ export class TimerComponent implements OnInit, OnDestroy {
   }
 
   stopTimer(): void {
-    const elapsed = this.timerSvc.elapsedSeconds();
-    const state = this.timerSvc.state();
-    if ((state === 'running' || state === 'paused') && elapsed > 0) {
-      if (elapsed >= 60) {
-        this.toastService.show('warning', `Você tem ${this.formatDuration(elapsed)} de atividade. Clique em "Salvar" antes de parar.`, 8000);
-      } else {
-        this.toastService.warning(`Timer parado. Sessão de ${elapsed}s muito curta para ser salva.`, 3000);
-      }
-    }
     this.currentCycleSaved = false;
     this.currentCycleActivity = null;
     this.clearCurrentCycleActivity();
     this.lastTimerState = 'idle';
     this.releaseWakeLock();
     this.timerSvc.stop();
+    this.toastService.info('Timer descartado.', 2000);
   }
 
   startTimer(): void {
@@ -348,15 +340,28 @@ export class TimerComponent implements OnInit, OnDestroy {
 
   stopAndSave(): void {
     this.ensureAudioReady();
-    if (!this.currentCycleActivity) this.currentCycleActivity = this.selectedType();
+    this.currentCycleActivity ??= this.selectedType();
+    const elapsed = this.timerSvc.elapsedSeconds();
+
+    if (elapsed < 60) {
+      this.toastService.info('Sessão muito curta, continuando o timer.', 3000);
+      return;
+    }
+
     if (!this.currentCycleSaved) {
       this.currentCycleSaved = true;
       this.saveCurrentSession().then(() => {
         this.currentCycleActivity = null;
         this.clearCurrentCycleActivity();
+        this.resetAfterCompletion();
       });
     }
     this.timerSvc.stop();
+  }
+
+  discardTimer(): void {
+    this.stopTimer();
+    this.resetAfterCompletion();
   }
 
   pauseTimer(): void { this.ensureAudioReady(); this.timerSvc.pause(); }
@@ -463,7 +468,7 @@ export class TimerComponent implements OnInit, OnDestroy {
         const match = this.activityTypes().find(t => t.id === sa.id || (t.name === sa.name && t.color === sa.color));
         if (match) this.currentCycleActivity = match;
       }
-    } catch {}
+    } catch { }
   }
 
   private ensureValidActivityForSave(availableTypes: ActivityType[]): void {
@@ -481,7 +486,7 @@ export class TimerComponent implements OnInit, OnDestroy {
   }
 
   private saveSelectedActivity(activity: ActivityType): void {
-    try { localStorage.setItem(this.SELECTED_ACTIVITY_KEY, JSON.stringify({ id: activity.id, name: activity.name, icon: activity.icon, color: activity.color })); } catch {}
+    try { localStorage.setItem(this.SELECTED_ACTIVITY_KEY, JSON.stringify({ id: activity.id, name: activity.name, icon: activity.icon, color: activity.color })); } catch { }
   }
 
   private restoreSelectedActivity(availableTypes: ActivityType[]): void {
@@ -493,7 +498,7 @@ export class TimerComponent implements OnInit, OnDestroy {
         const match = availableTypes.find(t => t.id === sa.id || (t.name === sa.name && t.color === sa.color));
         if (match) { this.selectedType.set(match); this.ensureCurrentCycleActivity(); return; }
       }
-    } catch {}
+    } catch { }
     if (availableTypes.length > 0) { this.selectedType.set(availableTypes[0]); this.saveSelectedActivity(availableTypes[0]); this.ensureCurrentCycleActivity(); }
   }
 
@@ -509,11 +514,11 @@ export class TimerComponent implements OnInit, OnDestroy {
   }
 
   private saveCurrentCycleActivity(activity: ActivityType): void {
-    try { localStorage.setItem(this.CYCLE_ACTIVITY_KEY, JSON.stringify({ id: activity.id, name: activity.name, icon: activity.icon, color: activity.color })); } catch {}
+    try { localStorage.setItem(this.CYCLE_ACTIVITY_KEY, JSON.stringify({ id: activity.id, name: activity.name, icon: activity.icon, color: activity.color })); } catch { }
   }
 
   private clearCurrentCycleActivity(): void {
-    try { localStorage.removeItem(this.CYCLE_ACTIVITY_KEY); } catch {}
+    try { localStorage.removeItem(this.CYCLE_ACTIVITY_KEY); } catch { }
   }
 
   // ─── Background features ──────────────────────────────────────────────────
@@ -538,7 +543,7 @@ export class TimerComponent implements OnInit, OnDestroy {
         return;
       }
       if (perm === 'denied' && !ackShown) { localStorage.setItem(this.NOTIFICATION_ACK_KEY, '1'); this.toastService.warning('Permita notificações para ser avisado em segundo plano.', 6000); }
-    } catch {}
+    } catch { }
   }
 
   private setupVisibilityListener(): void {
@@ -560,16 +565,16 @@ export class TimerComponent implements OnInit, OnDestroy {
     try {
       this.wakeLock = await navigator.wakeLock!.request('screen');
       this.wakeLock.addEventListener('release', () => { this.wakeLock = null; });
-    } catch {}
+    } catch { }
   }
 
   private async releaseWakeLock(): Promise<void> {
-    if (this.wakeLock) { try { await this.wakeLock.release(); this.wakeLock = null; } catch {} }
+    if (this.wakeLock) { try { await this.wakeLock.release(); this.wakeLock = null; } catch { } }
   }
 
   private async registerNotificationServiceWorker(): Promise<void> {
     if (!('serviceWorker' in navigator)) return;
-    try { await navigator.serviceWorker.register('/notification-sw.js', { scope: '/' }); } catch {}
+    try { await navigator.serviceWorker.register('/notification-sw.js', { scope: '/' }); } catch { }
   }
 
   private showCompletionNotification(): void {
@@ -590,7 +595,7 @@ export class TimerComponent implements OnInit, OnDestroy {
     try {
       if (!this.audioContext) this.initializeAudioContext();
       if (!this.audioContext) return false;
-      if (this.audioContext.state === 'suspended') this.audioContext.resume().then(() => this.playWebAudioBeep()).catch(() => {});
+      if (this.audioContext.state === 'suspended') this.audioContext.resume().then(() => this.playWebAudioBeep()).catch(() => { });
       else this.playWebAudioBeep();
       return true;
     } catch { return false; }
@@ -635,7 +640,7 @@ export class TimerComponent implements OnInit, OnDestroy {
   }
 
   private tryVibrationFallback(): void {
-    if ('vibrate' in navigator) { try { navigator.vibrate([200, 100, 200, 100, 200]); } catch {} }
+    if ('vibrate' in navigator) { try { navigator.vibrate([200, 100, 200, 100, 200]); } catch { } }
   }
 
   private initializeAudioContext(): void {
@@ -645,7 +650,7 @@ export class TimerComponent implements OnInit, OnDestroy {
   private ensureAudioReady(): void {
     if (!this.audioInitialized) {
       if (!this.audioContext) this.initializeAudioContext();
-      if (this.audioContext && this.audioContext.state === 'suspended') this.audioContext.resume().then(() => { this.audioInitialized = true; }).catch(() => {});
+      if (this.audioContext && this.audioContext.state === 'suspended') this.audioContext.resume().then(() => { this.audioInitialized = true; }).catch(() => { });
       else this.audioInitialized = true;
     }
   }
@@ -667,6 +672,6 @@ export class TimerComponent implements OnInit, OnDestroy {
     try {
       const n = new Notification(title, { body, icon, badge: icon, tag: 'timer-complete', requireInteraction: true, silent: false });
       n.onclick = () => { if (window.focus) window.focus(); };
-    } catch {}
+    } catch { }
   }
 }
