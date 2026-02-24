@@ -347,7 +347,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
     } else if (this.dateFilterType() === 'month') {
       currentDate.setMonth(currentDate.getMonth() - 1);
     }
-    this.selectedDate.set(this.getLocalDateString(currentDate));
+    const newDate = this.getLocalDateString(currentDate);
+    this.selectedDate.set(newDate);
+    this.syncCalendarSelection(newDate);
   }
 
   goToNextPeriod(): void {
@@ -360,7 +362,57 @@ export class DashboardComponent implements OnInit, OnDestroy {
     } else if (this.dateFilterType() === 'month') {
       currentDate.setMonth(currentDate.getMonth() + 1);
     }
-    this.selectedDate.set(this.getLocalDateString(currentDate));
+    const newDate = this.getLocalDateString(currentDate);
+    this.selectedDate.set(newDate);
+    this.syncCalendarSelection(newDate);
+  }
+
+  // Botão "Hoje"  — no HTML você chama esse método em vez do set inline
+  goToToday(): void {
+    const today = this.getLocalDateString();
+    this.selectedCalendarDates.set(new Set());  // limpa seleção anterior
+    this.selectedDate.set(today);
+    this.viewMode.set('quick');                  // volta pro modo rápido
+    this.period.set('today');                    // marca "Hoje" como ativo
+  }
+
+  // Input de data manual
+  onDatePickerInput(value: string): void {
+    const first = this.firstSessionDate() ?? '';
+    if (first !== '' && value < first) return;
+    this.selectedDate.set(value);
+    this.syncCalendarSelection(value);
+  }
+
+  private syncCalendarSelection(anchorDate: string): void {
+    const filterType = this.dateFilterType();
+    const allDays = this.calendarDays().map(d => d.date);
+
+    if (filterType === 'day') {
+      // Só o dia exato
+      this.selectedCalendarDates.set(new Set([anchorDate]));
+
+    } else if (filterType === 'week') {
+      const anchor = this.parseLocalDate(anchorDate);
+      const startOfWeek = new Date(anchor);
+      startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(endOfWeek.getDate() + 6);
+      const startStr = this.getLocalDateString(startOfWeek);
+      const endStr = this.getLocalDateString(endOfWeek);
+      const range = allDays.filter(d => d >= startStr && d <= endStr);
+      this.selectedCalendarDates.set(new Set(range));
+
+    } else if (filterType === 'month') {
+      const anchor = this.parseLocalDate(anchorDate);
+      const year = anchor.getFullYear();
+      const month = anchor.getMonth();
+      const range = allDays.filter(d => {
+        const date = this.parseLocalDate(d);
+        return date.getFullYear() === year && date.getMonth() === month;
+      });
+      this.selectedCalendarDates.set(new Set(range));
+    }
   }
 
   formatPeriodTitle(): string {

@@ -17,8 +17,7 @@
 
                 @if (viewMode() === 'quick') {
                 <div class="quick-filters">
-                    <button [class.active]="period() === 'today'"
-                        (click)="setPeriodAndClearCalendarSelection('today')">Hoje</button>
+                    <button [class.active]="period() === 'today'" (click)="goToToday()">Hoje</button>
                     <button [class.active]="period() === '7d'" (click)="setPeriodAndClearCalendarSelection('7d')">7
                         dias</button>
                     <button [class.active]="period() === '30d'" (click)="setPeriodAndClearCalendarSelection('30d')">30
@@ -43,16 +42,13 @@
                             [disabled]="(firstSessionDate() ?? '') !== '' && selectedDate() <= (firstSessionDate() ?? '')">‹</button>
                         <label class="date-display" title="Clique para escolher uma data">
                             {{ formatPeriodTitle() }}
-                            <input type="date" [value]="selectedDate()" [min]="firstSessionDate() || null" (input)="
-                                                                    (firstSessionDate() ?? '') !== '' && $any($event.target).value < (firstSessionDate() ?? '')
-                                                                        ? null
-                                                                        : selectedDate.set($any($event.target).value)"
-                                class="date-picker-hidden">
+                            <input type="date" [value]="selectedDate()" [min]="firstSessionDate() || null"
+                                (input)="onDatePickerInput($any($event.target).value)" class="date-picker-hidden">
                         </label>
                         <button (click)="goToNextPeriod()" class="nav-btn" title="Próximo período"
                             [disabled]="isNextPeriodDisabled()">›</button>
                         <div class="nav-divider"></div>
-                        <button (click)="selectedDate.set(getLocalDateString())" class="today-btn">Hoje</button>
+                        <button (click)="goToToday()" class="today-btn">Hoje</button>
                     </div>
                 </div>
                 }
