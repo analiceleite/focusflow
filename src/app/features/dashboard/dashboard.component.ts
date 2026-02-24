@@ -36,7 +36,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // Filtros por data personalizada
   viewMode = signal<'quick' | 'custom'>('quick');
   dateFilterType = signal<'day' | 'week' | 'month'>('day');
-  selectedDate = signal<string>(this.getLocalDateString());
+  selectedDate = signal<string>(DashboardComponent.toLocalDateString());
 
   // Paginação
   currentPage = signal(0);
@@ -51,15 +51,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // ─── Helpers de data (parse local, sem offset UTC) ────────────────────────
 
   public getLocalDateString(date: Date = new Date()): string {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+    return DashboardComponent.toLocalDateString(date);
   }
 
   private parseLocalDate(dateStr: string): Date {
     const [year, month, day] = dateStr.split('-').map(Number);
     return new Date(year, month - 1, day);
+  }
+
+  static toLocalDateString(date: Date = new Date()): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   // ─── Computed: botão → desabilitado ──────────────────────────────────────
@@ -88,6 +92,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   readonly filteredSessions = computed(() => {
     const all = this.sessions();
+
+    // ── Filtro por seleção múltipla no calendário ──
+    const selectedDates = this.selectedCalendarDates();
+    if (selectedDates.size > 1) {
+      return all.filter(s => selectedDates.has(s.date));
+    }
 
     if (this.viewMode() === 'quick') {
       const today = this.getLocalDateString();
@@ -375,6 +385,127 @@ export class DashboardComponent implements OnInit, OnDestroy {
         year: 'numeric'
       });
     }
+  }
+
+  // ─── Seleção de dias no calendário ───────────────────────────────────────
+  public selectedCalendarDates = signal<Set<string>>(new Set());
+
+  private isDragging = false;
+  private dragStartDate: string | null = null;
+
+  private getDateFromPointerEvent(event: PointerEvent): string | null {
+    const el = document.elementFromPoint(event.clientX, event.clientY);
+    return el?.getAttribute('data-date') ?? null;
+  }
+
+  public onGridPointerDown(event: PointerEvent): void {
+    const date = this.getDateFromPointerEvent(event);
+    if (!date || this.isCalendarDayDisabled(date)) return;
+    event.preventDefault();
+    // Captura o pointer no container para receber eventos mesmo saindo dos filhos
+    (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+    this.isDragging = true;
+    this.dragStartDate = date;
+    this.selectedCalendarDates.set(new Set([date]));
+  }
+
+  public onGridPointerMove(event: PointerEvent): void {
+    if (!this.isDragging || !this.dragStartDate) return;
+    event.preventDefault(); // impede scroll durante drag
+    const date = this.getDateFromPointerEvent(event);
+    if (!date) return;
+
+    const allDays = this.calendarDays().map(d => d.date);
+    const startIdx = allDays.indexOf(this.dragStartDate);
+    const endIdx = allDays.indexOf(date);
+    if (startIdx === -1 || endIdx === -1) return;
+
+    const [from, to] = startIdx <= endIdx
+      ? [startIdx, endIdx]
+      : [endIdx, startIdx];
+
+    const range = allDays
+      .slice(from, to + 1)
+      .filter(d => !this.isCalendarDayDisabled(d));
+
+    this.selectedCalendarDates.set(new Set(range));
+  }
+
+  public onCalendarMouseUp(): void {
+    if (!this.isDragging) return;
+    this.isDragging = false;
+    this.dragStartDate = null;
+
+    const selected = this.selectedCalendarDates();
+    const sorted = [...selected].sort();
+
+    this.viewMode.set('custom');
+    this.selectedDate.set(sorted[0]);
+    this.dateFilterType.set('day');
+  }
+
+  public onCalendarDayClick(date: string, event?: MouseEvent): void {
+    if (this.isCalendarDayDisabled(date)) return;
+    // só executa se não foi um drag (drag já resolveu no pointerup)
+    if (this.selectedCalendarDates().size <= 1) {
+      this.selectedCalendarDates.set(new Set([date]));
+      this.viewMode.set('custom');
+      this.dateFilterType.set('day');
+      this.selectedDate.set(date);
+    }
+  }
+
+  public onCalendarDayMouseDown(date: string, event: MouseEvent): void {
+    if (this.isCalendarDayDisabled(date)) return;
+    event.preventDefault();
+    this.isDragging = true;
+    this.dragStartDate = date;
+    // Seleciona o dia inicial imediatamente
+    this.selectedCalendarDates.set(new Set([date]));
+  }
+
+  public onCalendarDayMouseEnter(date: string): void {
+    if (!this.isDragging || !this.dragStartDate) return;
+    if (this.isCalendarDayDisabled(date)) return;
+
+    // Pega todos os dias entre dragStart e date
+    const allDays = this.calendarDays().map(d => d.date);
+    const startIdx = allDays.indexOf(this.dragStartDate);
+    const endIdx = allDays.indexOf(date);
+    if (startIdx === -1 || endIdx === -1) return;
+
+    const [from, to] = startIdx <= endIdx ? [startIdx, endIdx] : [endIdx, startIdx];
+    const range = allDays.slice(from, to + 1).filter(d => !this.isCalendarDayDisabled(d));
+    this.selectedCalendarDates.set(new Set(range));
+
+    // No drag, muda para modo custom com filtro de período livre
+    // (as métricas vão filtrar pelos dias selecionados)
+    this.viewMode.set('custom');
+  }
+
+  public isCalendarDaySelected(date: string): boolean {
+    return this.selectedCalendarDates().has(date);
+  }
+
+  // Primeiro dia com sessão registrada
+  readonly firstSessionDate = computed(() => {
+    const all = this.sessions();
+    if (!all.length) return null;
+    return all.map(s => s.date).sort()[0];
+  });
+
+  // Se o dia do calendário é desabilitado (antes da primeira sessão)
+  public isCalendarDayDisabled(date: string): boolean {
+    const first = this.firstSessionDate();
+    return !!first && date < first;
+  }
+
+  public setPeriodAndClearCalendarSelection(period: 'today' | '7d' | '30d' | 'all') {
+    this.selectedCalendarDates.set(new Set());
+    this.isDragging = false;
+    this.dragStartDate = null;
+    this.period.set(period);
+    this.viewMode.set('quick');
   }
 
   logout(): void {

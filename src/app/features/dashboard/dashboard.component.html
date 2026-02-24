@@ -17,10 +17,14 @@
 
                 @if (viewMode() === 'quick') {
                 <div class="quick-filters">
-                    <button [class.active]="period() === 'today'" (click)="period.set('today')">Hoje</button>
-                    <button [class.active]="period() === '7d'" (click)="period.set('7d')">7 dias</button>
-                    <button [class.active]="period() === '30d'" (click)="period.set('30d')">30 dias</button>
-                    <button [class.active]="period() === 'all'" (click)="period.set('all')">Tudo</button>
+                    <button [class.active]="period() === 'today'"
+                        (click)="setPeriodAndClearCalendarSelection('today')">Hoje</button>
+                    <button [class.active]="period() === '7d'" (click)="setPeriodAndClearCalendarSelection('7d')">7
+                        dias</button>
+                    <button [class.active]="period() === '30d'" (click)="setPeriodAndClearCalendarSelection('30d')">30
+                        dias</button>
+                    <button [class.active]="period() === 'all'"
+                        (click)="setPeriodAndClearCalendarSelection('all')">Tudo</button>
                 </div>
                 }
 
@@ -35,11 +39,15 @@
                             class="period-btn">Mês</button>
                     </div>
                     <div class="date-navigation">
-                        <button (click)="goToPreviousPeriod()" class="nav-btn" title="Período anterior">‹</button>
+                        <button (click)="goToPreviousPeriod()" class="nav-btn" title="Período anterior"
+                            [disabled]="(firstSessionDate() ?? '') !== '' && selectedDate() <= (firstSessionDate() ?? '')">‹</button>
                         <label class="date-display" title="Clique para escolher uma data">
                             {{ formatPeriodTitle() }}
-                            <input type="date" [value]="selectedDate()"
-                                (input)="selectedDate.set($any($event.target).value)" class="date-picker-hidden">
+                            <input type="date" [value]="selectedDate()" [min]="firstSessionDate() || null" (input)="
+                                                                    (firstSessionDate() ?? '') !== '' && $any($event.target).value < (firstSessionDate() ?? '')
+                                                                        ? null
+                                                                        : selectedDate.set($any($event.target).value)"
+                                class="date-picker-hidden">
                         </label>
                         <button (click)="goToNextPeriod()" class="nav-btn" title="Próximo período"
                             [disabled]="isNextPeriodDisabled()">›</button>
@@ -132,16 +140,26 @@
                         🔥 Ofensiva — {{ currentStreak() }} dia(s) consecutivo(s)
                         @if (bestStreak() > 0) { · Recorde: {{ bestStreak() }} dias }
                     </div>
-                    <div class="calendar-grid">
+                    <div class="calendar-grid" style="touch-action: none;" (pointerdown)="onGridPointerDown($event)"
+                        (pointermove)="onGridPointerMove($event)" (pointerup)="onCalendarMouseUp()"
+                        (pointerleave)="onCalendarMouseUp()">
                         @for (day of calendarDays(); track day.date) {
-                        <div class="cal-day" [class.has-session]="day.hasSession" [class.today]="day.isToday"
-                            [title]="day.date + (day.seconds > 0 ? (' — ' + formatDuration(day.seconds)) : '')">
+                        <div class="cal-day" [class.has-session]="day.hasSession"
+                            [class.today]="day.isToday && !isCalendarDaySelected(day.date)"
+                            [class.selected]="isCalendarDaySelected(day.date)"
+                            [class.disabled]="isCalendarDayDisabled(day.date)" [attr.data-date]="day.date"
+                            [attr.title]="'Dia ' + day.date + (day.seconds > 0 ? (' — ' + formatDuration(day.seconds)) : '')"
+                            (click)="onCalendarDayClick(day.date, $event)"
+                            [attr.tabindex]="isCalendarDayDisabled(day.date) ? -1 : 0" role="button"
+                            [attr.aria-pressed]="isCalendarDaySelected(day.date) ? 'true' : 'false'"
+                            [attr.aria-disabled]="isCalendarDayDisabled(day.date) ? 'true' : null">
                         </div>
                         }
                     </div>
                     <div class="calendar-legend">
                         <span class="legend-dot empty"></span> Sem sessão
                         <span class="legend-dot filled"></span> Com sessão
+                        <span class="legend-dot selected"></span> Selecionado
                     </div>
                 </div>
 
