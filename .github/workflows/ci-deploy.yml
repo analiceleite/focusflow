@@ -34,6 +34,11 @@ jobs:
       - name: Debug environment.ts
         run: cat src/environments/environment.ts
 
+      - name: Verify environment.ts exists
+        run: |
+         ls -la src/environments/
+         cat src/environments/environment.ts
+
       - name: Build (production)
         run: npm run build
 
