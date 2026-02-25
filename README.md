@@ -2,98 +2,75 @@
 
 Personal productivity timer focused on consistency and clarity.
 
-## Login screen
-![Login](./src/assets/demo/login.png)
+---
 
-## Timer screen
-![Timer](./src/assets/demo/timer.png)
+## Screenshots
 
-
-## Statistics screen
-![Statistics](./src/assets/demo/stats.png)
-
-## Picture and picture preview
-
-![Picture and Picture](./src/assets/demo/pip-demo.png)
+| Login | Timer | Statistics | Picture-in-Picture |
+|---|---|---|---|
+| ![Login](./src/assets/demo/login.png) | ![Timer](./src/assets/demo/timer.png) | ![Statistics](./src/assets/demo/stats.png) | ![PiP](./src/assets/demo/pip-demo.png) |
 
 ---
 
-## Features in Detail
+## Features
 
-**Timer**
-- Pomodoro mode with configurable duration
-- Free stopwatch mode (no time limit)
-- User-saved presets (e.g., 25 min, 50 min, 90 min)
-- Activity type selection per session
-- Animated progress bar
-- Notification sound at Pomodoro completion
-- Picture-in-Picture — floating mini window with time and progress while using other applications
-- Detailed statistics displayed in the timer view, including:
-	- Current focus data:
-		- Hours focused today
-		- Hours focused in the last 7 days
-		- Hours focused in the last 30 days
-	- Averages and trends:
-		- Daily average (last 7 days)
-		- Weekly average (last 4 weeks / 28 days)
-		- Monthly average (last 12 months)
+**🍅 Timer**
+- Pomodoro mode with configurable duration and user-saved presets (e.g., 25, 50, 90 min)
+- Free stopwatch mode with no time limit
+- Activity type per session (Study, Work, Exercise, Reading, Meditation, Personal Project, or custom)
+- Animated progress bar, audio notification on completion, and pause/resume support
 
-**Activity Types**
-- Default types: Study, Work, Exercise, Reading, Meditation, Personal Project
-- Custom type creation with name, emoji, and color
-- Each session recorded with selected type
+**🖼️ Picture-in-Picture**
+- Floating mini window (110×120px) with live time and progress
+- Works across all apps and browser tabs, light/dark theme support
 
-**Dashboard**
-- Total time per activity type with progress bars
-- Current streak (consecutive days) and personal record
-- Visual calendar of the last 70 days
-- Total sessions, average per session, and accumulated time
-- Filters for 7 days, 30 days, or all history
-- Filters with interactive calendar
-- Recent sessions list
+**📊 Dashboard**
+- Streak tracking (current and personal record) and 70-day calendar heatmap
+- Activity breakdown with color-coded bars, session count, and accumulated time
+- Stats inline on the timer view: today, last 7d, last 30d, daily/weekly/monthly averages
+- Filters by 7d / 30d / all time, with interactive calendar
 
-**Authentication**
-- Email and password registration and login
-- User-isolated data — each account sees only their own history
+**🎨 Theme & PWA**
+- Light/dark mode with system detection and persistent preference
+- Installable as a desktop or mobile app via PWA, with offline support
+
+**🔐 Authentication**
+- Email/password login — each account sees only its own data
 
 ---
 
-## Technologies
+## Tech Stack
 
 | Layer | Technology |
 |---|---|
 | Framework | Angular 17 (Standalone Components) |
 | State | Angular Signals |
-| Authentication | Firebase Authentication |
-| Database | Cloud Firestore |
+| Auth & DB | Firebase Authentication + Cloud Firestore |
 | Hosting | Firebase Hosting |
-| PWA | @angular/pwa (installable as desktop app) |
-| Styling | SCSS inline (modular CSS per component) |
-| PiP | Canvas API + Picture-in-Picture API (native browser APIs) |
+| PWA | @angular/pwa |
+| Styling | SCSS (modular, per component) |
+| PiP | Canvas API + Picture-in-Picture API |
 
 ---
 
 ## Run Locally
 
-> **Note:** This project uses Firebase (Auth + Firestore + Hosting). The Firebase credentials are **not stored in the repository** intentionally — this protects the author's Firebase account from unauthorized usage and billing.
->
-> To run this project locally, you need to **create your own Firebase project** (free tier is sufficient).
+> This project's Firebase credentials are **not stored in the repository** to protect the author's account from unauthorized access and billing. To run locally, you'll need your own Firebase project (free tier is sufficient).
 
 ### 1. Create a Firebase project
 
-1. Go to [console.firebase.google.com](https://console.firebase.google.com)
-2. Create a new project
-3. Enable **Authentication** (Email/Password provider)
-4. Enable **Firestore Database** (start in test mode)
-5. Register a **Web App** and copy the config object
+1. Go to [console.firebase.google.com](https://console.firebase.google.com) and create a new project
+2. Enable **Authentication** → Email/Password provider
+3. Enable **Firestore Database** (test mode is fine)
+4. Register a **Web App** and copy the config object
 
-### 2. Set up local environment
+### 2. Set up environment
 
 ```sh
 cp src/environments/environment.example.ts src/environments/environment.ts
 ```
 
-Open `src/environments/environment.ts` and fill in with your Firebase config:
+Fill in `environment.ts` with your Firebase config:
 
 ```ts
 export const environment = {
@@ -118,13 +95,18 @@ npm install
 ng serve
 ```
 
+To test the PWA (requires a production build):
+
+```bash
+ng build
+npx serve dist/focusflow/browser
+```
+
 ---
 
 ## CI / Deploy (GitHub Actions)
 
-If you want to deploy your own fork, the workflow generates `environment.ts` from GitHub Secrets at build time.
-
-Required secrets (Settings → Secrets and variables → Actions):
+The workflow generates `environment.ts` from GitHub Secrets at build time. To deploy your own fork, add these secrets under **Settings → Secrets and variables → Actions**:
 
 | Secret | Where to find it |
 |---|---|
@@ -134,82 +116,20 @@ Required secrets (Settings → Secrets and variables → Actions):
 | `FIREBASE_STORAGE_BUCKET` | same |
 | `FIREBASE_MESSAGING_SENDER_ID` | same |
 | `FIREBASE_APP_ID` | same |
-| `FIREBASE_SERVICE_ACCOUNT_FOCUSFLOW_IO` | Firebase console → Project settings → Service accounts → Generate new private key |
-
-The last secret is generated automatically if you connect the repo via `firebase init hosting` and let the Firebase CLI create the GitHub Action for you.
-
----
-
-## Features in Detail
-
-### 🍅 **Pomodoro Timer**
-- Customizable work sessions (default 25 minutes)
-- Visual progress ring with smooth animations
-- Audio notifications when sessions complete
-- Pause/resume functionality
-- Activity type tracking for each session
-
-### ⏱️ **Stopwatch Mode**
-- Free-running timer for flexible work sessions
-- Track unlimited time without preset boundaries
-- Perfect for creative work or open-ended tasks
-
-### 📊 **Analytics Dashboard**
-- Visual activity breakdown with color-coded progress bars
-- Daily streak tracking with personal records
-- Interactive calendar heatmap (70-day history)
-- Session statistics with averages and totals
-- Time period filtering (today, 7d, 30d, all time)
-- Time period filtered using interactive calendar
-
-### 🖼️ **Picture-in-Picture**
-- Ultra-compact floating timer (110x120px)
-- Works across all applications and browser tabs
-- Real-time progress display
-- Light/dark theme support
-- Minimal CPU usage with canvas optimization
-
-### 🎨 **Theme System**
-- Seamless light/dark mode switching
-- Persistent user preference storage
-- System theme detection
-- Consistent theming across all components including PiP
-
-### 📱 **Progressive Web App**
-- Install as native desktop/mobile app
-- Offline functionality with service worker
-- Native app-like experience
-- Custom app icons and splash screens
-
----
-
-## Technical Highlights
-
-- **Modern Angular 17**: Standalone components, signals-based state management
-- **Firebase Integration**: Authentication, Firestore database, hosting
-- **Performance Optimized**: Lazy loading, OnPush change detection
-- **Responsive Design**: Mobile-first approach with desktop enhancements
-- **Accessibility**: ARIA labels, keyboard navigation support
-- **Type Safety**: Full TypeScript implementation
-- **Component Architecture**: Modular, reusable components with SCSS styling
+| `FIREBASE_SERVICE_ACCOUNT_*` | Firebase console → Project settings → Service accounts → Generate new private key (also created automatically via `firebase init hosting`) |
 
 ---
 
 ## Browser Compatibility
 
-- **Chrome/Edge**: Full support including Picture-in-Picture
-- **Firefox**: Full support (PiP support varies)
-- **Safari**: Full support on macOS/iOS
-- **PWA Install**: Supported on all modern browsers
-
----
-
-## Contributing
-
-This is a personal productivity project built for learning modern Angular patterns and Firebase integration. Feel free to fork and customize for your own needs!
+| Browser | Support |
+|---|---|
+| Chrome / Edge | Full, including PiP |
+| Firefox | Full (PiP support varies) |
+| Safari | Full on macOS / iOS |
 
 ---
 
 ## License
 
-MIT License - Feel free to use and modify as needed.
+MIT — feel free to fork and customize.
