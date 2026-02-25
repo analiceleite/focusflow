@@ -18,7 +18,7 @@ Personal productivity timer focused on consistency and clarity.
 
 ---
 
-## Features — v1.0
+## Features in Detail
 
 **Timer**
 - Pomodoro mode with configurable duration
@@ -49,6 +49,7 @@ Personal productivity timer focused on consistency and clarity.
 - Visual calendar of the last 70 days
 - Total sessions, average per session, and accumulated time
 - Filters for 7 days, 30 days, or all history
+- Filters with interactive calendar
 - Recent sessions list
 
 **Authentication**
@@ -79,18 +80,34 @@ npm install
 ng serve
 ```
 
+## CI / Deploy (GitHub Actions)
+
+This repository uses a GitHub Actions workflow to generate `src/environments/environment.ts` from repository Secrets during the CI build, so your private Firebase credentials are never stored in the repo.
+
+Required repository Secrets (set in GitHub Settings → Secrets):
+- `FIREBASE_API_KEY`
+- `FIREBASE_AUTH_DOMAIN`
+- `FIREBASE_PROJECT_ID`
+- `FIREBASE_STORAGE_BUCKET`
+- `FIREBASE_MESSAGING_SENDER_ID`
+- `FIREBASE_APP_ID`
+- `FIREBASE_TOKEN` (used to authenticate `firebase deploy`)
+
+The workflow will run `node scripts/generate-env.js` (which reads the secrets) before the build and then deploy to Firebase Hosting.
+
+Local developer setup:
+1. Copy the example env file:
+```sh
+cp src/environments/environment.example.ts src/environments/environment.ts
+```
+2. Fill `src/environments/environment.ts` with your own Firebase credentials (these are not committed).
+
 To test the PWA (requires production build):
 
 ```bash
 ng build
 serve dist/focusflow/browser
 ```
-
----
-
-## Live Demo
-
-🚀 **[https://focusflow-io.web.app](https://focusflow-io.web.app)**
 
 ---
 
@@ -114,6 +131,7 @@ serve dist/focusflow/browser
 - Interactive calendar heatmap (70-day history)
 - Session statistics with averages and totals
 - Time period filtering (today, 7d, 30d, all time)
+- Time period filtered using interactive calendar
 
 ### 🖼️ **Picture-in-Picture**
 - Ultra-compact floating timer (110x120px)
