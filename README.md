@@ -75,39 +75,68 @@ Personal productivity timer focused on consistency and clarity.
 
 ## Run Locally
 
+> **Note:** This project uses Firebase (Auth + Firestore + Hosting). The Firebase credentials are **not stored in the repository** intentionally — this protects the author's Firebase account from unauthorized usage and billing.
+>
+> To run this project locally, you need to **create your own Firebase project** (free tier is sufficient).
+
+### 1. Create a Firebase project
+
+1. Go to [console.firebase.google.com](https://console.firebase.google.com)
+2. Create a new project
+3. Enable **Authentication** (Email/Password provider)
+4. Enable **Firestore Database** (start in test mode)
+5. Register a **Web App** and copy the config object
+
+### 2. Set up local environment
+
+```sh
+cp src/environments/environment.example.ts src/environments/environment.ts
+```
+
+Open `src/environments/environment.ts` and fill in with your Firebase config:
+
+```ts
+export const environment = {
+  production: false,
+  firebase: {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT.firebaseapp.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  }
+};
+```
+
+> `environment.ts` is in `.gitignore` — your credentials will never be committed.
+
+### 3. Install and run
+
 ```bash
 npm install
 ng serve
 ```
 
+---
+
 ## CI / Deploy (GitHub Actions)
 
-This repository uses a GitHub Actions workflow to generate `src/environments/environment.ts` from repository Secrets during the CI build, so your private Firebase credentials are never stored in the repo.
+If you want to deploy your own fork, the workflow generates `environment.ts` from GitHub Secrets at build time.
 
-Required repository Secrets (set in GitHub Settings → Secrets):
-- `FIREBASE_API_KEY`
-- `FIREBASE_AUTH_DOMAIN`
-- `FIREBASE_PROJECT_ID`
-- `FIREBASE_STORAGE_BUCKET`
-- `FIREBASE_MESSAGING_SENDER_ID`
-- `FIREBASE_APP_ID`
-- `FIREBASE_TOKEN` (used to authenticate `firebase deploy`)
+Required secrets (Settings → Secrets and variables → Actions):
 
-The workflow will run `node scripts/generate-env.js` (which reads the secrets) before the build and then deploy to Firebase Hosting.
+| Secret | Where to find it |
+|---|---|
+| `FIREBASE_API_KEY` | Firebase console → Project settings → Your app |
+| `FIREBASE_AUTH_DOMAIN` | same |
+| `FIREBASE_PROJECT_ID` | same |
+| `FIREBASE_STORAGE_BUCKET` | same |
+| `FIREBASE_MESSAGING_SENDER_ID` | same |
+| `FIREBASE_APP_ID` | same |
+| `FIREBASE_SERVICE_ACCOUNT_FOCUSFLOW_IO` | Firebase console → Project settings → Service accounts → Generate new private key |
 
-Local developer setup:
-1. Copy the example env file:
-```sh
-cp src/environments/environment.example.ts src/environments/environment.ts
-```
-2. Fill `src/environments/environment.ts` with your own Firebase credentials (these are not committed).
-
-To test the PWA (requires production build):
-
-```bash
-ng build
-serve dist/focusflow/browser
-```
+The last secret is generated automatically if you connect the repo via `firebase init hosting` and let the Firebase CLI create the GitHub Action for you.
 
 ---
 

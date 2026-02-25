@@ -88,7 +88,7 @@
 
     &.active {
         background: var(--bg-card);
-        color: var(--accent-color);
+        color: var(--accent-primary);
         box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
     }
 }
@@ -155,7 +155,7 @@
 
     &.active {
         background: var(--bg-card);
-        color: var(--accent-color);
+        color: var(--accent-primary);
         box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
     }
 }
@@ -237,7 +237,7 @@
     padding: 0.2rem 0.6rem;
     border: none;
     background: transparent;
-    color: var(--accent-color);
+    color: var(--accent-primary);
     font-size: 0.775rem;
     font-weight: 600;
     border-radius: 6px;
@@ -246,7 +246,7 @@
     white-space: nowrap;
 
     &:hover {
-        background: color-mix(in srgb, var(--accent-color) 10%, transparent);
+        background: color-mix(in srgb, var(--accent-primary) 10%, transparent);
     }
 }
 
