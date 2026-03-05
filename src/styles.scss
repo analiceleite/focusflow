@@ -1,31 +1,29 @@
-
-
 /* Theme Variables */
 :root {
   /* Default (Dark Theme) */
-  --bg-primary: #0f0f14;
-  --bg-secondary: #1a1a2e;
-  --bg-tertiary: #12121a;
-  --bg-card: #0a0a10;
-  --bg-card-rgb: 10, 10, 16;
-  
-  --text-primary: #ffffff;
-  --text-secondary: #cccccc;
-  --text-muted: #888888;
-  --text-disabled: #444444;
-  
-  --border-color: #2a2a3a;
+  --bg-primary: #1c1c1e;
+  --bg-secondary: #232325;
+  --bg-tertiary: #2c2c2e;
+  --bg-card: #1f1f21;
+  --bg-card-rgb: 31, 31, 33;
+
+  --text-primary: #f5f5f7;
+  --text-secondary: #d1d1d6;
+  --text-muted: #8e8e93;
+  --text-disabled: #5a5a5f;
+
+  --border-color: #3a3a3c;
   --border-hover: #43D9AD;
-  
+
   --accent-primary: #6C63FF;
   --accent-success: #43D9AD;
   --accent-warning: #FFB366;
   --accent-error: #ff6b6b;
-  
-  --shadow-light: rgba(0, 0, 0, 0.1);
-  --shadow-medium: rgba(0, 0, 0, 0.2);
-  --shadow-strong: rgba(0, 0, 0, 0.3);
-  
+
+  --shadow-light: rgba(0, 0, 0, 0.12);
+  --shadow-medium: rgba(0, 0, 0, 0.22);
+  --shadow-strong: rgba(0, 0, 0, 0.32);
+
   /* Breakpoints */
   --mobile: 480px;
   --tablet: 768px;
@@ -34,63 +32,66 @@
 
 /* Light Theme */
 .light-theme {
-  --bg-primary: #ffffff;
-  --bg-secondary: #f8f9fa;
-  --bg-tertiary: #f1f3f4;
+  --bg-primary: #f5f5f7;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f0f0f2;
   --bg-card: #ffffff;
   --bg-card-rgb: 255, 255, 255;
-  
-  --text-primary: #1a1a1a;
-  --text-secondary: #333333;
-  --text-muted: #666666;
-  --text-disabled: #999999;
-  
-  --border-color: #e0e0e0;
+
+  --text-primary: #1d1d1f;
+  --text-secondary: #3a3a3c;
+  --text-muted: #6e6e73;
+  --text-disabled: #a1a1a6;
+
+  --border-color: #d2d2d7;
   --border-hover: #43D9AD;
-  
+
   --accent-primary: #6C63FF;
   --accent-success: #43D9AD;
   --accent-warning: #FFB366;
   --accent-error: #ff6b6b;
-  
+
   --shadow-light: rgba(0, 0, 0, 0.08);
-  --shadow-medium: rgba(0, 0, 0, 0.12);
-  --shadow-strong: rgba(0, 0, 0, 0.16);
+  --shadow-medium: rgba(0, 0, 0, 0.14);
+  --shadow-strong: rgba(0, 0, 0, 0.2);
 }
 
 /* Dark Theme (explicit) */
 .dark-theme {
-  --bg-primary: #0f0f14;
-  --bg-secondary: #1a1a2e;
-  --bg-tertiary: #12121a;
-  --bg-card: #0a0a10;
-  --bg-card-rgb: 10, 10, 16;
-  
-  --text-primary: #ffffff;
-  --text-secondary: #cccccc;
-  --text-muted: #888888;
-  --text-disabled: #444444;
-  
-  --border-color: #2a2a3a;
+  --bg-primary: #1c1c1e;
+  --bg-secondary: #232325;
+  --bg-tertiary: #2c2c2e;
+  --bg-card: #1f1f21;
+  --bg-card-rgb: 31, 31, 33;
+
+  --text-primary: #f5f5f7;
+  --text-secondary: #d1d1d6;
+  --text-muted: #8e8e93;
+  --text-disabled: #5a5a5f;
+
+  --border-color: #3a3a3c;
   --border-hover: #43D9AD;
-  
+
   --accent-primary: #6C63FF;
   --accent-success: #43D9AD;
   --accent-warning: #FFB366;
   --accent-error: #ff6b6b;
-  
-  --shadow-light: rgba(0, 0, 0, 0.1);
-  --shadow-medium: rgba(0, 0, 0, 0.2);
-  --shadow-strong: rgba(0, 0, 0, 0.3);
+
+  --shadow-light: rgba(0, 0, 0, 0.12);
+  --shadow-medium: rgba(0, 0, 0, 0.22);
+  --shadow-strong: rgba(0, 0, 0, 0.32);
 }
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-html, body {
+html,
+body {
   height: 100%;
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
   background: var(--bg-primary);
@@ -105,10 +106,25 @@ input[type="number"]::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
-input[type="number"] { -moz-appearance: textfield; }
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
 
 /* Scrollbar */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: var(--bg-primary); }
-::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}

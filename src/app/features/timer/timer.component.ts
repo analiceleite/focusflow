@@ -197,7 +197,7 @@ export class TimerComponent implements OnInit, OnDestroy {
    */
   readonly weeklySparkline = computed(() => {
     const today = new Date();
-    const weeks: { label: string; seconds: number; percent: number }[] = [];
+    const weeks: { label: string; seconds: number; percent: number; isCurrent: boolean }[] = [];
 
     for (let w = 3; w >= 0; w--) {
       const startDate = new Date(today);
@@ -213,7 +213,7 @@ export class TimerComponent implements OnInit, OnDestroy {
         .filter(s => s.date >= startStr && s.date <= endStr)
         .reduce((acc, s) => acc + s.durationSeconds, 0);
 
-      weeks.push({ label: `S${weekNum}`, seconds, percent: 0 });
+      weeks.push({ label: `S${weekNum}`, seconds, percent: 0, isCurrent: w === 0 });
     }
 
     const maxSec = Math.max(...weeks.map(w => w.seconds), 1);
@@ -225,7 +225,7 @@ export class TimerComponent implements OnInit, OnDestroy {
    */
   readonly monthlySparkline = computed(() => {
     const today = new Date();
-    const months: { label: string; seconds: number; percent: number }[] = [];
+    const months: { label: string; seconds: number; percent: number; isCurrent: boolean }[] = [];
 
     for (let m = 5; m >= 0; m--) {
       const d = new Date(today.getFullYear(), today.getMonth() - m, 1);
@@ -236,7 +236,7 @@ export class TimerComponent implements OnInit, OnDestroy {
         .filter(s => s.date.startsWith(yearMonth))
         .reduce((acc, s) => acc + s.durationSeconds, 0);
 
-      months.push({ label, seconds, percent: 0 });
+      months.push({ label, seconds, percent: 0, isCurrent: m === 0 });
     }
 
     const maxSec = Math.max(...months.map(m => m.seconds), 1);
@@ -313,7 +313,6 @@ export class TimerComponent implements OnInit, OnDestroy {
       return;
     }
     this.timerSvc.setMode(mode);
-    this.toastService.success(`Modo alterado para ${mode === 'pomodoro' ? 'Pomodoro' : 'Cronômetro'}`, 2000);
   }
 
   stopTimer(): void {

@@ -35,16 +35,23 @@ export class PipService {
   private readonly W = 280;
   private readonly H = 148;
 
+  private getCssVar(name: string, fallback: string): string {
+    if (globalThis.window === undefined || globalThis.document === undefined) return fallback;
+    const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    return value || fallback;
+  }
+
   private getThemeColors() {
     const isDark = this.themeService.isDarkMode();
     return {
-      background: isDark ? '#0d0d12' : '#fafafa',
-      surface: isDark ? '#16161f' : '#ffffff',
-      border: isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.08)',
-      textPrimary: isDark ? '#f0f0f5' : '#111118',
-      textSecondary: isDark ? '#9898b0' : '#555568',
-      textMuted: isDark ? '#505060' : '#aaaabc',
-      progressTrack: isDark ? '#1e1e2c' : '#e8e8f0',
+      // Pull colors from global theme vars so PiP always mirrors app theme.
+      background: this.getCssVar('--bg-primary', isDark ? '#1c1c1e' : '#f5f5f7'),
+      surface: this.getCssVar('--bg-card', isDark ? '#1f1f21' : '#ffffff'),
+      border: this.getCssVar('--border-color', isDark ? '#3a3a3c' : '#d2d2d7'),
+      textPrimary: this.getCssVar('--text-primary', isDark ? '#f5f5f7' : '#1d1d1f'),
+      textSecondary: this.getCssVar('--text-secondary', isDark ? '#d1d1d6' : '#3a3a3c'),
+      textMuted: this.getCssVar('--text-muted', isDark ? '#8e8e93' : '#6e6e73'),
+      progressTrack: this.getCssVar('--bg-secondary', isDark ? '#232325' : '#ffffff'),
       glow: isDark,
     };
   }

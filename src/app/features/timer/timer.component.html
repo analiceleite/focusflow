@@ -127,68 +127,20 @@
 
             <div class="stats-grid">
 
-                <!-- Card 1: Hoje -->
-                <div class="stat-card">
-                    <div class="stat-card-top">
-                        <span class="stat-label">Hoje</span>
-                        <span class="stat-icon">☀️</span>
-                    </div>
-                    <div class="stat-value">{{ formatHours(todayTotalSeconds()) }}</div>
-                    <div class="stat-sub">{{ todayTotalSeconds() === 0 ? 'Nenhuma sessão ainda' : 'acumulado hoje' }}
-                    </div>
-                    <div class="stat-sparkline">
-                        @for (bar of dailySparkline(); track bar.date) {
-                        <div class="spark-col" [class.today]="bar.date === getLocalDateString()">
-                            <div class="spark-bar" [style.height.%]="bar.percent || 4"
-                                [title]="bar.label + ': ' + formatHours(bar.seconds)"></div>
-                            <span class="spark-label">{{ bar.label }}</span>
-                        </div>
-                        }
-                    </div>
-                </div>
-
-                <!-- Card 2: 7 dias -->
-                <div class="stat-card">
-                    <div class="stat-card-top">
-                        <span class="stat-label">Últimos 7 dias</span>
-                        <span class="stat-icon">📅</span>
-                    </div>
-                    <div class="stat-value">{{ formatHours(last7TotalSeconds()) }}</div>
-                    <div class="stat-sub">acumulado na semana</div>
-                    <div class="stat-sparkline">
-                        @for (bar of dailySparkline(); track bar.date) {
-                        <div class="spark-col" [class.today]="bar.date === getLocalDateString()">
-                            <div class="spark-bar" [style.height.%]="bar.percent || 4"
-                                [title]="bar.label + ': ' + formatHours(bar.seconds)"></div>
-                            <span class="spark-label">{{ bar.label }}</span>
-                        </div>
-                        }
-                    </div>
-                </div>
-
-                <!-- Card 3: 30 dias -->
-                <div class="stat-card">
-                    <div class="stat-card-top">
-                        <span class="stat-label">Últimos 30 dias</span>
-                        <span class="stat-icon">🗓️</span>
-                    </div>
-                    <div class="stat-value">{{ formatHours(last30TotalSeconds()) }}</div>
-                    <div class="stat-sub">acumulado no mês</div>
-                    <div class="stat-sparkline">
-                        @for (bar of weeklySparkline(); track bar.label) {
-                        <div class="spark-col">
-                            <div class="spark-bar" [style.height.%]="bar.percent || 4"
-                                [title]="bar.label + ': ' + formatHours(bar.seconds)"></div>
-                            <span class="spark-label">{{ bar.label }}</span>
-                        </div>
-                        }
-                    </div>
-                </div>
-
-                <!-- Card 4: coluna de médias (3 mini-cards empilhados) -->
-                <div class="stat-averages-col">
-
+                <!-- Coluna 1: Acumulado hoje + Média diária -->
+                <div class="stat-stack">
                     <div class="stat-card stat-card-avg">
+                        <div class="stat-card-top">
+                            <span class="stat-label">Acumulado hoje</span>
+                            <span class="stat-icon">☀️</span>
+                        </div>
+                        <div class="stat-value">{{ formatHours(todayTotalSeconds()) }}</div>
+                        <div class="stat-sub">{{ todayTotalSeconds() === 0 ? 'Nenhuma sessão ainda' : 'acumulado hoje'
+                            }}
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
                         <div class="stat-card-top">
                             <span class="stat-label">Média diária</span>
                             <span class="stat-icon">☀️</span>
@@ -197,9 +149,30 @@
                             <span class="stat-value stat-value-sm">{{ formatHours(avgDailyLast7Seconds()) }}</span>
                             <span class="stat-value-hint">/ dia · últimos 7d</span>
                         </div>
+                        <div class="stat-sparkline">
+                            @for (bar of dailySparkline(); track bar.date) {
+                            <div class="spark-col" [class.today]="bar.date === getLocalDateString()">
+                                <div class="spark-bar" [style.height.%]="bar.percent || 4"
+                                    [title]="bar.label + ': ' + formatHours(bar.seconds)"></div>
+                                <span class="spark-label">{{ bar.label }}</span>
+                            </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Coluna 2: Acumulado 7 dias + Média semanal -->
+                <div class="stat-stack">
+                    <div class="stat-card stat-card-avg">
+                        <div class="stat-card-top">
+                            <span class="stat-label">Acumulado 7 dias</span>
+                            <span class="stat-icon">📅</span>
+                        </div>
+                        <div class="stat-value">{{ formatHours(last7TotalSeconds()) }}</div>
+                        <div class="stat-sub">acumulado nos ultimos 7 dias</div>
                     </div>
 
-                    <div class="stat-card stat-card-avg">
+                    <div class="stat-card">
                         <div class="stat-card-top">
                             <span class="stat-label">Média semanal</span>
                             <span class="stat-icon">📅</span>
@@ -208,9 +181,30 @@
                             <span class="stat-value stat-value-sm">{{ formatHours(avgWeeklyLast4Seconds()) }}</span>
                             <span class="stat-value-hint">/ semana · últimas 4</span>
                         </div>
+                        <div class="stat-sparkline">
+                            @for (bar of weeklySparkline(); track bar.label) {
+                            <div class="spark-col" [class.current]="bar.isCurrent">
+                                <div class="spark-bar" [style.height.%]="bar.percent || 4"
+                                    [title]="bar.label + ': ' + formatHours(bar.seconds)"></div>
+                                <span class="spark-label">{{ bar.label }}</span>
+                            </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Coluna 3: Acumulado 30 dias + Média mensal -->
+                <div class="stat-stack">
+                    <div class="stat-card stat-card-avg">
+                        <div class="stat-card-top">
+                            <span class="stat-label">Acumulado 30 dias</span>
+                            <span class="stat-icon">📅</span>
+                        </div>
+                        <div class="stat-value">{{ formatHours(last30TotalSeconds()) }}</div>
+                        <div class="stat-sub">acumulado nos ultimos 30 dias</div>
                     </div>
 
-                    <div class="stat-card stat-card-avg">
+                    <div class="stat-card">
                         <div class="stat-card-top">
                             <span class="stat-label">Média mensal</span>
                             <span class="stat-icon">📅</span>
@@ -219,8 +213,16 @@
                             <span class="stat-value stat-value-sm">{{ formatHours(avgMonthlyLast12Seconds()) }}</span>
                             <span class="stat-value-hint">/ mês · últimos 12</span>
                         </div>
+                        <div class="stat-sparkline">
+                            @for (bar of monthlySparkline(); track bar.label) {
+                            <div class="spark-col" [class.current]="bar.isCurrent">
+                                <div class="spark-bar" [style.height.%]="bar.percent || 4"
+                                    [title]="bar.label + ': ' + formatHours(bar.seconds)"></div>
+                                <span class="spark-label">{{ bar.label }}</span>
+                            </div>
+                            }
+                        </div>
                     </div>
-
                 </div>
 
             </div>
