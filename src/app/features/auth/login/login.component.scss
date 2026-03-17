@@ -1,173 +1,196 @@
- :host {
-     display: block;
-     min-height: 100vh;
-     background: var(--bg-primary);
- }
+:host {
+    display: block;
+    min-height: 100vh;
+    background: var(--bg-primary);
+}
 
- .auth-page {
-     min-height: 100vh;
-     display: flex;
-     align-items: center;
-     justify-content: center;
-     padding: 1rem;
-     background: radial-gradient(ellipse at 50% 0%, var(--bg-secondary) 0%, var(--bg-primary) 70%);
+.auth-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    // Fundo com gradiente radial igual ao padrão do app
+    background:
+        radial-gradient(ellipse at 30% 20%, color-mix(in srgb, var(--accent-primary) 6%, transparent), transparent 55%),
+        radial-gradient(ellipse at 75% 80%, color-mix(in srgb, var(--accent-primary) 4%, transparent), transparent 50%),
+        var(--bg-primary);
 
-     @media (max-width: 768px) {
-         padding: 0.5rem;
-         align-items: center;
-         justify-content: center;
-     }
- }
+    @media (max-width: 480px) {
+        padding: 0.5rem;
+        align-items: center;
+    }
+}
 
- .auth-card {
-     background: var(--bg-secondary);
-     border: 1px solid var(--border-color);
-     border-radius: 20px;
-     padding: 2.5rem;
-     width: 100%;
-     max-width: 400px;
-     box-shadow: 0 25px 50px var(--shadow-strong);
-     text-align: center;
+.auth-card {
+    background: color-mix(in srgb, var(--bg-card) 80%, transparent);
+    backdrop-filter: blur(24px) saturate(1.5);
+    -webkit-backdrop-filter: blur(24px) saturate(1.5);
+    border: 1px solid color-mix(in srgb, var(--border-color) 65%, transparent);
+    border-radius: 24px;
+    padding: 2.5rem;
+    width: 100%;
+    max-width: 400px;
+    box-shadow:
+        0 2px 1px rgba(255, 255, 255, 0.04) inset,
+        0 20px 60px rgba(0, 0, 0, 0.18),
+        0 4px 16px rgba(0, 0, 0, 0.1);
+    text-align: center;
 
-     .logo {
-        margin-bottom: 2rem;
-     }
+    @media (max-width: 480px) {
+        padding: 2rem 1.5rem;
+        border-radius: 20px;
+        max-width: none;
+    }
+}
 
-     @media (max-width: 768px) {
-         padding: 2rem;
-         border-radius: 16px;
-         max-width: none;
-         margin: 0;
-     }
+// ─── Logo ─────────────────────────────────────────────────────────────────────
 
-     @media (max-width: 480px) {
-         padding: 1.5rem;
-         border-radius: 12px;
-         border: none;
-         box-shadow: 0 10px 25px var(--shadow-strong);
-     }
+.logo {
+    margin-bottom: 2rem;
 
-     font-size: 2.5rem;
-     margin: 0 auto 1rem;
-     display: block;
-     margin-bottom: 0.5rem;
+    .logo-icon {
+        font-size: 2.5rem;
+        display: block;
+        margin-bottom: 0.5rem;
+    }
 
-     h1 {
-         color: var(--text-primary);
-         font-size: 1.75rem;
-         font-weight: 700;
-         margin: 0 0 0.25rem;
-         letter-spacing: -0.5px;
-     }
+    h1 {
+        color: var(--text-primary);
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin: 0 0 0.25rem;
+        letter-spacing: -0.5px;
+    }
 
-     p {
-         color: var(--text-muted);
-         font-size: 0.875rem;
-         margin: 0;
-     }
- }
+    p {
+        color: var(--text-muted);
+        font-size: 0.875rem;
+        margin: 0;
+    }
+}
 
- .auth-card .field label {
+// ─── Tabs ─────────────────────────────────────────────────────────────────────
+
+.tabs {
+    display: flex;
+    background: color-mix(in srgb, var(--bg-secondary) 70%, transparent);
+    border: 1px solid color-mix(in srgb, var(--border-color) 50%, transparent);
+    border-radius: 12px;
+    padding: 3px;
+    margin-bottom: 1.75rem;
+    gap: 2px;
+
+    button {
+        flex: 1;
+        padding: 0.6rem;
+        border: 1px solid transparent;
+        background: transparent;
+        color: var(--text-muted);
+        border-radius: 9px;
+        cursor: pointer;
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: all 0.2s;
+
+        &.active {
+            background: var(--accent-primary);
+            border-color: color-mix(in srgb, var(--accent-primary) 60%, transparent);
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 2px 8px color-mix(in srgb, var(--accent-primary) 35%, transparent);
+        }
+
+        &:hover:not(.active) {
+            background: color-mix(in srgb, var(--bg-card) 80%, transparent);
+            color: var(--text-secondary);
+        }
+    }
+}
+
+// ─── Fields ───────────────────────────────────────────────────────────────────
+
+.field {
+    margin-bottom: 1rem;
+    text-align: left;
+
+    label {
+        display: block;
+        color: var(--text-muted);
+        font-size: 0.72rem;
+        font-weight: 600;
+        margin-bottom: 0.4rem;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+    }
+
+    input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        background: color-mix(in srgb, var(--bg-secondary) 70%, transparent);
+        border: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
+        border-radius: 12px;
+        color: var(--text-primary);
+        font-size: 0.95rem;
+        outline: none;
+        box-sizing: border-box;
+        transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+        backdrop-filter: blur(8px);
+
+        &:focus {
+            border-color: color-mix(in srgb, var(--accent-primary) 70%, transparent);
+            background: color-mix(in srgb, var(--bg-card) 80%, transparent);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 12%, transparent);
+        }
+
+        &::placeholder {
+            color: var(--text-disabled);
+        }
+    }
+}
+
+// ─── Error ────────────────────────────────────────────────────────────────────
+
+.error-msg {
+    background: color-mix(in srgb, var(--accent-error) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent-error) 30%, var(--border-color));
+    color: var(--accent-error);
+    padding: 0.6rem 1rem;
+    border-radius: 10px;
+    font-size: 0.82rem;
+    margin-bottom: 1rem;
     text-align: left;
 }
 
+// ─── Submit ───────────────────────────────────────────────────────────────────
 
- .tabs {
-     display: flex;
-     background: var(--bg-primary);
-     border-radius: 10px;
-     padding: 4px;
-     margin-bottom: 1.75rem;
+.btn-submit {
+    width: 100%;
+    padding: 0.875rem;
+    background: var(--accent-primary);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 0.5rem;
+    transition: all 0.2s;
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--accent-primary) 35%, transparent);
 
-     button {
-         flex: 1;
-         padding: 0.6rem;
-         border: none;
-         background: transparent;
-         color: var(--text-muted);
-         border-radius: 7px;
-         cursor: pointer;
-         font-size: 0.875rem;
-         transition: all 0.2s;
+    &:hover:not(:disabled) {
+        filter: brightness(1.1);
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px color-mix(in srgb, var(--accent-primary) 40%, transparent);
+    }
 
-         &.active {
-             background: var(--accent-primary);
-             color: white;
-             font-weight: 600;
-         }
+    &:active:not(:disabled) {
+        transform: scale(0.98);
+    }
 
-         &:hover:not(.active) {
-             background: var(--bg-secondary);
-             color: var(--text-secondary);
-         }
-     }
- }
-
- .field {
-     margin-bottom: 1rem;
-
-     label {
-         display: block;
-         color: var(--text-muted);
-         font-size: 0.8rem;
-         font-weight: 500;
-         margin-bottom: 0.4rem;
-         text-transform: uppercase;
-         letter-spacing: 0.5px;
-     }
-
-     input {
-         width: 100%;
-         padding: 0.75rem 1rem;
-         background: var(--bg-primary);
-         border: 1px solid var(--border-color);
-         border-radius: 10px;
-         color: var(--text-primary);
-         font-size: 0.95rem;
-         outline: none;
-         box-sizing: border-box;
-         transition: border-color 0.2s;
-
-         &:focus {
-             border-color: var(--accent-primary);
-         }
-
-         &::placeholder {
-             color: var(--text-disabled);
-         }
-     }
- }
-
- .error-msg {
-     background: rgba(255, 100, 100, 0.1);
-     border: 1px solid rgba(255, 100, 100, 0.3);
-     color: #ff8080;
-     padding: 0.6rem 1rem;
-     border-radius: 8px;
-     font-size: 0.85rem;
-     margin-bottom: 1rem;
- }
-
- .btn-submit {
-     width: 100%;
-     padding: 0.875rem;
-     background: var(--accent-primary);
-     color: white;
-     border: none;
-     border-radius: 10px;
-     font-size: 1rem;
-     font-weight: 600;
-     cursor: pointer;
-     margin-top: 0.5rem;
-     transition: all 0.2s;
-
-     &:hover:not(:disabled) {
-         filter: brightness(1.1);
-         transform: translateY(-1px);
-     }
-
-     &:disabled {
-         opacity: 0.6;
-         cursor: not-allowed;
-     }
- }
+    &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        box-shadow: none;
+    }
+}

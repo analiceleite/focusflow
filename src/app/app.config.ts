@@ -9,6 +9,7 @@ import { environment } from '../environments/environment';
 import { routes } from './app.routes';
 import { provideServiceWorker } from '@angular/service-worker';
 import { ThemeService } from './core/services/theme.service';
+import { SpotifyService } from './core/services/spotify.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -20,16 +21,16 @@ export const appConfig: ApplicationConfig = {
     provideFirestore(() => getFirestore()),
     {
       provide: APP_INITIALIZER,
-      useFactory: (themeService: ThemeService) => () => {
+      useFactory: (themeService: ThemeService, spotifyService: SpotifyService) => () => {
         // Initialize theme service on app startup
-        return Promise.resolve();
+        return spotifyService.initialize();
       },
-      deps: [ThemeService],
+      deps: [ThemeService, SpotifyService],
       multi: true
     },
     provideServiceWorker('ngsw-worker.js', {
-        enabled: !isDevMode() && (location.protocol === 'https:' || location.hostname === 'localhost'),
-        registrationStrategy: 'registerWhenStable:30000'
+      enabled: !isDevMode() && (location.protocol === 'https:' || location.hostname === 'localhost'),
+      registrationStrategy: 'registerWhenStable:30000'
     })
-]
+  ]
 };

@@ -10,5 +10,9 @@ export const environment = {
     storageBucket: "YOUR_FIREBASE_STORAGE_BUCKET",
     messagingSenderId: "YOUR_FIREBASE_MESSAGING_SENDER_ID",
     appId: "YOUR_FIREBASE_APP_ID",
+  },
+  spotify: {
+    clientId: "YOUR_SPOTIFY_CLIENT_ID",
+    redirectUri: ""
   }
 };

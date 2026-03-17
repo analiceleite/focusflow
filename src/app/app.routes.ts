@@ -14,6 +14,10 @@ export const routes: Routes = [
     canActivate: [publicGuard]
   },
   {
+    path: 'auth/spotify/callback',
+    loadComponent: () => import('./features/auth/spotify-callback/spotify-callback.component').then(m => m.SpotifyCallbackComponent)
+  },
+  {
     path: 'timer',
     loadComponent: () => import('./features/timer/timer.component').then(m => m.TimerComponent),
     canActivate: [authGuard]

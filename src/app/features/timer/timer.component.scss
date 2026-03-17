@@ -1,4 +1,4 @@
-// ─── Layout principal ─────────────────────────────────────────────────────────
+// ─── Host & Shell ─────────────────────────────────────────────────────────────
 
 :host {
     display: block;
@@ -78,16 +78,16 @@
     }
 }
 
-// ─── Grid principal ───────────────────────────────────────────────────────────
+// ─── Linha superior: Timer + Spotify mesma altura ─────────────────────────────
 
-.timer-grid {
+.top-row {
     display: grid;
-    grid-template-columns: 1fr 380px;
+    grid-template-columns: 1fr 300px;
     gap: 1.5rem;
-    align-items: start;
+    align-items: stretch; // chave: as duas colunas têm a mesma altura
 
     @media (max-width: 1024px) {
-        grid-template-columns: 1fr 320px;
+        grid-template-columns: 1fr 260px;
     }
 
     @media (max-width: 768px) {
@@ -95,46 +95,44 @@
     }
 }
 
-.col-timer {
+// ─── Linha inferior: Atividade + Presets largura total ────────────────────────
+
+.bottom-widgets {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+// ─── Timer card ───────────────────────────────────────────────────────────────
+
+.timer-card {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 1.25rem;
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border-color);
-    border-radius: 20px;
-    padding: 1.75rem 1.75rem;
+    background: color-mix(in srgb, var(--bg-tertiary) 85%, transparent);
+    backdrop-filter: blur(20px) saturate(1.4);
+    -webkit-backdrop-filter: blur(20px) saturate(1.4);
+    border: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
+    border-radius: 24px;
+    padding: 2rem 1.75rem 1.5rem;
+    box-shadow:
+        0 2px 1px rgba(255, 255, 255, 0.03) inset,
+        0 12px 40px rgba(0, 0, 0, 0.14);
 
     @media (max-width: 768px) {
         padding: 1.5rem 1.1rem;
         gap: 1rem;
+        border-radius: 20px;
     }
 }
 
-.col-config {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-    position: sticky;
-    top: 1.5rem;
-
-    @media (max-width: 768px) {
-        position: static;
-        gap: 1rem;
-    }
-}
-
-// ─── Timer ring ───────────────────────────────────────────────────────────────
+// ─── Ring ─────────────────────────────────────────────────────────────────────
 
 .timer-ring-wrapper {
     position: relative;
     width: 200px;
     height: 200px;
-
-    @media (max-width: 1024px) {
-        width: 180px;
-        height: 180px;
-    }
 
     @media (max-width: 480px) {
         width: 170px;
@@ -149,7 +147,7 @@
 
     .ring-bg {
         fill: none;
-        stroke: var(--border-color);
+        stroke: color-mix(in srgb, var(--border-color) 80%, transparent);
         stroke-width: 8;
     }
 
@@ -160,6 +158,7 @@
         stroke-dasharray: 553;
         stroke-dashoffset: 0;
         transition: stroke-dashoffset 0.4s ease, stroke 0.3s;
+        filter: drop-shadow(0 0 8px currentColor);
     }
 }
 
@@ -179,10 +178,6 @@
         letter-spacing: -1.5px;
         font-variant-numeric: tabular-nums;
 
-        @media (max-width: 1024px) {
-            font-size: 2.2rem;
-        }
-
         @media (max-width: 480px) {
             font-size: 2rem;
         }
@@ -200,13 +195,9 @@
 .controls {
     display: flex;
     gap: 0.75rem;
-    flex-wrap: wrap;
+    align-items: center;
     justify-content: center;
-
-    @media (max-width: 480px) {
-        flex-direction: column;
-        width: 100%;
-    }
+    flex-wrap: wrap;
 }
 
 .btn-main {
@@ -219,16 +210,22 @@
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
 
     &:hover {
         filter: brightness(1.1);
         transform: translateY(-1px);
     }
 
+    &:active {
+        transform: scale(0.97);
+    }
+
     &.btn-pause {
         background: var(--bg-secondary);
         color: var(--text-primary);
         border: 1px solid var(--border-color);
+        box-shadow: none;
     }
 
     @media (max-width: 480px) {
@@ -250,11 +247,7 @@
     &:hover {
         border-color: var(--accent-success);
         color: var(--accent-success);
-    }
-
-    @media (max-width: 480px) {
-        width: 100%;
-        padding: 0.75rem;
+        background: color-mix(in srgb, var(--accent-success) 6%, transparent);
     }
 }
 
@@ -272,20 +265,15 @@
         background: rgba(255, 107, 107, 0.08);
         transform: translateY(-1px);
     }
-
-    @media (max-width: 480px) {
-        width: 100%;
-        padding: 0.75rem;
-    }
 }
 
 .btn-pip {
-    padding: 0.4rem 1rem;
+    padding: 0.35rem 0.9rem;
     border-radius: 50px;
     border: 1px dashed var(--border-color);
     background: transparent;
-    color: var(--text-muted);
-    font-size: 0.775rem;
+    color: var(--text-disabled);
+    font-size: 0.72rem;
     cursor: pointer;
     transition: all 0.2s;
 
@@ -306,9 +294,9 @@
     background: rgba(67, 217, 173, 0.08);
     border: 1px solid rgba(67, 217, 173, 0.25);
     color: #43D9AD;
-    padding: 0.75rem 1rem;
+    padding: 0.65rem 1rem;
     border-radius: 10px;
-    font-size: 0.875rem;
+    font-size: 0.82rem;
     text-align: center;
     animation: slideIn 0.3s ease;
 }
@@ -316,7 +304,7 @@
 @keyframes slideIn {
     from {
         opacity: 0;
-        transform: translateY(8px);
+        transform: translateY(6px);
     }
 
     to {
@@ -325,46 +313,488 @@
     }
 }
 
-// ─── Sections col-config ──────────────────────────────────────────────────────
+// ─── Spotify widget ───────────────────────────────────────────────────────────
 
-.section {
+.spotify-widget {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    // height: 100% faz o widget esticar para ocupar a mesma altura que o timer-card
+    height: 100%;
+    background:
+        radial-gradient(circle at top right, rgba(29, 185, 84, 0.10), transparent 50%),
+        color-mix(in srgb, var(--bg-tertiary) 85%, transparent);
+    backdrop-filter: blur(20px) saturate(1.3);
+    -webkit-backdrop-filter: blur(20px) saturate(1.3);
+    border: 1px solid color-mix(in srgb, #1DB954 22%, var(--border-color));
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
 }
 
-.section-label {
+// ── Desconectado ──────────────────────────────────────────────────────────────
+
+.spotify-connect-block {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    padding: 1.25rem;
+}
+
+.spotify-connect-top {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.spotify-logo-dot {
+    color: #1DB954;
+    font-size: 0.85rem;
+}
+
+.spotify-connect-title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.spotify-connect-copy {
+    font-size: 0.78rem;
     color: var(--text-muted);
-    font-size: 0.75rem;
+    line-height: 1.45;
+    margin: 0;
+}
+
+.btn-spotify {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: linear-gradient(135deg, #1DB954, #1ed760);
+    color: #08110c;
+    font-weight: 700;
+    font-size: 0.875rem;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+
+    &:hover {
+        transform: translateY(-1px);
+        opacity: 0.96;
+    }
+}
+
+// ── Now Playing ───────────────────────────────────────────────────────────────
+
+.spotify-np-block {
+    display: grid;
+    grid-template-columns: 48px 1fr auto;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 1rem 1rem 0.85rem;
+}
+
+.spotify-np-art {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: color-mix(in srgb, #1DB954 20%, var(--bg-secondary));
+    display: grid;
+    place-items: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    &--fallback {
+        background: linear-gradient(135deg, #1DB954, #8be6b2);
+        color: #073611;
+        font-weight: 700;
+    }
+}
+
+.spotify-np-meta {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+.spotify-np-track {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.spotify-np-artist {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.spotify-np-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.sp-ctrl {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1px solid var(--border-color);
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+
+    &:hover {
+        border-color: #1DB954;
+        color: #1DB954;
+    }
+
+    &--main {
+        width: 34px;
+        height: 34px;
+        background: #1DB954;
+        border: none;
+        color: #073611;
+        font-weight: 700;
+        font-size: 0.8rem;
+
+        &:hover {
+            filter: brightness(1.1);
+            color: #073611;
+        }
+    }
+}
+
+// ── Mensagens inline ──────────────────────────────────────────────────────────
+
+.spotify-msg-info,
+.spotify-msg-error {
+    margin: 0 1rem;
+    padding: 0.5rem 0.7rem;
+    border-radius: 10px;
+    font-size: 0.74rem;
+    line-height: 1.4;
+}
+
+.spotify-msg-info {
+    background: color-mix(in srgb, #1DB954 10%, transparent);
+    border: 1px solid color-mix(in srgb, #1DB954 25%, var(--border-color));
+    color: var(--text-secondary);
+}
+
+.spotify-msg-error {
+    background: color-mix(in srgb, var(--accent-error) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent-error) 25%, var(--border-color));
+    color: var(--accent-error);
+}
+
+// ── Header playlists ──────────────────────────────────────────────────────────
+
+.spotify-pl-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.7rem 1rem 0.45rem;
+    border-top: 1px solid color-mix(in srgb, var(--border-color) 40%, transparent);
+    margin-top: 0.35rem;
+}
+
+.spotify-pl-title {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    color: var(--text-muted);
+}
+
+.spotify-pl-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.sp-link {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    padding: 0.2rem 0.35rem;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    transition: color 0.15s;
+
+    &:hover {
+        color: #1DB954;
+    }
+
+    &--muted:hover {
+        color: var(--accent-error);
+    }
+}
+
+// ── Lista de playlists ────────────────────────────────────────────────────────
+
+.spotify-pl-empty {
+    padding: 0.5rem 1rem 1rem;
+    font-size: 0.78rem;
+    color: var(--text-disabled);
+}
+
+.spotify-pl-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 0 0.5rem 0.5rem;
+}
+
+.spotify-pl-row {
+    display: grid;
+    grid-template-columns: 36px 1fr 16px;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.5rem 0.55rem;
+    border-radius: 12px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.15s;
+
+    &:hover {
+        background: color-mix(in srgb, #1DB954 8%, var(--bg-card));
+
+        .pl-play-icon {
+            opacity: 1;
+        }
+    }
+}
+
+.spotify-pl-row--active {
+    background: color-mix(in srgb, #1DB954 14%, var(--bg-card));
+
+    .pl-name {
+        color: #1DB954;
+    }
+
+    .pl-play-icon {
+        opacity: 1;
+    }
+}
+
+.pl-thumb {
+    width: 36px;
+    height: 36px;
+    border-radius: 7px;
+    overflow: hidden;
+    background: color-mix(in srgb, #1DB954 18%, var(--bg-secondary));
+    display: grid;
+    place-items: center;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    &--fallback {
+        background: linear-gradient(135deg, #1DB954, #8be6b2);
+        color: #073611;
+        font-weight: 700;
+    }
+}
+
+.pl-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.05rem;
+    min-width: 0;
+}
+
+.pl-name {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pl-meta {
+    font-size: 0.68rem;
+    color: var(--text-disabled);
+}
+
+.pl-play-icon {
+    font-size: 0.6rem;
+    color: #1DB954;
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+
+.spotify-footnote {
+    padding: 0.5rem 1rem 0.85rem;
+    margin: 0;
+    margin-top: auto; // empurra para o fundo quando o widget é mais alto que o conteúdo
+    font-size: 0.7rem;
+    color: var(--text-disabled);
+    border-top: 1px solid color-mix(in srgb, var(--border-color) 30%, transparent);
+}
+
+// ─── Activity / Presets widgets ───────────────────────────────────────────────
+
+.activity-widget,
+.presets-widget {
+    width: 100%;
+    background: color-mix(in srgb, var(--bg-tertiary) 80%, transparent);
+    backdrop-filter: blur(16px);
+    border: 1px solid color-mix(in srgb, var(--border-color) 65%, transparent);
+    border-radius: 18px;
+    overflow: hidden;
+    transition: box-shadow 0.2s;
+
+    &:hover {
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    }
+}
+
+.activity-bar,
+.presets-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.8rem 1.1rem;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s;
+
+    &:hover {
+        background: color-mix(in srgb, var(--accent-primary) 4%, transparent);
+    }
+}
+
+.activity-bar-left,
+.presets-bar-left {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.activity-badge-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.activity-bar-icon,
+.presets-bar-icon {
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.activity-bar-name,
+.presets-bar-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.activity-bar-empty {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+.activity-bar-right {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.activity-bar-label {
+    font-size: 0.68rem;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.8px;
+    letter-spacing: 0.6px;
+    color: var(--text-disabled);
+}
+
+.activity-expand-icon {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-block;
+
+    &.rotated {
+        transform: rotate(180deg);
+    }
+}
+
+.activity-chips-panel {
+    padding: 0 1rem 1rem;
+    border-top: 1px solid color-mix(in srgb, var(--border-color) 50%, transparent);
+    animation: expandIn 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes expandIn {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .activity-grid {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
+    padding-top: 0.85rem;
 }
 
 .activity-chip {
     display: flex;
     align-items: center;
     gap: 0.4rem;
-    padding: 0.5rem 0.875rem;
+    padding: 0.45rem 0.8rem;
     border-radius: 50px;
     border: 1px solid var(--border-color);
-    background: var(--bg-tertiary);
+    background: color-mix(in srgb, var(--bg-card) 80%, transparent);
+    backdrop-filter: blur(8px);
     color: var(--text-muted);
     cursor: pointer;
-    font-size: 0.875rem;
+    font-size: 0.85rem;
     transition: all 0.2s;
 
     &.selected {
-        background: color-mix(in srgb, var(--color) 15%, transparent);
+        background: color-mix(in srgb, var(--color) 14%, transparent);
         border-color: var(--color);
         color: var(--color);
         font-weight: 600;
+        box-shadow: 0 0 0 1px color-mix(in srgb, var(--color) 25%, transparent);
     }
 
     &:hover:not(.selected):not(.disabled) {
@@ -378,14 +808,14 @@
     }
 
     .chip-name {
-        font-size: 0.8rem;
+        font-size: 0.78rem;
     }
 
     .activity-delete {
         display: inline-flex;
-        margin-left: 0.3rem;
+        margin-left: 0.2rem;
         color: var(--text-muted);
-        font-size: 1rem;
+        font-size: 0.95rem;
         line-height: 1;
         opacity: 0;
         transition: opacity 0.15s;
@@ -413,18 +843,21 @@
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
+    padding-top: 0.85rem;
 }
 
 .preset-chip {
-    position: relative;
-    padding: 0.45rem 0.9rem;
+    padding: 0.4rem 0.85rem;
     border-radius: 50px;
     border: 1px solid var(--border-color);
-    background: var(--bg-tertiary);
+    background: color-mix(in srgb, var(--bg-card) 80%, transparent);
     color: var(--text-muted);
     cursor: pointer;
-    font-size: 0.825rem;
+    font-size: 0.8rem;
     transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
 
     &.active {
         border-color: var(--accent-primary);
@@ -438,13 +871,10 @@
     }
 
     .preset-delete {
-        display: inline-flex;
-        margin-left: 0.35rem;
-        color: var(--text-muted);
-        font-size: 0.9rem;
-        line-height: 1;
+        margin-left: 0.25rem;
         opacity: 0;
         transition: opacity 0.15s;
+        font-size: 0.85rem;
     }
 
     &:hover .preset-delete {
@@ -468,15 +898,16 @@
 .custom-time {
     display: flex;
     gap: 0.5rem;
+    margin-top: 0.75rem;
 
     input {
         flex: 1;
-        padding: 0.55rem 0.875rem;
+        padding: 0.5rem 0.75rem;
         background: var(--bg-card);
         border: 1px solid var(--border-color);
         border-radius: 8px;
         color: var(--text-primary);
-        font-size: 0.875rem;
+        font-size: 0.85rem;
         outline: none;
         transition: border-color 0.2s;
 
@@ -487,16 +918,20 @@
         &::placeholder {
             color: var(--text-disabled);
         }
+
+        &:disabled {
+            opacity: 0.4;
+        }
     }
 
     button {
-        padding: 0.55rem 1.1rem;
+        padding: 0.5rem 1rem;
         background: var(--bg-secondary);
         border: 1px solid var(--border-color);
         border-radius: 8px;
         color: var(--text-muted);
         cursor: pointer;
-        font-size: 0.825rem;
+        font-size: 0.8rem;
         transition: all 0.2s;
         white-space: nowrap;
 
@@ -504,10 +939,15 @@
             border-color: var(--accent-primary);
             color: var(--accent-primary);
         }
+
+        &:disabled {
+            opacity: 0.4;
+            pointer-events: none;
+        }
     }
 }
 
-// ─── Painel de estatísticas ───────────────────────────────────────────────────
+// ─── Stats ────────────────────────────────────────────────────────────────────
 
 .stats-panel {
     display: flex;
@@ -515,7 +955,14 @@
     gap: 0.75rem;
 }
 
-// 3 colunas: cada uma com media + card principal
+.section-label {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -537,20 +984,20 @@
     gap: 0.75rem;
 }
 
-// ─── Card base (os 3 grandes) ─────────────────────────────────────────────────
-
 .stat-card {
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border-color);
-    border-radius: 14px;
+    background: color-mix(in srgb, var(--bg-tertiary) 80%, transparent);
+    backdrop-filter: blur(12px);
+    border: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
+    border-radius: 16px;
     padding: 1.1rem 1.25rem;
     display: flex;
     flex-direction: column;
     gap: 0.35rem;
-    transition: border-color 0.2s;
+    transition: border-color 0.2s, box-shadow 0.2s;
 
     &:hover {
         border-color: color-mix(in srgb, var(--accent-primary) 35%, var(--border-color));
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
     }
 }
 
@@ -592,14 +1039,12 @@
     margin-bottom: 0.25rem;
 }
 
-// ─── Sparkline ────────────────────────────────────────────────────────────────
-
 .stat-sparkline {
     display: flex;
     align-items: flex-end;
     gap: 3px;
     height: 56px;
-    margin-top: auto; // empurra para o fundo do card, alinhando os 3 cards visualmente
+    margin-top: auto;
     padding-top: 8px;
 }
 
@@ -612,11 +1057,7 @@
     gap: 3px;
     height: 100%;
 
-    &.today .spark-bar {
-        background: var(--accent-primary);
-        opacity: 1;
-    }
-
+    &.today .spark-bar,
     &.current .spark-bar {
         background: var(--accent-primary);
         opacity: 1;
@@ -638,10 +1079,7 @@
         background: color-mix(in srgb, var(--accent-primary) 55%, var(--border-color));
     }
 
-    .spark-col.today:hover & {
-        background: var(--accent-primary);
-    }
-
+    .spark-col.today:hover &,
     .spark-col.current:hover & {
         background: var(--accent-primary);
     }
@@ -653,11 +1091,7 @@
     white-space: nowrap;
     line-height: 1;
 
-    .spark-col.today & {
-        color: var(--accent-primary);
-        font-weight: 600;
-    }
-
+    .spark-col.today &,
     .spark-col.current & {
         color: var(--accent-primary);
         font-weight: 600;
@@ -666,9 +1100,6 @@
 
 .stat-card-avg {
     padding: 0.75rem 1rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
 }
 
 .stat-value-row {
@@ -729,13 +1160,14 @@
 }
 
 .modal {
-    background: var(--bg-primary);
+    background: color-mix(in srgb, var(--bg-primary) 92%, transparent);
+    backdrop-filter: blur(20px);
     border: 1px solid var(--border-color);
-    border-radius: 16px;
+    border-radius: 20px;
     padding: 1.75rem;
     width: 100%;
     max-width: 360px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
     animation: modalIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 
     @media (max-width: 480px) {

@@ -48,7 +48,7 @@
     }
 }
 
-// ─── Filter bar (inline no header) ───────────────────────────────────────────
+// ─── Filter bar ───────────────────────────────────────────────────────────────
 
 .filter-bar {
     display: flex;
@@ -254,7 +254,7 @@
 
 .dashboard-grid {
     display: grid;
-    grid-template-columns: 1fr 380px; // Esquerda flexível, direita fixa
+    grid-template-columns: 1fr 380px;
     gap: 1.5rem;
     align-items: start;
 
@@ -263,7 +263,7 @@
     }
 
     @media (max-width: 768px) {
-        grid-template-columns: 1fr; // Coluna única em mobile
+        grid-template-columns: 1fr;
     }
 }
 
@@ -278,7 +278,6 @@
     }
 }
 
-// A coluna direita fica "grudada" ao topo ao fazer scroll
 .col-right {
     position: sticky;
     top: 1.5rem;
@@ -288,7 +287,7 @@
     }
 }
 
-// ─── Cards de métricas ────────────────────────────────────────────────────────
+// ─── Cards de métricas — glassmorphism ────────────────────────────────────────
 
 .cards-grid {
     display: grid;
@@ -301,13 +300,27 @@
 }
 
 .card {
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border-color);
-    border-radius: 14px;
+    background: color-mix(in srgb, var(--bg-tertiary) 82%, transparent);
+    backdrop-filter: blur(16px) saturate(1.4);
+    -webkit-backdrop-filter: blur(16px) saturate(1.4);
+    border: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
+    border-radius: 20px;
     padding: 1.25rem;
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
+    box-shadow:
+        0 2px 1px rgba(255, 255, 255, 0.03) inset,
+        0 6px 24px rgba(0, 0, 0, 0.1);
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+
+    &:hover {
+        border-color: color-mix(in srgb, var(--accent-primary) 35%, var(--border-color));
+        box-shadow:
+            0 2px 1px rgba(255, 255, 255, 0.03) inset,
+            0 8px 32px rgba(0, 0, 0, 0.14);
+        transform: translateY(-1px);
+    }
 
     .card-icon {
         font-size: 1.5rem;
@@ -360,6 +373,11 @@
     display: flex;
     flex-direction: column;
     gap: 0.875rem;
+    background: color-mix(in srgb, var(--bg-tertiary) 80%, transparent);
+    backdrop-filter: blur(12px);
+    border: 1px solid color-mix(in srgb, var(--border-color) 65%, transparent);
+    border-radius: 18px;
+    padding: 1rem 1.1rem;
 }
 
 .activity-bar-item {
@@ -413,7 +431,7 @@
 
 .bar-track {
     height: 5px;
-    background: var(--border-color);
+    background: color-mix(in srgb, var(--border-color) 60%, transparent);
     border-radius: 3px;
     overflow: hidden;
 }
@@ -422,9 +440,8 @@
     height: 100%;
     border-radius: 3px;
     transition: width 0.6s ease;
+    filter: brightness(1.05);
 }
-
-// ─── Calendário ───────────────────────────────────────────────────────────────
 
 // ─── Calendário ───────────────────────────────────────────────────────────────
 
@@ -432,19 +449,25 @@
     display: flex;
     flex-wrap: wrap;
     gap: 3px;
+    padding: 1rem;
+    background: color-mix(in srgb, var(--bg-tertiary) 80%, transparent);
+    backdrop-filter: blur(12px);
+    border: 1px solid color-mix(in srgb, var(--border-color) 65%, transparent);
+    border-radius: 18px;
 }
 
 .cal-day {
     width: 14px;
     height: 14px;
     border-radius: 3px;
-    background: var(--border-color);
+    background: color-mix(in srgb, var(--border-color) 80%, transparent);
     transition: transform 0.15s, box-shadow 0.15s, background 0.1s;
     cursor: pointer;
 
     &.has-session {
-        background: var(--accent-primary); // roxo #6C63FF
+        background: var(--accent-primary);
         opacity: 0.85;
+        box-shadow: 0 0 4px color-mix(in srgb, var(--accent-primary) 40%, transparent);
     }
 
     &.today {
@@ -457,7 +480,7 @@
     }
 
     &.selected {
-        background: var(--accent-success) !important; // teal #43D9AD
+        background: var(--accent-success) !important;
         opacity: 1 !important;
         box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent-success) 50%, transparent);
     }
@@ -510,7 +533,7 @@
     }
 }
 
-// ─── Sessions ─────────────────────────────────────────────────────────────────
+// ─── Sessions list ────────────────────────────────────────────────────────────
 
 .sessions-list {
     display: flex;
@@ -523,13 +546,15 @@
     align-items: center;
     gap: 0.75rem;
     padding: 0.7rem 1rem;
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border-color);
-    border-radius: 10px;
-    transition: border-color 0.2s;
+    background: color-mix(in srgb, var(--bg-tertiary) 80%, transparent);
+    backdrop-filter: blur(10px);
+    border: 1px solid color-mix(in srgb, var(--border-color) 65%, transparent);
+    border-radius: 14px;
+    transition: border-color 0.2s, box-shadow 0.2s;
 
     &:hover {
         border-color: color-mix(in srgb, var(--accent-primary) 40%, var(--border-color));
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
     }
 
     @media (max-width: 480px) {
@@ -543,6 +568,7 @@
     height: 8px;
     border-radius: 50%;
     flex-shrink: 0;
+    box-shadow: 0 0 4px currentColor;
 }
 
 .session-info {
@@ -612,15 +638,15 @@
     justify-content: space-between;
     align-items: center;
     padding: 0.75rem 0 0;
-    border-top: 1px solid var(--border-color);
+    border-top: 1px solid color-mix(in srgb, var(--border-color) 60%, transparent);
 }
 
 .page-btn {
-    background: var(--bg-primary);
+    background: color-mix(in srgb, var(--bg-secondary) 80%, transparent);
     border: 1px solid var(--border-color);
     color: var(--text-secondary);
     padding: 0.45rem 0.875rem;
-    border-radius: 6px;
+    border-radius: 8px;
     cursor: pointer;
     font-size: 0.825rem;
     transition: all 0.2s;
@@ -652,6 +678,10 @@
     flex-direction: column;
     align-items: center;
     gap: 0.75rem;
+    background: color-mix(in srgb, var(--bg-tertiary) 70%, transparent);
+    backdrop-filter: blur(12px);
+    border: 1px solid color-mix(in srgb, var(--border-color) 60%, transparent);
+    border-radius: 20px;
 
     .empty-icon {
         font-size: 3rem;
@@ -672,6 +702,7 @@
     font-size: 0.875rem;
     font-weight: 600;
     transition: all 0.2s;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
 
     &:hover {
         filter: brightness(1.1);
@@ -684,7 +715,7 @@
 .modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.6);
+    background: rgba(0, 0, 0, 0.65);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -706,7 +737,7 @@
 @keyframes modalIn {
     from {
         opacity: 0;
-        transform: scale(0.9) translateY(-20px);
+        transform: scale(0.92) translateY(-16px);
     }
 
     to {
@@ -716,13 +747,14 @@
 }
 
 .delete-modal {
-    background: var(--bg-primary);
+    background: color-mix(in srgb, var(--bg-primary) 92%, transparent);
+    backdrop-filter: blur(20px);
     border: 1px solid var(--border-color);
-    border-radius: 16px;
+    border-radius: 20px;
     padding: 2rem;
     max-width: 400px;
     width: 100%;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15), 0 8px 16px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.2);
     animation: modalIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     text-align: center;
 }
@@ -763,7 +795,7 @@
 .btn-cancel,
 .btn-delete {
     padding: 0.75rem 1.5rem;
-    border-radius: 8px;
+    border-radius: 10px;
     font-size: 0.9rem;
     font-weight: 500;
     cursor: pointer;
@@ -772,7 +804,7 @@
 }
 
 .btn-cancel {
-    background: var(--bg-secondary);
+    background: color-mix(in srgb, var(--bg-secondary) 80%, transparent);
     border: 1px solid var(--border-color);
     color: var(--text-secondary);
 
@@ -789,7 +821,7 @@
 
     &:hover {
         background: color-mix(in srgb, var(--accent-error) 90%, black);
-        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3);
         transform: translateY(-1px);
     }
 }

@@ -19,6 +19,7 @@ Personal productivity timer focused on consistency and clarity.
 - Free stopwatch mode with no time limit
 - Activity type per session (Study, Work, Exercise, Reading, Meditation, Personal Project, or custom)
 - Animated progress bar, audio notification on completion, and pause/resume support
+- Spotify integration to focus while listening to your favorite songs
 
 **🖼️ Picture-in-Picture**
 - Floating mini window (110×120px) with live time and progress

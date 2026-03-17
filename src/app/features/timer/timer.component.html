@@ -15,11 +15,11 @@
             </div>
         </header>
 
-        <!-- Grid principal -->
-        <div class="timer-grid">
+        <!-- ══ Linha superior: Timer | Spotify (mesma altura) ══ -->
+        <div class="top-row">
 
-            <!-- ── Coluna esquerda: timer ── -->
-            <div class="col-timer">
+            <!-- Timer -->
+            <div class="timer-card">
                 <div class="timer-ring-wrapper">
                     <svg class="timer-ring" viewBox="0 0 200 200">
                         <circle cx="100" cy="100" r="88" class="ring-bg" />
@@ -70,10 +70,115 @@
                 }
             </div>
 
-            <!-- ── Coluna direita: config ── -->
-            <div class="col-config">
-                <div class="section">
-                    <div class="section-label">Tipo de atividade</div>
+            <!-- Spotify -->
+            @if (spotifySvc.isConfigured()) {
+            <div class="spotify-widget">
+
+                @if (!spotifySvc.isConnected()) {
+                <div class="spotify-connect-block">
+                    <div class="spotify-connect-top">
+                        <span class="spotify-logo-dot">●</span>
+                        <span class="spotify-connect-title">Spotify</span>
+                    </div>
+                    <p class="spotify-connect-copy">Conecte para tocar playlists enquanto foca.</p>
+                    <button class="btn-spotify" type="button" (click)="connectSpotify()">Conectar</button>
+                </div>
+
+                } @else {
+                <!-- Now Playing -->
+                <div class="spotify-np-block">
+                    <div class="spotify-np-art" [class.spotify-np-art--fallback]="!spotifySvc.currentTrack()?.imageUrl">
+                        @if (spotifySvc.currentTrack()?.imageUrl) {
+                        <img [src]="spotifySvc.currentTrack()!.imageUrl!" [alt]="spotifySvc.currentTrack()!.name" />
+                        } @else { <span>♫</span> }
+                    </div>
+                    <div class="spotify-np-meta">
+                        @if (spotifySvc.currentTrack()) {
+                        <div class="spotify-np-track">{{ spotifySvc.currentTrack()!.name }}</div>
+                        <div class="spotify-np-artist">{{ spotifySvc.currentTrack()!.artistNames }}</div>
+                        } @else {
+                        <div class="spotify-np-track">{{ spotifySvc.profile()?.displayName || 'Spotify' }}</div>
+                        <div class="spotify-np-artist">{{ spotifyStatusText() }}</div>
+                        }
+                    </div>
+                    @if (spotifySvc.playerReady()) {
+                    <div class="spotify-np-controls">
+                        <button class="sp-ctrl" (click)="previousSpotifyTrack()">⏮</button>
+                        <button class="sp-ctrl sp-ctrl--main" (click)="toggleSpotifyPlayback()">
+                            {{ spotifySvc.isPlaying() ? '⏸' : '▶' }}
+                        </button>
+                        <button class="sp-ctrl" (click)="nextSpotifyTrack()">⏭</button>
+                    </div>
+                    }
+                </div>
+
+                @if (spotifySvc.playerMessage()) {
+                <div class="spotify-msg-info">{{ spotifySvc.playerMessage() }}</div>
+                }
+                @if (spotifySvc.error()) {
+                <div class="spotify-msg-error">{{ spotifySvc.error() }}</div>
+                }
+
+                <div class="spotify-pl-header">
+                    <span class="spotify-pl-title">Playlists</span>
+                    <div class="spotify-pl-actions">
+                        <button class="sp-link" (click)="refreshSpotifyLibrary()">↻</button>
+                        <button class="sp-link sp-link--muted" (click)="disconnectSpotify()">Desconectar</button>
+                    </div>
+                </div>
+
+                @if (spotifySvc.loading()) {
+                <div class="spotify-pl-empty">Carregando...</div>
+                } @else if (spotifyPlaylists().length === 0) {
+                <div class="spotify-pl-empty">Nenhuma playlist encontrada.</div>
+                } @else {
+                <div class="spotify-pl-list">
+                    @for (pl of spotifyPlaylists(); track pl.id) {
+                    <button class="spotify-pl-row"
+                        [class.spotify-pl-row--active]="spotifySvc.activePlaylistId() === pl.id"
+                        (click)="playSpotifyPlaylist(pl)">
+                        <div class="pl-thumb" [class.pl-thumb--fallback]="!pl.imageUrl">
+                            @if (pl.imageUrl) { <img [src]="pl.imageUrl" [alt]="pl.name" /> }
+                            @else { <span>♫</span> }
+                        </div>
+                        <div class="pl-info">
+                            <span class="pl-name">{{ pl.name }}</span>
+                            <span class="pl-meta">{{ pl.totalTracks }} faixas</span>
+                        </div>
+                        <span class="pl-play-icon">▶</span>
+                    </button>
+                    }
+                </div>
+                }
+
+                <p class="spotify-footnote">Sem Premium, abre no Spotify.</p>
+                }
+            </div>
+            }
+        </div>
+
+        <!-- ══ Linha inferior: Atividade + Presets (largura total) ══ -->
+        <div class="bottom-widgets">
+
+            <!-- Atividade -->
+            <div class="activity-widget">
+                <div class="activity-bar" (click)="toggleActivityExpanded()">
+                    <div class="activity-bar-left">
+                        @if (selectedType()) {
+                        <span class="activity-badge-dot" [style.background]="selectedType()!.color"></span>
+                        <span class="activity-bar-icon">{{ selectedType()!.icon }}</span>
+                        <span class="activity-bar-name">{{ selectedType()!.name }}</span>
+                        } @else {
+                        <span class="activity-bar-empty">Selecione uma atividade</span>
+                        }
+                    </div>
+                    <div class="activity-bar-right">
+                        <span class="activity-bar-label">Atividade</span>
+                        <span class="activity-expand-icon" [class.rotated]="activityExpanded()">⌄</span>
+                    </div>
+                </div>
+                @if (activityExpanded()) {
+                <div class="activity-chips-panel">
                     <div class="activity-grid">
                         @for (type of activityTypes(); track type.id) {
                         <button class="activity-chip" [style.--color]="type.color"
@@ -91,10 +196,24 @@
                         </button>
                     </div>
                 </div>
+                }
+            </div>
 
-                @if (timerSvc.mode() === 'pomodoro') {
-                <div class="section">
-                    <div class="section-label">Presets de tempo</div>
+            <!-- Presets (só pomodoro) -->
+            @if (timerSvc.mode() === 'pomodoro') {
+            <div class="presets-widget">
+                <div class="presets-bar" (click)="togglePresetsExpanded()">
+                    <div class="presets-bar-left">
+                        <span class="presets-bar-icon">⏱</span>
+                        <span class="presets-bar-name">{{ currentMinutes() }} min</span>
+                    </div>
+                    <div class="activity-bar-right">
+                        <span class="activity-bar-label">Presets</span>
+                        <span class="activity-expand-icon" [class.rotated]="presetsExpanded()">⌄</span>
+                    </div>
+                </div>
+                @if (presetsExpanded()) {
+                <div class="activity-chips-panel">
                     <div class="presets-row">
                         @for (preset of presets(); track preset.id) {
                         <button class="preset-chip" [class.active]="currentMinutes() === preset.minutes"
@@ -115,19 +234,14 @@
                 </div>
                 }
             </div>
+            }
         </div>
 
-        <!-- ══════════════════════════════════════════════════════════ -->
-        <!-- Painel de estatísticas                                     -->
-        <!-- Layout: [Hoje] [7 dias] [30 dias] [Médias ÷ 3]            -->
-        <!-- ══════════════════════════════════════════════════════════ -->
+        <!-- ══ Estatísticas ══ -->
         <div class="stats-panel">
-
             <div class="section-label">📊 Estatísticas de foco</div>
-
             <div class="stats-grid">
 
-                <!-- Coluna 1: Acumulado hoje + Média diária -->
                 <div class="stat-stack">
                     <div class="stat-card stat-card-avg">
                         <div class="stat-card-top">
@@ -136,10 +250,8 @@
                         </div>
                         <div class="stat-value">{{ formatHours(todayTotalSeconds()) }}</div>
                         <div class="stat-sub">{{ todayTotalSeconds() === 0 ? 'Nenhuma sessão ainda' : 'acumulado hoje'
-                            }}
-                        </div>
+                            }}</div>
                     </div>
-
                     <div class="stat-card">
                         <div class="stat-card-top">
                             <span class="stat-label">Média diária</span>
@@ -161,7 +273,6 @@
                     </div>
                 </div>
 
-                <!-- Coluna 2: Acumulado 7 dias + Média semanal -->
                 <div class="stat-stack">
                     <div class="stat-card stat-card-avg">
                         <div class="stat-card-top">
@@ -171,7 +282,6 @@
                         <div class="stat-value">{{ formatHours(last7TotalSeconds()) }}</div>
                         <div class="stat-sub">acumulado nos ultimos 7 dias</div>
                     </div>
-
                     <div class="stat-card">
                         <div class="stat-card-top">
                             <span class="stat-label">Média semanal</span>
@@ -193,7 +303,6 @@
                     </div>
                 </div>
 
-                <!-- Coluna 3: Acumulado 30 dias + Média mensal -->
                 <div class="stat-stack">
                     <div class="stat-card stat-card-avg">
                         <div class="stat-card-top">
@@ -203,7 +312,6 @@
                         <div class="stat-value">{{ formatHours(last30TotalSeconds()) }}</div>
                         <div class="stat-sub">acumulado nos ultimos 30 dias</div>
                     </div>
-
                     <div class="stat-card">
                         <div class="stat-card-top">
                             <span class="stat-label">Média mensal</span>
