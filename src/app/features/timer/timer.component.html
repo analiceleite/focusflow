@@ -70,9 +70,19 @@
                 }
             </div>
 
-            <!-- Spotify -->
-            @if (spotifySvc.isConfigured()) {
             <div class="spotify-widget">
+
+                @if (!spotifySvc.isConfigured()) {
+                <div class="spotify-connect-block">
+                    <div class="spotify-connect-top">
+                        <span class="spotify-logo-dot">●</span>
+                        <span class="spotify-connect-title">Spotify</span>
+                    </div>
+                    <p class="spotify-connect-copy">Client ID do Spotify não configurado neste ambiente.</p>
+                    <button class="btn-spotify" type="button" (click)="connectSpotify()">Conectar</button>
+                </div>
+
+                } @else {
 
                 @if (!spotifySvc.isConnected()) {
                 <div class="spotify-connect-block">
@@ -153,8 +163,8 @@
 
                 <p class="spotify-footnote">Sem Premium, abre no Spotify.</p>
                 }
+                }
             </div>
-            }
         </div>
 
         <!-- ══ Linha inferior: Atividade + Presets (largura total) ══ -->
