@@ -15,6 +15,86 @@
             </div>
         </header>
 
+        <!-- ══ Linha inferior: Atividade + Presets (largura total) ══ -->
+        <div class="bottom-widgets">
+
+            <!-- Atividade -->
+            <div class="activity-widget">
+                <div class="activity-bar" (click)="toggleActivityExpanded()">
+                    <div class="activity-bar-left">
+                        @if (selectedType()) {
+                        <span class="activity-badge-dot" [style.background]="selectedType()!.color"></span>
+                        <span class="activity-bar-icon">{{ selectedType()!.icon }}</span>
+                        <span class="activity-bar-name">{{ selectedType()!.name }}</span>
+                        } @else {
+                        <span class="activity-bar-empty">Selecione uma atividade</span>
+                        }
+                    </div>
+                    <div class="activity-bar-right">
+                        <span class="activity-bar-label">Atividade</span>
+                        <span class="activity-expand-icon" [class.rotated]="activityExpanded()">⌄</span>
+                    </div>
+                </div>
+                @if (activityExpanded()) {
+                <div class="activity-chips-panel">
+                    <div class="activity-grid">
+                        @for (type of activityTypes(); track type.id) {
+                        <button class="activity-chip" [style.--color]="type.color"
+                            [class.selected]="selectedType()?.id === type.id"
+                            [class.disabled]="isTimerRunning() && selectedType()?.id !== type.id"
+                            (click)="selectActivityType(type)">
+                            <span>{{ type.icon }}</span>
+                            <span class="chip-name">{{ type.name }}</span>
+                            <span class="activity-delete"
+                                (click)="$event.stopPropagation(); deleteActivityType(type.id!)">×</span>
+                        </button>
+                        }
+                        <button class="activity-chip add-chip" (click)="showAddType.set(true)">
+                            <span>＋</span><span class="chip-name">Novo</span>
+                        </button>
+                    </div>
+                </div>
+                }
+            </div>
+
+            <!-- Presets (só pomodoro) -->
+            @if (timerSvc.mode() === 'pomodoro') {
+            <div class="presets-widget">
+                <div class="presets-bar" (click)="togglePresetsExpanded()">
+                    <div class="presets-bar-left">
+                        <span class="presets-bar-icon">⏱</span>
+                        <span class="presets-bar-name">{{ currentMinutes() }} min</span>
+                    </div>
+                    <div class="activity-bar-right">
+                        <span class="activity-bar-label">Presets</span>
+                        <span class="activity-expand-icon" [class.rotated]="presetsExpanded()">⌄</span>
+                    </div>
+                </div>
+                @if (presetsExpanded()) {
+                <div class="activity-chips-panel">
+                    <div class="presets-row">
+                        @for (preset of presets(); track preset.id) {
+                        <button class="preset-chip" [class.active]="currentMinutes() === preset.minutes"
+                            (click)="applyPreset(preset.minutes)">
+                            {{ preset.label }}
+                            <span class="preset-delete"
+                                (click)="$event.stopPropagation(); deletePreset(preset.id!)">×</span>
+                        </button>
+                        }
+                        <button class="preset-chip preset-add" (click)="showAddPreset.set(true)">＋ Salvar
+                            preset</button>
+                    </div>
+                    <div class="custom-time">
+                        <input type="number" [(ngModel)]="customMinutes" placeholder="Minutos" min="1" max="480"
+                            (keyup.enter)="applyCustomTime()" />
+                        <button (click)="applyCustomTime()">Aplicar</button>
+                    </div>
+                </div>
+                }
+            </div>
+            }
+        </div>
+
         <!-- ══ Linha superior: Timer | Spotify (mesma altura) ══ -->
         <div class="top-row">
 
@@ -165,86 +245,6 @@
                 }
                 }
             </div>
-        </div>
-
-        <!-- ══ Linha inferior: Atividade + Presets (largura total) ══ -->
-        <div class="bottom-widgets">
-
-            <!-- Atividade -->
-            <div class="activity-widget">
-                <div class="activity-bar" (click)="toggleActivityExpanded()">
-                    <div class="activity-bar-left">
-                        @if (selectedType()) {
-                        <span class="activity-badge-dot" [style.background]="selectedType()!.color"></span>
-                        <span class="activity-bar-icon">{{ selectedType()!.icon }}</span>
-                        <span class="activity-bar-name">{{ selectedType()!.name }}</span>
-                        } @else {
-                        <span class="activity-bar-empty">Selecione uma atividade</span>
-                        }
-                    </div>
-                    <div class="activity-bar-right">
-                        <span class="activity-bar-label">Atividade</span>
-                        <span class="activity-expand-icon" [class.rotated]="activityExpanded()">⌄</span>
-                    </div>
-                </div>
-                @if (activityExpanded()) {
-                <div class="activity-chips-panel">
-                    <div class="activity-grid">
-                        @for (type of activityTypes(); track type.id) {
-                        <button class="activity-chip" [style.--color]="type.color"
-                            [class.selected]="selectedType()?.id === type.id"
-                            [class.disabled]="isTimerRunning() && selectedType()?.id !== type.id"
-                            (click)="selectActivityType(type)">
-                            <span>{{ type.icon }}</span>
-                            <span class="chip-name">{{ type.name }}</span>
-                            <span class="activity-delete"
-                                (click)="$event.stopPropagation(); deleteActivityType(type.id!)">×</span>
-                        </button>
-                        }
-                        <button class="activity-chip add-chip" (click)="showAddType.set(true)">
-                            <span>＋</span><span class="chip-name">Novo</span>
-                        </button>
-                    </div>
-                </div>
-                }
-            </div>
-
-            <!-- Presets (só pomodoro) -->
-            @if (timerSvc.mode() === 'pomodoro') {
-            <div class="presets-widget">
-                <div class="presets-bar" (click)="togglePresetsExpanded()">
-                    <div class="presets-bar-left">
-                        <span class="presets-bar-icon">⏱</span>
-                        <span class="presets-bar-name">{{ currentMinutes() }} min</span>
-                    </div>
-                    <div class="activity-bar-right">
-                        <span class="activity-bar-label">Presets</span>
-                        <span class="activity-expand-icon" [class.rotated]="presetsExpanded()">⌄</span>
-                    </div>
-                </div>
-                @if (presetsExpanded()) {
-                <div class="activity-chips-panel">
-                    <div class="presets-row">
-                        @for (preset of presets(); track preset.id) {
-                        <button class="preset-chip" [class.active]="currentMinutes() === preset.minutes"
-                            (click)="applyPreset(preset.minutes)">
-                            {{ preset.label }}
-                            <span class="preset-delete"
-                                (click)="$event.stopPropagation(); deletePreset(preset.id!)">×</span>
-                        </button>
-                        }
-                        <button class="preset-chip preset-add" (click)="showAddPreset.set(true)">＋ Salvar
-                            preset</button>
-                    </div>
-                    <div class="custom-time">
-                        <input type="number" [(ngModel)]="customMinutes" placeholder="Minutos" min="1" max="480"
-                            (keyup.enter)="applyCustomTime()" />
-                        <button (click)="applyCustomTime()">Aplicar</button>
-                    </div>
-                </div>
-                }
-            </div>
-            }
         </div>
 
         <!-- ══ Estatísticas ══ -->
