@@ -69,6 +69,22 @@ interface SpotifyPlaylistsResponse {
     }>;
 }
 
+interface SpotifyDevicesResponse {
+    devices: Array<{
+        id: string;
+        is_active: boolean;
+        is_restricted: boolean;
+        name: string;
+        type: string;
+    }>;
+}
+
+class SpotifyHttpError extends Error {
+    constructor(public readonly status: number, message: string) {
+        super(message);
+    }
+}
+
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const AUTH_URL = 'https://accounts.spotify.com/authorize';
@@ -420,6 +436,7 @@ export class SpotifyService {
 
         p.addListener('not_ready', () => {
             this.playerReady.set(false);
+            this.deviceId.set(null);
             this.playerMessage.set('O player perdeu o estado de pronto.');
         });
 
@@ -466,15 +483,82 @@ export class SpotifyService {
     // ── Playback helpers ──────────────────────────────────────────────────────
 
     private async transferPlayback(play: boolean): Promise<void> {
-        const id = this.deviceId();
-        if (!id) throw new Error('Device não pronto.');
-        await this.put('/me/player', { device_ids: [id], play });
+        await this.runWithDeviceRetry(async id => {
+            await this.put('/me/player', { device_ids: [id], play });
+        });
     }
 
     private async startPlayback(body: Record<string, unknown>): Promise<void> {
+        await this.runWithDeviceRetry(async id => {
+            await this.put(`/me/player/play?device_id=${encodeURIComponent(id)}`, body);
+        });
+    }
+
+    private async runWithDeviceRetry(operation: (deviceId: string) => Promise<void>, attempts = 3): Promise<void> {
+        let lastError: unknown = null;
+
+        for (let attempt = 1; attempt <= attempts; attempt++) {
+            const id = await this.ensureUsableDeviceId();
+            try {
+                await operation(id);
+                return;
+            } catch (error) {
+                lastError = error;
+                if (!this.isDeviceUnavailableError(error) || attempt === attempts) {
+                    throw error;
+                }
+
+                this.playerMessage.set('Sincronizando device do Spotify...');
+                await this.player?.activateElement?.();
+                await this.waitForPlayerReady();
+                await this.waitForDeviceAvailable(this.deviceId(), 6_000);
+            }
+        }
+
+        if (lastError instanceof Error) {
+            throw lastError;
+        }
+        throw new Error('Não foi possível sincronizar o device do Spotify.');
+    }
+
+    private async ensureUsableDeviceId(): Promise<string> {
         const id = this.deviceId();
         if (!id) throw new Error('Device não pronto.');
-        await this.put(`/me/player/play?device_id=${encodeURIComponent(id)}`, body);
+
+        await this.waitForDeviceAvailable(id, 6_000);
+        return id;
+    }
+
+    private async waitForDeviceAvailable(expectedId: string | null, timeoutMs: number): Promise<void> {
+        if (!expectedId) {
+            throw new Error('Device não pronto.');
+        }
+
+        const startedAt = Date.now();
+        while (Date.now() - startedAt < timeoutMs) {
+            const devices = await this.get<SpotifyDevicesResponse>('/me/player/devices');
+            const exists = devices.devices.some(device => device.id === expectedId && !device.is_restricted);
+            if (exists) {
+                return;
+            }
+            await new Promise(resolve => setTimeout(resolve, 250));
+        }
+
+        throw new Error('Device do Spotify não ficou disponível a tempo. Verifique se o player está ativo neste navegador.');
+    }
+
+    private isDeviceUnavailableError(error: unknown): boolean {
+        const status = error instanceof SpotifyHttpError ? error.status : null;
+        const message = error instanceof Error ? error.message.toLowerCase() : '';
+
+        if (status === 404) {
+            return true;
+        }
+
+        return message.includes('no active device')
+            || message.includes('device not found')
+            || message.includes('device não')
+            || message.includes('device nao');
     }
 
     // ── API helpers ───────────────────────────────────────────────────────────
@@ -528,7 +612,10 @@ export class SpotifyService {
             res = await fetch(url.toString(), { headers: { Authorization: `Bearer ${this.accessToken()}` } });
         }
 
-        if (!res.ok) throw new Error(await this.apiError(res));
+        if (!res.ok) {
+            const message = await this.apiError(res);
+            throw new SpotifyHttpError(res.status, message);
+        }
         return res.json() as Promise<T>;
     }
 
@@ -555,7 +642,10 @@ export class SpotifyService {
             });
         }
 
-        if (!res.ok) throw new Error(await this.apiError(res));
+        if (!res.ok) {
+            const message = await this.apiError(res);
+            throw new SpotifyHttpError(res.status, message);
+        }
     }
 
     // ── Token management ──────────────────────────────────────────────────────
@@ -662,6 +752,7 @@ export class SpotifyService {
     private async apiError(res: Response): Promise<string> {
         if (res.status === 401) return 'Sessão expirada.';
         if (res.status === 403) return 'Operação não permitida.';
+        if (res.status === 404) return 'Device do Spotify não encontrado no momento.';
         if (res.status === 429) return 'Muitas requisições. Tente em instantes.';
         try {
             const p = await res.json() as { error?: { message?: string } };
