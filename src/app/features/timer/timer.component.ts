@@ -139,9 +139,9 @@ export class TimerComponent implements OnInit, OnDestroy {
     return 'Conectado';
   });
 
-  /** Ring offset para raio 88 (viewBox 200×200, r=88, circunferência ≈ 553) */
+  /** Ring offset para raio 110 (viewBox 240×240, r=110, circunferência ≈ 691) */
   readonly ringOffset = computed(() => {
-    const circumference = 2 * Math.PI * 88;
+    const circumference = 2 * Math.PI * 110;
     return circumference * (1 - this.timerSvc.progress());
   });
 
@@ -448,9 +448,9 @@ export class TimerComponent implements OnInit, OnDestroy {
     this.releaseWakeLock();
     this.timerSvc.stop();
 
-    // Limpar do Firestore após descartar
+    // Limpar do Firestore após descartar (qualquer dispositivo pode descartar)
     const userId = this.authSvc.currentUser?.uid;
-    if (userId && this.timerSvc.activeDeviceId() === this.timerSvc.getDeviceId()) {
+    if (userId && this.timerSvc.activeDeviceId()) {
       this.timerSvc.publishTimerToFirestore(userId, 'delete').catch(err => {
         console.error('Erro ao deletar timer do Firestore:', err);
       });

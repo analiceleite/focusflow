@@ -131,12 +131,17 @@
 
 .timer-ring-wrapper {
     position: relative;
-    width: 200px;
-    height: 200px;
+    width: 240px;
+    height: 240px;
+
+    @media (max-width: 768px) {
+        width: 200px;
+        height: 200px;
+    }
 
     @media (max-width: 480px) {
-        width: 170px;
-        height: 170px;
+        width: 180px;
+        height: 180px;
     }
 }
 
@@ -155,7 +160,7 @@
         fill: none;
         stroke-width: 8;
         stroke-linecap: round;
-        stroke-dasharray: 553;
+        stroke-dasharray: 691;
         stroke-dashoffset: 0;
         transition: stroke-dashoffset 0.4s ease, stroke 0.3s;
         filter: drop-shadow(0 0 8px currentColor);
@@ -173,10 +178,14 @@
 
     .timer-time {
         color: var(--text-primary);
-        font-size: 2.5rem;
+        font-size: 2.75rem;
         font-weight: 700;
         letter-spacing: -1.5px;
         font-variant-numeric: tabular-nums;
+
+        @media (max-width: 768px) {
+            font-size: 2.5rem;
+        }
 
         @media (max-width: 480px) {
             font-size: 2rem;

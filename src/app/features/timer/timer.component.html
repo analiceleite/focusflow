@@ -101,10 +101,10 @@
             <!-- Timer -->
             <div class="timer-card">
                 <div class="timer-ring-wrapper">
-                    <svg class="timer-ring" viewBox="0 0 200 200">
-                        <circle cx="100" cy="100" r="88" class="ring-bg" />
+                    <svg class="timer-ring" viewBox="0 0 240 240">
+                        <circle cx="120" cy="120" r="110" class="ring-bg" />
                         @if (timerSvc.mode() === 'pomodoro') {
-                        <circle cx="100" cy="100" r="88" class="ring-progress"
+                        <circle cx="120" cy="120" r="110" class="ring-progress"
                             [style.stroke]="selectedType()?.color || '#6C63FF'"
                             [style.stroke-dashoffset]="ringOffset()" />
                         }
