@@ -41,11 +41,11 @@ service cloud.firestore {
       allow read: if request.auth != null
         && request.auth.uid == userId;
       
-      // CREATE: iniciar novo timer - apenas o deviceId que inicia pode criar
+      // CREATE: iniciar novo timer
       allow create: if request.auth != null
         && request.auth.uid == userId
         && request.resource.data.userId == userId
-        && request.resource.data.initiatedBy == request.headers['x-device-id']
+        && request.resource.data.initiatedBy != null
         && request.resource.data.timerState != null
         && request.resource.data.lastUpdated != null;
       
@@ -53,20 +53,14 @@ service cloud.firestore {
       allow update: if request.auth != null
         && request.auth.uid == userId
         && resource.data.userId == userId
-        && (request.resource.data.paused != resource.data.paused
-          || request.resource.data.remaining != resource.data.remaining
-          || request.resource.data.elapsed != resource.data.elapsed
-          || request.resource.data.updatedBy != resource.data.updatedBy)
-        // NÃO permitir mudar initiatedBy após criação (garante que só quem iniciou pode fazer start)
+        // NÃO permitir mudar initiatedBy ou timerState após criação
         && request.resource.data.initiatedBy == resource.data.initiatedBy
-        // NÃO permitir mudar timerState após criação (mode e totalSeconds são imutáveis)
         && request.resource.data.timerState.mode == resource.data.timerState.mode
         && request.resource.data.timerState.totalSeconds == resource.data.timerState.totalSeconds;
       
       // DELETE: apenas quem iniciou pode deletar/finalizar o timer
       allow delete: if request.auth != null
-        && request.auth.uid == userId
-        && resource.data.initiatedBy == request.headers['x-device-id'];
+        && request.auth.uid == userId;
     }
   }
 }
