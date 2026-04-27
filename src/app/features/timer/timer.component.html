@@ -128,17 +128,6 @@
                             </span>
                         </div>
                         }
-                        @if (timerSvc.isSyncing()) {
-                        <div class="sync-indicator">
-                            <span class="sync-spinner">⟳</span>
-                            <span>Sincronizando...</span>
-                        </div>
-                        }
-                        @if (timerSvc.syncError()) {
-                        <div class="sync-error">
-                            <span>⚠ {{ timerSvc.syncError() }}</span>
-                        </div>
-                        }
                     </div>
                 </div>
 
