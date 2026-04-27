@@ -1,6 +1,7 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { Firestore, doc, onSnapshot, setDoc, updateDoc, deleteDoc, Unsubscribe } from '@angular/fire/firestore';
 import { serverTimestamp, Timestamp } from '@angular/fire/firestore';
+import { FirebaseError } from 'firebase/app';
 
 export type TimerMode = 'pomodoro' | 'stopwatch';
 export type TimerState = 'idle' | 'running' | 'paused' | 'finished';
@@ -391,7 +392,30 @@ export class TimerService {
           lastUpdated: serverTimestamp() as Timestamp
         };
 
-        await updateDoc(docRef, updateData);
+        try {
+          await updateDoc(docRef, updateData);
+        } catch (error) {
+          // Se o documento ainda não existir, cria um estado inicial para não quebrar o sync.
+          const fbError = error as FirebaseError;
+          if (fbError?.code === 'not-found') {
+            const fallbackData: TimerSyncData = {
+              userId,
+              initiatedBy: this.activeDeviceId() ?? this.deviceId,
+              updatedBy: this.deviceId,
+              timerState: {
+                mode: this.mode(),
+                totalSeconds: this.totalSeconds()
+              },
+              paused: this.state() === 'paused',
+              remaining: this.remaining(),
+              elapsed: this.elapsedSeconds(),
+              lastUpdated: serverTimestamp() as Timestamp
+            };
+            await setDoc(docRef, fallbackData, { merge: true });
+          } else {
+            throw error;
+          }
+        }
       } else if (action === 'delete') {
         // Deletar documento (apenas quem iniciou pode fazer via rules)
         await deleteDoc(docRef);

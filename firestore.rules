@@ -45,9 +45,8 @@ service cloud.firestore {
       allow create: if request.auth != null
         && request.auth.uid == userId
         && request.resource.data.userId == userId
-        && request.resource.data.initiatedBy != null
-        && request.resource.data.timerState != null
-        && request.resource.data.lastUpdated != null;
+        && request.resource.data.initiatedBy is string
+        && request.resource.data.timerState is map;
       
       // UPDATE: pausar/parar/sincronizar - qualquer device do usuário pode fazer
       allow update: if request.auth != null
@@ -55,10 +54,9 @@ service cloud.firestore {
         && resource.data.userId == userId
         // NÃO permitir mudar initiatedBy ou timerState após criação
         && request.resource.data.initiatedBy == resource.data.initiatedBy
-        && request.resource.data.timerState.mode == resource.data.timerState.mode
-        && request.resource.data.timerState.totalSeconds == resource.data.timerState.totalSeconds;
+        && request.resource.data.timerState == resource.data.timerState;
       
-      // DELETE: apenas quem iniciou pode deletar/finalizar o timer
+      // DELETE: qualquer device autenticado do mesmo usuário pode finalizar
       allow delete: if request.auth != null
         && request.auth.uid == userId;
     }
