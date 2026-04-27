@@ -294,9 +294,15 @@ export class TimerService {
         docRef,
         (snapshot) => {
           if (!snapshot.exists()) {
-            // Não há timer sincronizado, manter estado local
+            // Não há timer sincronizado, resetar tudo
             this.activeDeviceId.set(null);
+            this.syncedActivity.set(null);
             this.syncError.set(null);
+            // Parar timer em todos os devices quando é descartado em qualquer um
+            this.clearInterval();
+            this.elapsedSeconds.set(0);
+            this.state.set('idle');
+            this.saveState();
             return;
           }
 
