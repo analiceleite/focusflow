@@ -1,4 +1,6 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
+import { Firestore, doc, onSnapshot, setDoc, updateDoc, deleteDoc, Unsubscribe } from '@angular/fire/firestore';
+import { serverTimestamp, Timestamp } from '@angular/fire/firestore';
 
 export type TimerMode = 'pomodoro' | 'stopwatch';
 export type TimerState = 'idle' | 'running' | 'paused' | 'finished';
@@ -11,10 +13,27 @@ interface TimerStateData {
   startTimestamp: number;
 }
 
+interface TimerSyncData {
+  userId: string;
+  initiatedBy: string;
+  updatedBy: string;
+  timerState: {
+    mode: TimerMode;
+    totalSeconds: number;
+  };
+  paused: boolean;
+  remaining: number;
+  elapsed: number;
+  lastUpdated: Timestamp;
+}
+
 @Injectable({ providedIn: 'root' })
 export class TimerService {
   private readonly TIMER_STATE_KEY = 'focusflow_timer_state';
-  
+  private readonly DEVICE_ID_KEY = 'focusflow_device_id';
+
+  private firestore = inject(Firestore);
+
   // Signals
   readonly mode = signal<TimerMode>('pomodoro');
   readonly state = signal<TimerState>('idle');
@@ -40,8 +59,17 @@ export class TimerService {
     return this.formatTime(secs);
   });
 
+  // Multi-device sync signals
+  readonly activeDeviceId = signal<string | null>(null);
+  readonly isSyncing = signal(false);
+  readonly syncError = signal<string | null>(null);
+
   private intervalId: ReturnType<typeof setInterval> | null = null;
   private startTimestamp: number = 0;
+  private deviceId: string = '';
+  private firestoreUnsubscribe: Unsubscribe | null = null;
+  private syncDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+  private readonly SYNC_DEBOUNCE_MS = 500;
 
   constructor() {
     this.restoreState();
@@ -132,7 +160,7 @@ export class TimerService {
       gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
       oscillator.start(ctx.currentTime);
       oscillator.stop(ctx.currentTime + 0.5);
-    } catch {}
+    } catch { }
   }
 
   private saveState(): void {
@@ -156,7 +184,7 @@ export class TimerService {
       if (!saved) return;
 
       const stateData: TimerStateData = JSON.parse(saved);
-      
+
       // Restaurar estados básicos
       this.mode.set(stateData.mode);
       this.totalSeconds.set(stateData.totalSeconds);
@@ -167,7 +195,7 @@ export class TimerService {
       if (stateData.state === 'running') {
         const timeSinceLastUpdate = Date.now() - this.startTimestamp;
         const currentElapsed = Math.floor(timeSinceLastUpdate / 1000);
-        
+
         // Verificar se ainda está dentro dos limites válidos
         if (stateData.mode === 'pomodoro' && currentElapsed >= stateData.totalSeconds) {
           // Timer já terminou enquanto estava fora
@@ -193,7 +221,7 @@ export class TimerService {
 
   private startTimer(): void {
     if (this.intervalId) this.clearInterval();
-    
+
     this.intervalId = setInterval(() => {
       const elapsed = Math.floor((Date.now() - this.startTimestamp) / 1000);
       this.elapsedSeconds.set(elapsed);
@@ -204,5 +232,208 @@ export class TimerService {
         this.finish();
       }
     }, 250);
+  }
+
+  // ── Multi-device Sync Methods ─────────────────────────────────────────────────
+
+  /**
+   * Gera e retorna deviceId único para este navegador/sessão
+   * Armazenado em sessionStorage para duração da sessão
+   */
+  getDeviceId(): string {
+    if (this.deviceId) return this.deviceId;
+
+    // Tentar recuperar de sessionStorage
+    let stored = sessionStorage.getItem(this.DEVICE_ID_KEY);
+    if (stored) {
+      this.deviceId = stored;
+      return this.deviceId;
+    }
+
+    // Gerar novo deviceId usando uuid4-like logic
+    this.deviceId = this.generateUUID();
+    sessionStorage.setItem(this.DEVICE_ID_KEY, this.deviceId);
+    return this.deviceId;
+  }
+
+  /**
+   * Verifica se este device pode iniciar um novo timer
+   * Retorna false se outro device já tem um timer ativo
+   */
+  canStartTimer(): boolean {
+    const activeDevId = this.activeDeviceId();
+    // Pode iniciar se não há device ativo ou se o device ativo é este mesmo
+    return !activeDevId || activeDevId === this.deviceId;
+  }
+
+  /**
+   * Inicia listener Firestore realtime para sincronização de timer
+   * Deve ser chamado após autenticação bem-sucedida
+   */
+  syncFromFirestore(userId: string): void {
+    if (!userId) return;
+
+    this.deviceId = this.getDeviceId();
+
+    // Unsubscribe do listener anterior se houver
+    if (this.firestoreUnsubscribe) {
+      this.firestoreUnsubscribe();
+    }
+
+    try {
+      const docRef = doc(this.firestore, 'timerSessions', userId);
+
+      this.firestoreUnsubscribe = onSnapshot(
+        docRef,
+        (snapshot) => {
+          if (!snapshot.exists()) {
+            // Não há timer sincronizado, manter estado local
+            this.activeDeviceId.set(null);
+            this.syncError.set(null);
+            return;
+          }
+
+          const data = snapshot.data() as TimerSyncData;
+
+          // Atualizar activeDeviceId para controlar UI (disable/enable botões)
+          this.activeDeviceId.set(data.initiatedBy);
+
+          // Se este device é quem tem o timer, não atualizar campos (respeitar local)
+          if (data.initiatedBy === this.deviceId) {
+            // Este device iniciou o timer, respeitar seu estado local
+            // Apenas sincronizar se estiver desatualizado
+            const localRemaining = this.remaining();
+            const cloudRemaining = data.remaining;
+
+            // Se diferença maior que 2 segundos, houve mudança (outro device pausou/parou)
+            if (Math.abs(localRemaining - cloudRemaining) > 2) {
+              // Outro device pausou/parou
+              this.elapsedSeconds.set(data.elapsed);
+              if (data.paused) {
+                this.pause();
+              }
+            }
+          } else {
+            // Outro device tem o timer ativo, sincronizar estado
+            this.mode.set(data.timerState.mode);
+            this.totalSeconds.set(data.timerState.totalSeconds);
+            this.elapsedSeconds.set(data.elapsed);
+
+            if (data.paused && this.state() === 'running') {
+              this.pause();
+            } else if (!data.paused && this.state() === 'idle') {
+              this.state.set('running');
+              this.startTimestamp = Date.now() - data.elapsed * 1000;
+              this.startTimer();
+            }
+          }
+
+          this.syncError.set(null);
+        },
+        (error) => {
+          console.error('Erro ao sincronizar timer:', error);
+          this.syncError.set(error.message);
+        }
+      );
+    } catch (error) {
+      console.error('Erro ao iniciar listener Firestore:', error);
+      this.syncError.set(error instanceof Error ? error.message : 'Erro de sincronização');
+    }
+  }
+
+  /**
+   * Para o listener Firestore (deve ser chamado ao logout)
+   */
+  stopSync(): void {
+    if (this.firestoreUnsubscribe) {
+      this.firestoreUnsubscribe();
+      this.firestoreUnsubscribe = null;
+    }
+    this.activeDeviceId.set(null);
+    this.syncError.set(null);
+  }
+
+  /**
+   * Publica estado do timer para Firestore
+   * Action: 'create' (iniciar), 'update' (pausar/parar), 'delete' (finalizar)
+   */
+  async publishTimerToFirestore(userId: string, action: 'create' | 'update' | 'delete'): Promise<void> {
+    if (!userId || !this.deviceId) return;
+
+    try {
+      this.isSyncing.set(true);
+      const docRef = doc(this.firestore, 'timerSessions', userId);
+
+      if (action === 'create') {
+        // Criar novo documento com initiatedBy = deviceId
+        const syncData: TimerSyncData = {
+          userId,
+          initiatedBy: this.deviceId,
+          updatedBy: this.deviceId,
+          timerState: {
+            mode: this.mode(),
+            totalSeconds: this.totalSeconds()
+          },
+          paused: false,
+          remaining: this.remaining(),
+          elapsed: this.elapsedSeconds(),
+          lastUpdated: serverTimestamp() as Timestamp
+        };
+
+        await setDoc(docRef, syncData);
+      } else if (action === 'update') {
+        // Atualizar apenas campos mutáveis
+        const updateData: Partial<TimerSyncData> = {
+          updatedBy: this.deviceId,
+          paused: this.state() === 'paused',
+          remaining: this.remaining(),
+          elapsed: this.elapsedSeconds(),
+          lastUpdated: serverTimestamp() as Timestamp
+        };
+
+        await updateDoc(docRef, updateData);
+      } else if (action === 'delete') {
+        // Deletar documento (apenas quem iniciou pode fazer via rules)
+        await deleteDoc(docRef);
+      }
+
+      this.syncError.set(null);
+    } catch (error) {
+      console.error('Erro ao publicar timer no Firestore:', error);
+      this.syncError.set(error instanceof Error ? error.message : 'Erro ao sincronizar');
+      throw error;
+    } finally {
+      this.isSyncing.set(false);
+    }
+  }
+
+  /**
+   * Publica timer com debounce para evitar escritas excessivas
+   */
+  async publishTimerWithDebounce(userId: string, action: 'update'): Promise<void> {
+    if (!userId) return;
+
+    // Limpar timer anterior
+    if (this.syncDebounceTimer) {
+      clearTimeout(this.syncDebounceTimer);
+    }
+
+    // Agendar publicação com debounce
+    this.syncDebounceTimer = setTimeout(() => {
+      this.publishTimerToFirestore(userId, action).catch(err => {
+        console.error('Erro ao sincronizar com debounce:', err);
+      });
+    }, this.SYNC_DEBOUNCE_MS);
+  }
+
+  /**
+   * Gera um UUID v4-like string para deviceId
+   */
+  private generateUUID(): string {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+      const r = (Math.random() * 16) | 0;
+      const v = c === 'x' ? r : (r & 0x3) | 0x8;
+      return v.toString(16);
+    });
   }
 }

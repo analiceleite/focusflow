@@ -244,6 +244,12 @@ export class TimerComponent implements OnInit, OnDestroy {
     this.initializeAudioContext();
     this.setupBackgroundFeatures();
 
+    // Iniciar sincronização de timer com Firestore se autenticado
+    const currentUser = this.authSvc.currentUser;
+    if (currentUser) {
+      this.timerSvc.syncFromFirestore(currentUser.uid);
+    }
+
     this.subs.push(
       this.sessionSvc.getActivityTypes$().subscribe(types => {
         this.activityTypes.set(types);
@@ -309,7 +315,18 @@ export class TimerComponent implements OnInit, OnDestroy {
   }
 
   startTimer(): void {
-    if (!this.selectedType()) { this.toastService.warning('Selecione um tipo de atividade primeiro!'); return; }
+    if (!this.selectedType()) {
+      this.toastService.warning('Selecione um tipo de atividade primeiro!');
+      return;
+    }
+
+    // Verificar se outro device está com timer ativo
+    if (!this.timerSvc.canStartTimer()) {
+      const activeDeviceId = this.timerSvc.activeDeviceId();
+      this.toastService.warning(`Timer já está ativo em outro dispositivo (${activeDeviceId}). Finalize antes de começar aqui.`, 5000);
+      return;
+    }
+
     if (this.timerSvc.state() === 'finished') this.timerSvc.reset();
     this.ensureAudioReady();
     if (!this.notificationPermissionGranted && Notification.permission === 'default') this.requestNotificationPermission();
@@ -319,11 +336,45 @@ export class TimerComponent implements OnInit, OnDestroy {
     this.saveCurrentCycleActivity(this.currentCycleActivity!);
     if (this.pipSvc.active && this.currentCycleActivity) this.pipSvc.updateActivity(this.currentCycleActivity.color, this.currentCycleActivity.name);
     if (!this.isAppVisible) this.acquireWakeLock();
+
+    // Iniciar timer localmente
     this.timerSvc.start();
+
+    // Publicar no Firestore após iniciar
+    const userId = this.authSvc.currentUser?.uid;
+    if (userId) {
+      this.timerSvc.publishTimerToFirestore(userId, 'create').catch(err => {
+        console.error('Erro ao publicar timer no Firestore:', err);
+        this.toastService.error('Erro ao sincronizar timer. Continuando localmente.', 4000);
+      });
+    }
   }
 
-  pauseTimer(): void { this.ensureAudioReady(); this.timerSvc.pause(); }
-  resumeTimer(): void { this.ensureAudioReady(); this.timerSvc.resume(); }
+  pauseTimer(): void {
+    this.ensureAudioReady();
+    this.timerSvc.pause();
+
+    // Publicar pausa no Firestore
+    const userId = this.authSvc.currentUser?.uid;
+    if (userId) {
+      this.timerSvc.publishTimerWithDebounce(userId, 'update').catch(err => {
+        console.error('Erro ao sincronizar pausa:', err);
+      });
+    }
+  }
+
+  resumeTimer(): void {
+    this.ensureAudioReady();
+    this.timerSvc.resume();
+
+    // Publicar resumo no Firestore
+    const userId = this.authSvc.currentUser?.uid;
+    if (userId) {
+      this.timerSvc.publishTimerWithDebounce(userId, 'update').catch(err => {
+        console.error('Erro ao sincronizar resumo:', err);
+      });
+    }
+  }
 
   stopAndSave(): void {
     this.ensureAudioReady();
@@ -335,6 +386,13 @@ export class TimerComponent implements OnInit, OnDestroy {
     if (!this.currentCycleSaved) {
       this.currentCycleSaved = true;
       this.saveCurrentSession().then(() => {
+        // Limpar do Firestore após salvar
+        const userId = this.authSvc.currentUser?.uid;
+        if (userId && this.timerSvc.activeDeviceId() === this.timerSvc.getDeviceId()) {
+          this.timerSvc.publishTimerToFirestore(userId, 'delete').catch(err => {
+            console.error('Erro ao deletar timer do Firestore:', err);
+          });
+        }
         this.currentCycleActivity = null;
         this.clearCurrentCycleActivity();
         this.resetAfterCompletion();
@@ -350,6 +408,15 @@ export class TimerComponent implements OnInit, OnDestroy {
     this.lastTimerState = 'idle';
     this.releaseWakeLock();
     this.timerSvc.stop();
+
+    // Limpar do Firestore após descartar
+    const userId = this.authSvc.currentUser?.uid;
+    if (userId && this.timerSvc.activeDeviceId() === this.timerSvc.getDeviceId()) {
+      this.timerSvc.publishTimerToFirestore(userId, 'delete').catch(err => {
+        console.error('Erro ao deletar timer do Firestore:', err);
+      });
+    }
+
     this.resetAfterCompletion();
     this.toastService.info('Timer descartado.', 2000);
   }

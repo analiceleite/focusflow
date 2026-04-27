@@ -34,5 +34,39 @@ service cloud.firestore {
       allow read, write: if request.auth != null
         && request.auth.uid == userId;
     }
+
+    // TimerSessions: sincronização realtime de timers ativos entre dispositivos
+    match /timerSessions/{userId} {
+      // READ: qualquer device do usuário pode ler o estado do timer
+      allow read: if request.auth != null
+        && request.auth.uid == userId;
+      
+      // CREATE: iniciar novo timer - apenas o deviceId que inicia pode criar
+      allow create: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.data.userId == userId
+        && request.resource.data.initiatedBy == request.headers['x-device-id']
+        && request.resource.data.timerState != null
+        && request.resource.data.lastUpdated != null;
+      
+      // UPDATE: pausar/parar/sincronizar - qualquer device do usuário pode fazer
+      allow update: if request.auth != null
+        && request.auth.uid == userId
+        && resource.data.userId == userId
+        && (request.resource.data.paused != resource.data.paused
+          || request.resource.data.remaining != resource.data.remaining
+          || request.resource.data.elapsed != resource.data.elapsed
+          || request.resource.data.updatedBy != resource.data.updatedBy)
+        // NÃO permitir mudar initiatedBy após criação (garante que só quem iniciou pode fazer start)
+        && request.resource.data.initiatedBy == resource.data.initiatedBy
+        // NÃO permitir mudar timerState após criação (mode e totalSeconds são imutáveis)
+        && request.resource.data.timerState.mode == resource.data.timerState.mode
+        && request.resource.data.timerState.totalSeconds == resource.data.timerState.totalSeconds;
+      
+      // DELETE: apenas quem iniciou pode deletar/finalizar o timer
+      allow delete: if request.auth != null
+        && request.auth.uid == userId
+        && resource.data.initiatedBy == request.headers['x-device-id'];
+    }
   }
 }

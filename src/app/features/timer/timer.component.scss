@@ -188,6 +188,53 @@
         font-size: 0.75rem;
         letter-spacing: 0.3px;
     }
+
+    .device-badge {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        margin-top: 0.75rem;
+        padding: 0.4rem 0.8rem;
+        background: var(--bg-secondary);
+        border-radius: 20px;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        border: 1px solid var(--border-color);
+
+        .device-icon {
+            font-size: 0.85rem;
+        }
+
+        .device-text {
+            font-weight: 500;
+        }
+    }
+
+    .sync-indicator {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        margin-top: 0.75rem;
+        font-size: 0.75rem;
+        color: var(--accent-primary);
+        animation: pulse 1.5s ease-in-out infinite;
+
+        .sync-spinner {
+            display: inline-block;
+            animation: spin 2s linear infinite;
+            font-size: 0.85rem;
+        }
+    }
+
+    .sync-error {
+        margin-top: 0.75rem;
+        padding: 0.4rem 0.8rem;
+        font-size: 0.75rem;
+        color: #ef4444;
+        background: rgba(239, 68, 68, 0.1);
+        border-radius: 6px;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
 }
 
 // ─── Controles ────────────────────────────────────────────────────────────────
@@ -219,6 +266,19 @@
 
     &:active {
         transform: scale(0.97);
+    }
+
+    &:disabled {
+        background: var(--bg-secondary);
+        color: var(--text-muted);
+        cursor: not-allowed;
+        box-shadow: none;
+        opacity: 0.6;
+
+        &:hover {
+            filter: none;
+            transform: none;
+        }
     }
 
     &.btn-pause {
@@ -685,7 +745,6 @@
     justify-content: space-between;
     padding: 0.8rem 1.1rem;
     cursor: pointer;
-    user-select: none;
     transition: background 0.15s;
 
     &:hover {
@@ -1156,6 +1215,28 @@
     to {
         opacity: 1;
         transform: scale(1) translateY(0);
+    }
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.6;
     }
 }
 
