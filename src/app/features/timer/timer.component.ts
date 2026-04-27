@@ -355,10 +355,10 @@ export class TimerComponent implements OnInit, OnDestroy {
     this.ensureAudioReady();
     this.timerSvc.pause();
 
-    // Publicar pausa no Firestore
+    // Publicar pausa imediatamente no Firestore
     const userId = this.authSvc.currentUser?.uid;
     if (userId) {
-      this.timerSvc.publishTimerWithDebounce(userId, 'update').catch(err => {
+      this.timerSvc.publishTimerToFirestore(userId, 'update').catch(err => {
         console.error('Erro ao sincronizar pausa:', err);
       });
     }
@@ -368,10 +368,10 @@ export class TimerComponent implements OnInit, OnDestroy {
     this.ensureAudioReady();
     this.timerSvc.resume();
 
-    // Publicar resumo no Firestore
+    // Publicar retomada imediatamente no Firestore
     const userId = this.authSvc.currentUser?.uid;
     if (userId) {
-      this.timerSvc.publishTimerWithDebounce(userId, 'update').catch(err => {
+      this.timerSvc.publishTimerToFirestore(userId, 'update').catch(err => {
         console.error('Erro ao sincronizar resumo:', err);
       });
     }

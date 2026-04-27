@@ -299,35 +299,22 @@ export class TimerService {
           // Atualizar activeDeviceId para controlar UI (disable/enable botões)
           this.activeDeviceId.set(data.initiatedBy);
 
-          // Se este device é quem tem o timer, não atualizar campos (respeitar local)
-          if (data.initiatedBy === this.deviceId) {
-            // Este device iniciou o timer, respeitar seu estado local
-            // Apenas sincronizar se estiver desatualizado
-            const localRemaining = this.remaining();
-            const cloudRemaining = data.remaining;
+          // Aplicar estado remoto em todos os devices (inclui o iniciador) para
+          // garantir pausa/retomada imediata entre abas e dispositivos.
+          this.mode.set(data.timerState.mode);
+          this.totalSeconds.set(data.timerState.totalSeconds);
+          this.elapsedSeconds.set(data.elapsed);
 
-            // Se diferença maior que 2 segundos, houve mudança (outro device pausou/parou)
-            if (Math.abs(localRemaining - cloudRemaining) > 2) {
-              // Outro device pausou/parou
-              this.elapsedSeconds.set(data.elapsed);
-              if (data.paused) {
-                this.pause();
-              }
-            }
+          if (data.paused) {
+            this.clearInterval();
+            this.state.set('paused');
           } else {
-            // Outro device tem o timer ativo, sincronizar estado
-            this.mode.set(data.timerState.mode);
-            this.totalSeconds.set(data.timerState.totalSeconds);
-            this.elapsedSeconds.set(data.elapsed);
-
-            if (data.paused && this.state() === 'running') {
-              this.pause();
-            } else if (!data.paused && this.state() === 'idle') {
-              this.state.set('running');
-              this.startTimestamp = Date.now() - data.elapsed * 1000;
-              this.startTimer();
-            }
+            this.startTimestamp = Date.now() - data.elapsed * 1000;
+            this.state.set('running');
+            this.startTimer();
           }
+
+          this.saveState();
 
           this.syncError.set(null);
         },
