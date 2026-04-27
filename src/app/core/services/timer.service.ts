@@ -371,7 +371,12 @@ export class TimerService {
     action: 'create' | 'update' | 'delete',
     activity?: { id: string; name: string; icon: string; color: string } | null
   ): Promise<void> {
-    if (!userId || !this.deviceId) return;
+    if (!userId) return;
+
+    // Garante deviceId sempre disponível para publicar sem delay/race no primeiro start.
+    if (!this.deviceId) {
+      this.deviceId = this.getDeviceId();
+    }
 
     try {
       this.isSyncing.set(true);
