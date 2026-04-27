@@ -21,7 +21,13 @@ Personal productivity timer focused on consistency and clarity.
 - Animated progress bar, audio notification on completion, and pause/resume support
 - Spotify integration to focus while listening to your favorite songs
 
-**🖼️ Picture-in-Picture**
+**� Multi-Device Sync**
+- Real-time timer synchronization across all your devices and browser tabs via Firebase Firestore
+- Pause/resume instantly reflected everywhere — start on desktop, continue on mobile
+- Activity category synced automatically — the selected activity on one device automatically selects on others
+- Device indicator showing which device is currently running the timer
+
+**�🖼️ Picture-in-Picture**
 - Floating mini window (110×120px) with live time and progress
 - Works across all apps and browser tabs, light/dark theme support
 
