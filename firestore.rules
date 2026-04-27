@@ -52,9 +52,8 @@ service cloud.firestore {
       allow update: if request.auth != null
         && request.auth.uid == userId
         && resource.data.userId == userId
-        // NÃO permitir mudar initiatedBy ou timerState após criação
-        && request.resource.data.initiatedBy == resource.data.initiatedBy
-        && request.resource.data.timerState == resource.data.timerState;
+        // NÃO permitir mudar initiatedBy após criação
+        && request.resource.data.initiatedBy == resource.data.initiatedBy;
       
       // DELETE: qualquer device autenticado do mesmo usuário pode finalizar
       allow delete: if request.auth != null

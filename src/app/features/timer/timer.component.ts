@@ -244,13 +244,14 @@ export class TimerComponent implements OnInit, OnDestroy {
     this.initializeAudioContext();
     this.setupBackgroundFeatures();
 
-    // Iniciar sincronização de timer com Firestore se autenticado
-    const currentUser = this.authSvc.currentUser;
-    if (currentUser) {
-      this.timerSvc.syncFromFirestore(currentUser.uid);
-    }
-
     this.subs.push(
+      this.authSvc.user$.subscribe(currentUser => {
+        if (currentUser) {
+          this.timerSvc.syncFromFirestore(currentUser.uid);
+        } else {
+          this.timerSvc.stopSync();
+        }
+      }),
       this.sessionSvc.getActivityTypes$().subscribe(types => {
         this.activityTypes.set(types);
         this.restoreSelectedActivity(types);
