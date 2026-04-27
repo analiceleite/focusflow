@@ -77,6 +77,21 @@ export class TimerComponent implements OnInit, OnDestroy {
     this.spotifySvc.consumeFlashMessage();
   }, { allowSignalWrites: true });
 
+  private syncActivityEffect = effect(() => {
+    const syncedActivity = this.timerSvc.syncedActivity();
+    const isTimerRunning = this.timerSvc.state() === 'running' || this.timerSvc.state() === 'paused';
+
+    // Se um timer está rodando em outro dispositivo com atividade sincronizada
+    if (syncedActivity && syncedActivity.id && isTimerRunning) {
+      // Procura pela atividade sincronizada na lista local
+      const matchingActivity = this.activityTypes().find(a => a.id === syncedActivity.id);
+      if (matchingActivity) {
+        // Sincroniza o select para mostrar qual atividade está em uso
+        this.selectedType.set(matchingActivity);
+      }
+    }
+  }, { allowSignalWrites: true });
+
   // ── UI state ──────────────────────────────────────────────────────────────
 
   showAddType = signal(false);
@@ -305,6 +320,11 @@ export class TimerComponent implements OnInit, OnDestroy {
   }
 
   selectActivityType(type: ActivityType): void {
+    // Não permite trocar se outro dispositivo tem timer ativo
+    if (this.timerSvc.activeDeviceId() && this.timerSvc.activeDeviceId() !== this.timerSvc.getDeviceId()) {
+      this.toastService.warning('Outro dispositivo tem timer ativo. Finalize antes de mudar a atividade.', 4000);
+      return;
+    }
     if (this.isTimerRunning()) {
       this.toastService.warning('Não é possível trocar de atividade com o timer rodando.', 4000);
       return;
@@ -343,8 +363,14 @@ export class TimerComponent implements OnInit, OnDestroy {
 
     // Publicar no Firestore após iniciar
     const userId = this.authSvc.currentUser?.uid;
-    if (userId) {
-      this.timerSvc.publishTimerToFirestore(userId, 'create').catch(err => {
+    if (userId && this.currentCycleActivity) {
+      const activityData = {
+        id: this.currentCycleActivity.id || '',
+        name: this.currentCycleActivity.name,
+        icon: this.currentCycleActivity.icon,
+        color: this.currentCycleActivity.color
+      };
+      this.timerSvc.publishTimerToFirestore(userId, 'create', activityData).catch(err => {
         console.error('Erro ao publicar timer no Firestore:', err);
         this.toastService.error('Erro ao sincronizar timer. Continuando localmente.', 4000);
       });
@@ -357,8 +383,14 @@ export class TimerComponent implements OnInit, OnDestroy {
 
     // Publicar pausa imediatamente no Firestore
     const userId = this.authSvc.currentUser?.uid;
-    if (userId) {
-      this.timerSvc.publishTimerToFirestore(userId, 'update').catch(err => {
+    if (userId && this.currentCycleActivity) {
+      const activityData = {
+        id: this.currentCycleActivity.id || '',
+        name: this.currentCycleActivity.name,
+        icon: this.currentCycleActivity.icon,
+        color: this.currentCycleActivity.color
+      };
+      this.timerSvc.publishTimerToFirestore(userId, 'update', activityData).catch(err => {
         console.error('Erro ao sincronizar pausa:', err);
       });
     }
@@ -370,8 +402,14 @@ export class TimerComponent implements OnInit, OnDestroy {
 
     // Publicar retomada imediatamente no Firestore
     const userId = this.authSvc.currentUser?.uid;
-    if (userId) {
-      this.timerSvc.publishTimerToFirestore(userId, 'update').catch(err => {
+    if (userId && this.currentCycleActivity) {
+      const activityData = {
+        id: this.currentCycleActivity.id || '',
+        name: this.currentCycleActivity.name,
+        icon: this.currentCycleActivity.icon,
+        color: this.currentCycleActivity.color
+      };
+      this.timerSvc.publishTimerToFirestore(userId, 'update', activityData).catch(err => {
         console.error('Erro ao sincronizar resumo:', err);
       });
     }

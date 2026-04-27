@@ -120,12 +120,14 @@
                         </div>
                         }
                         <!-- Indicador de sincronização -->
-                        @if (timerSvc.activeDeviceId()) {
+                        @if (timerSvc.activeDeviceId() && timerSvc.activeDeviceId() !== timerSvc.getDeviceId()) {
                         <div class="device-badge">
-                            <span class="device-text">
-                                {{ timerSvc.activeDeviceId() === timerSvc.getDeviceId() ? 'Neste dispositivo' : 'Outro
-                                dispositivo' }}
-                            </span>
+                            🔗 Outro dispositivo
+                        </div>
+                        }
+                        @if (timerSvc.activeDeviceId() === timerSvc.getDeviceId()) {
+                        <div class="device-badge device-this">
+                            ✓ Neste dispositivo
                         </div>
                         }
                     </div>

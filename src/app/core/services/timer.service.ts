@@ -25,6 +25,11 @@ interface TimerSyncData {
   paused: boolean;
   remaining: number;
   elapsed: number;
+  // Activity info
+  activityId: string | null;
+  activityName: string | null;
+  activityIcon: string | null;
+  activityColor: string | null;
   lastUpdated: Timestamp;
 }
 
@@ -62,6 +67,7 @@ export class TimerService {
 
   // Multi-device sync signals
   readonly activeDeviceId = signal<string | null>(null);
+  readonly syncedActivity = signal<{ id: string | null; name: string | null; icon: string | null; color: string | null } | null>(null);
   readonly isSyncing = signal(false);
   readonly syncError = signal<string | null>(null);
 
@@ -299,6 +305,14 @@ export class TimerService {
           // Atualizar activeDeviceId para controlar UI (disable/enable botões)
           this.activeDeviceId.set(data.initiatedBy);
 
+          // Sincronizar atividade
+          this.syncedActivity.set({
+            id: data.activityId ?? null,
+            name: data.activityName ?? null,
+            icon: data.activityIcon ?? null,
+            color: data.activityColor ?? null
+          });
+
           // Aplicar estado remoto em todos os devices (inclui o iniciador) para
           // garantir pausa/retomada imediata entre abas e dispositivos.
           this.mode.set(data.timerState.mode);
@@ -344,8 +358,13 @@ export class TimerService {
   /**
    * Publica estado do timer para Firestore
    * Action: 'create' (iniciar), 'update' (pausar/parar), 'delete' (finalizar)
+   * activity: dados da atividade atual (opcional)
    */
-  async publishTimerToFirestore(userId: string, action: 'create' | 'update' | 'delete'): Promise<void> {
+  async publishTimerToFirestore(
+    userId: string,
+    action: 'create' | 'update' | 'delete',
+    activity?: { id: string; name: string; icon: string; color: string } | null
+  ): Promise<void> {
     if (!userId || !this.deviceId) return;
 
     try {
@@ -365,6 +384,10 @@ export class TimerService {
           paused: false,
           remaining: this.remaining(),
           elapsed: this.elapsedSeconds(),
+          activityId: activity?.id ?? null,
+          activityName: activity?.name ?? null,
+          activityIcon: activity?.icon ?? null,
+          activityColor: activity?.color ?? null,
           lastUpdated: serverTimestamp() as Timestamp
         };
 
@@ -376,6 +399,10 @@ export class TimerService {
           paused: this.state() === 'paused',
           remaining: this.remaining(),
           elapsed: this.elapsedSeconds(),
+          activityId: activity?.id ?? null,
+          activityName: activity?.name ?? null,
+          activityIcon: activity?.icon ?? null,
+          activityColor: activity?.color ?? null,
           lastUpdated: serverTimestamp() as Timestamp
         };
 
@@ -396,6 +423,10 @@ export class TimerService {
               paused: this.state() === 'paused',
               remaining: this.remaining(),
               elapsed: this.elapsedSeconds(),
+              activityId: activity?.id ?? null,
+              activityName: activity?.name ?? null,
+              activityIcon: activity?.icon ?? null,
+              activityColor: activity?.color ?? null,
               lastUpdated: serverTimestamp() as Timestamp
             };
             await setDoc(docRef, fallbackData, { merge: true });

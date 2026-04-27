@@ -190,23 +190,19 @@
     }
 
     .device-badge {
-        display: flex;
-        align-items: center;
-        gap: 0.4rem;
-        margin-top: 0.75rem;
-        padding: 0.4rem 0.8rem;
-        background: var(--bg-secondary);
-        border-radius: 20px;
-        font-size: 0.75rem;
+        display: inline-block;
+        margin-top: 0.5rem;
+        padding: 0.35rem 0.7rem;
+        background: rgba(0, 0, 0, 0.05);
+        border-radius: 6px;
+        font-size: 0.7rem;
         color: var(--text-muted);
-        border: 1px solid var(--border-color);
+        font-weight: 500;
+        letter-spacing: 0.3px;
 
-        .device-icon {
-            font-size: 0.85rem;
-        }
-
-        .device-text {
-            font-weight: 500;
+        &.device-this {
+            background: rgba(76, 175, 80, 0.1);
+            color: #4caf50;
         }
     }
 
