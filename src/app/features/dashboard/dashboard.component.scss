@@ -12,9 +12,8 @@
 }
 
 .main {
-    margin-left: 64px;
+    margin-top: 64px;
     flex: 1;
-    max-width: 1400px;
     margin-inline: auto;
     padding: 1.5rem 2rem;
     display: flex;
@@ -22,7 +21,7 @@
     gap: 1.5rem;
 
     @media (max-width: 768px) {
-        margin-left: 0;
+        margin-top: 0;
         margin-bottom: 64px;
         padding: 1rem;
         gap: 1rem;
@@ -254,7 +253,7 @@
 
 .dashboard-grid {
     display: grid;
-    grid-template-columns: 1fr 380px;
+    grid-template-columns: 1fr 500px;
     gap: 1.5rem;
     align-items: start;
 

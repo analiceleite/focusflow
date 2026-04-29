@@ -12,17 +12,17 @@
 }
 
 .main {
-    margin-left: 64px;
+    margin-top: 64px;
     flex: 1;
-    max-width: 1400px;
     margin-inline: auto;
     padding: 1.5rem 2rem;
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+    overflow: visible;
 
     @media (max-width: 768px) {
-        margin-left: 0;
+        margin-top: 0;
         margin-bottom: 64px;
         padding: 1rem;
         gap: 1rem;
@@ -82,9 +82,10 @@
 
 .top-row {
     display: grid;
-    grid-template-columns: 1fr 300px;
+    grid-template-columns: 1fr 500px;
     gap: 1.5rem;
     align-items: stretch; // chave: as duas colunas têm a mesma altura
+    overflow: visible;
 
     @media (max-width: 1024px) {
         grid-template-columns: 1fr 260px;
@@ -106,24 +107,29 @@
 // ─── Timer card ───────────────────────────────────────────────────────────────
 
 .timer-card {
+    position: relative;
+    z-index: 4;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 1.25rem;
     background: color-mix(in srgb, var(--bg-tertiary) 85%, transparent);
-    backdrop-filter: blur(20px) saturate(1.4);
-    -webkit-backdrop-filter: blur(20px) saturate(1.4);
-    border: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
     border-radius: 24px;
     padding: 2rem 1.75rem 1.5rem;
     box-shadow:
         0 2px 1px rgba(255, 255, 255, 0.03) inset,
         0 12px 40px rgba(0, 0, 0, 0.14);
+    overflow: visible; // permitir que menu absolute fique visível
 
     @media (max-width: 768px) {
         padding: 1.5rem 1.1rem;
         gap: 1rem;
         border-radius: 20px;
+        padding-bottom: 2rem; // espaço para o menu não ficar por cima de conteúdo
+    }
+
+    @media (max-width: 480px) {
+        padding-bottom: 2.5rem;
     }
 }
 
@@ -198,23 +204,6 @@
         letter-spacing: 0.3px;
     }
 
-    .device-badge {
-        display: inline-block;
-        margin-top: 0.5rem;
-        padding: 0.35rem 0.7rem;
-        background: rgba(0, 0, 0, 0.05);
-        border-radius: 6px;
-        font-size: 0.7rem;
-        color: var(--text-muted);
-        font-weight: 500;
-        letter-spacing: 0.3px;
-
-        &.device-this {
-            background: rgba(76, 175, 80, 0.1);
-            color: #4caf50;
-        }
-    }
-
     .sync-indicator {
         display: flex;
         align-items: center;
@@ -242,27 +231,158 @@
     }
 }
 
+.timer-status-row {
+    min-height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: -0.35rem;
+}
+
+.device-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.3rem 0.65rem;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 999px;
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    letter-spacing: 0.25px;
+
+    &.device-this {
+        background: rgba(76, 175, 80, 0.1);
+        color: #4caf50;
+    }
+}
+
 // ─── Controles ────────────────────────────────────────────────────────────────
 
 .controls {
     display: flex;
-    gap: 0.75rem;
+    gap: 0.45rem;
+    align-items: stretch;
+    justify-content: center;
+    width: 100%;
+    max-width: 520px;
+    flex-wrap: wrap;
+    margin-top: 0.1rem;
+}
+
+.control-row {
+    display: flex;
+    width: 100%;
     align-items: center;
     justify-content: center;
+    gap: 0.5rem;
+}
+
+.control-row-primary {
+    margin-bottom: 0.1rem;
+}
+
+.control-row-secondary {
     flex-wrap: wrap;
 }
 
+.actions-menu-wrap {
+    position: relative;
+    z-index: 20;
+
+    @media (max-width: 480px) {
+        width: 100%;
+    }
+}
+
+.btn-actions {
+    padding: 0.62rem 0.95rem;
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    font-size: 0.8rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+        color: var(--text-primary);
+        border-color: var(--text-disabled);
+    }
+}
+
+.btn-actions-large {
+    min-width: 190px;
+    padding: 0.78rem 1.8rem;
+    border-radius: 14px;
+    font-size: 0.94rem;
+    font-weight: 600;
+
+    @media (max-width: 480px) {
+        width: 100%;
+        padding: 0.75rem;
+        min-width: auto;
+    }
+}
+
+.actions-menu {
+    position: absolute;
+    top: calc(100% + 0.45rem);
+    right: 0;
+    min-width: 190px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 0.45rem;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-tertiary);
+    z-index: 50;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+
+    .btn-secondary,
+    .btn-tertiary,
+    .btn-pip {
+        width: 100%;
+        justify-content: center;
+    }
+
+    @media (max-width: 768px) {
+        max-width: calc(100vw - 2rem); // evitar ultrapassar a viewport
+    }
+
+    @media (max-width: 480px) {
+        left: 50%;
+        right: auto;
+        transform: translateX(-50%); // centralizar o menu
+        min-width: 0;
+        width: calc(100% + 1rem); // um pouco maior que o botão
+        max-width: calc(100vw - 2rem);
+    }
+}
+
+@media (max-width: 480px) {
+
+    .controls,
+    .control-row,
+    .control-row-secondary {
+        overflow: visible;
+    }
+}
+
 .btn-main {
-    padding: 0.875rem 2.5rem;
+    padding: 0.78rem 1.8rem;
     background: var(--accent-primary);
     color: white;
     border: none;
-    border-radius: 50px;
-    font-size: 1rem;
+    border-radius: 14px;
+    font-size: 0.94rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+    min-width: 190px;
 
     &:hover {
         filter: brightness(1.1);
@@ -300,12 +420,13 @@
 }
 
 .btn-secondary {
-    padding: 0.875rem 1.5rem;
+    padding: 0.62rem 0.95rem;
     background: transparent;
     color: var(--text-muted);
     border: 1px solid var(--border-color);
-    border-radius: 50px;
-    font-size: 0.9rem;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    line-height: 1;
     cursor: pointer;
     transition: all 0.2s;
 
@@ -317,12 +438,13 @@
 }
 
 .btn-tertiary {
-    padding: 0.875rem 1.5rem;
+    padding: 0.62rem 0.95rem;
     background: transparent;
     color: var(--accent-error);
     border: 1px solid var(--accent-error);
-    border-radius: 50px;
-    font-size: 0.9rem;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    line-height: 1;
     cursor: pointer;
     transition: all 0.2s;
 
@@ -333,12 +455,13 @@
 }
 
 .btn-pip {
-    padding: 0.35rem 0.9rem;
-    border-radius: 50px;
-    border: 1px dashed var(--border-color);
+    padding: 0.62rem 0.95rem;
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
     background: transparent;
     color: var(--text-disabled);
-    font-size: 0.72rem;
+    font-size: 0.76rem;
+    line-height: 1;
     cursor: pointer;
     transition: all 0.2s;
 
@@ -350,8 +473,20 @@
     &.pip-active {
         border-color: var(--accent-error);
         color: var(--accent-error);
-        border-style: solid;
+        background: color-mix(in srgb, var(--accent-error) 7%, transparent);
     }
+
+    @media (max-width: 480px) {
+        width: 100%;
+    }
+}
+
+.btn-pip-large {
+    min-width: 190px;
+    padding: 0.78rem 1.8rem;
+    border-radius: 14px;
+    font-size: 0.94rem;
+    font-weight: 600;
 }
 
 .save-banner {
@@ -394,6 +529,37 @@
     border-radius: 24px;
     overflow: hidden;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+}
+
+.spotify-collapse-bar {
+    display: none;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.8rem 1rem;
+    border: 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--border-color) 40%, transparent);
+    background: transparent;
+    color: var(--text-primary);
+    cursor: pointer;
+}
+
+.spotify-collapse-left {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.spotify-collapse-title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.spotify-content {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
 }
 
 // ── Desconectado ──────────────────────────────────────────────────────────────
@@ -724,6 +890,20 @@
     font-size: 0.7rem;
     color: var(--text-disabled);
     border-top: 1px solid color-mix(in srgb, var(--border-color) 30%, transparent);
+}
+
+@media (max-width: 768px) {
+    .spotify-collapse-bar {
+        display: inline-flex;
+    }
+
+    .spotify-widget.spotify-collapsed {
+        height: auto;
+    }
+
+    .spotify-widget.spotify-collapsed .spotify-content {
+        display: none;
+    }
 }
 
 // ─── Activity / Presets widgets ───────────────────────────────────────────────

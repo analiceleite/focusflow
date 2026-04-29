@@ -119,144 +119,187 @@
                             @else if (timerSvc.state() === 'finished') { ✅ Sessão concluída! }
                         </div>
                         }
-                        <!-- Indicador de sincronização -->
-                        @if (timerSvc.activeDeviceId() && timerSvc.activeDeviceId() !== timerSvc.getDeviceId()) {
-                        <div class="device-badge">
-                            🔗 Outro dispositivo
-                        </div>
-                        }
-                        @if (timerSvc.activeDeviceId() === timerSvc.getDeviceId()) {
-                        <div class="device-badge device-this">
-                            ✓ Neste dispositivo
-                        </div>
-                        }
                     </div>
+                </div>
+
+                <div class="timer-status-row">
+                    @if (timerSvc.activeDeviceId() && timerSvc.activeDeviceId() !== timerSvc.getDeviceId()) {
+                    <div class="device-badge">
+                        🔗 Outro dispositivo
+                    </div>
+                    }
                 </div>
 
                 <div class="controls">
                     @if (timerSvc.state() === 'idle' || timerSvc.state() === 'finished') {
-                    <button class="btn-main" [style.background]="selectedType()?.color || '#6C63FF'"
-                        [disabled]="!timerSvc.canStartTimer()"
-                        [title]="!timerSvc.canStartTimer() ? 'Timer ativo em outro dispositivo' : ''"
-                        (click)="startTimer()">
-                        {{ timerSvc.state() === 'finished' ? '🔄 Nova sessão' : '▶ Iniciar' }}
-                    </button>
+                    <div class="control-row control-row-primary">
+                        <button class="btn-main" [style.background]="selectedType()?.color || '#6C63FF'"
+                            [disabled]="!timerSvc.canStartTimer()"
+                            [title]="!timerSvc.canStartTimer() ? 'Timer ativo em outro dispositivo' : ''"
+                            (click)="startTimer()">
+                            {{ timerSvc.state() === 'finished' ? '🔄 Nova sessão' : '▶ Iniciar' }}
+                        </button>
+                    </div>
+                    <div class="control-row control-row-secondary">
+                        <button *ngIf="pipSvc.isSupported" class="btn-pip btn-pip-large"
+                            [class.pip-active]="pipSvc.active" (click)="togglePip()">
+                            {{ pipSvc.active ? '✕ Fechar PiP' : '⧉ Picture-in-Picture' }}
+                        </button>
+                    </div>
                     } @else if (timerSvc.state() === 'running') {
-                    <button class="btn-main btn-pause" (click)="pauseTimer()">⏸ Pausar</button>
-                    <button class="btn-secondary" (click)="stopAndSave()">✅ Salvar</button>
-                    <button class="btn-tertiary" (click)="discardTimer()">🛑 Descartar</button>
+                    <div class="control-row control-row-primary">
+                        <button class="btn-main btn-pause" (click)="pauseTimer()">⏸ Pausar</button>
+                    </div>
+                    <div class="control-row control-row-secondary">
+                        <div class="actions-menu-wrap">
+                            <button class="btn-actions btn-actions-large" (click)="toggleActionsExpanded()">⋯
+                                Ações</button>
+                            @if (actionsExpanded()) {
+                            <div class="actions-menu">
+                                <button class="btn-secondary" (click)="stopAndSave()">✅ Salvar</button>
+                                <button class="btn-tertiary" (click)="discardTimer()">🛑 Descartar</button>
+                                <button *ngIf="pipSvc.isSupported" class="btn-pip" [class.pip-active]="pipSvc.active"
+                                    (click)="togglePip(); closeActionsExpanded()">
+                                    {{ pipSvc.active ? '✕ PiP' : '⧉ PiP' }}
+                                </button>
+                            </div>
+                            }
+                        </div>
+                    </div>
                     } @else if (timerSvc.state() === 'paused') {
-                    <button class="btn-main" [style.background]="selectedType()?.color || '#6C63FF'"
-                        (click)="resumeTimer()">▶ Continuar</button>
-                    <button class="btn-secondary" (click)="stopAndSave()">✅ Salvar</button>
-                    <button class="btn-tertiary" (click)="discardTimer()">🛑 Descartar</button>
+                    <div class="control-row control-row-primary">
+                        <button class="btn-main" [style.background]="selectedType()?.color || '#6C63FF'"
+                            (click)="resumeTimer()">▶ Continuar</button>
+                    </div>
+                    <div class="control-row control-row-secondary">
+                        <div class="actions-menu-wrap">
+                            <button class="btn-actions btn-actions-large" (click)="toggleActionsExpanded()">⋯
+                                Ações</button>
+                            @if (actionsExpanded()) {
+                            <div class="actions-menu">
+                                <button class="btn-secondary" (click)="stopAndSave()">✅ Salvar</button>
+                                <button class="btn-tertiary" (click)="discardTimer()">🛑 Descartar</button>
+                                <button *ngIf="pipSvc.isSupported" class="btn-pip" [class.pip-active]="pipSvc.active"
+                                    (click)="togglePip(); closeActionsExpanded()">
+                                    {{ pipSvc.active ? '✕ PiP' : '⧉ PiP' }}
+                                </button>
+                            </div>
+                            }
+                        </div>
+                    </div>
                     }
                 </div>
-
-                <button *ngIf="pipSvc.isSupported" class="btn-pip" [class.pip-active]="pipSvc.active"
-                    (click)="togglePip()">
-                    {{ pipSvc.active ? '✕ Fechar PiP' : '⧉ Picture-in-Picture' }}
-                </button>
 
                 @if (showSaveBanner()) {
                 <div class="save-banner">✅ Sessão salva! {{ savedDuration() }} de {{ savedActivity() }}</div>
                 }
             </div>
 
-            <div class="spotify-widget">
-
-                @if (!spotifySvc.isConfigured()) {
-                <div class="spotify-connect-block">
-                    <div class="spotify-connect-top">
+            <div class="spotify-widget" [class.spotify-collapsed]="!spotifyExpanded()">
+                <button class="spotify-collapse-bar" type="button" (click)="toggleSpotifyExpanded()">
+                    <span class="spotify-collapse-left">
                         <span class="spotify-logo-dot">●</span>
-                        <span class="spotify-connect-title">Spotify</span>
-                    </div>
-                    <p class="spotify-connect-copy">Client ID do Spotify não configurado neste ambiente.</p>
-                    <button class="btn-spotify" type="button" (click)="connectSpotify()">Conectar</button>
-                </div>
+                        <span class="spotify-collapse-title">Spotify</span>
+                    </span>
+                    <span class="activity-expand-icon" [class.rotated]="spotifyExpanded()">⌄</span>
+                </button>
 
-                } @else {
+                <div class="spotify-content">
 
-                @if (!spotifySvc.isConnected()) {
-                <div class="spotify-connect-block">
-                    <div class="spotify-connect-top">
-                        <span class="spotify-logo-dot">●</span>
-                        <span class="spotify-connect-title">Spotify</span>
+                    @if (!spotifySvc.isConfigured()) {
+                    <div class="spotify-connect-block">
+                        <div class="spotify-connect-top">
+                            <span class="spotify-logo-dot">●</span>
+                            <span class="spotify-connect-title">Spotify</span>
+                        </div>
+                        <p class="spotify-connect-copy">Client ID do Spotify não configurado neste ambiente.</p>
+                        <button class="btn-spotify" type="button" (click)="connectSpotify()">Conectar</button>
                     </div>
-                    <p class="spotify-connect-copy">Conecte para tocar playlists enquanto foca.</p>
-                    <button class="btn-spotify" type="button" (click)="connectSpotify()">Conectar</button>
-                </div>
 
-                } @else {
-                <!-- Now Playing -->
-                <div class="spotify-np-block">
-                    <div class="spotify-np-art" [class.spotify-np-art--fallback]="!spotifySvc.currentTrack()?.imageUrl">
-                        @if (spotifySvc.currentTrack()?.imageUrl) {
-                        <img [src]="spotifySvc.currentTrack()!.imageUrl!" [alt]="spotifySvc.currentTrack()!.name" />
-                        } @else { <span>♫</span> }
+                    } @else {
+
+                    @if (!spotifySvc.isConnected()) {
+                    <div class="spotify-connect-block">
+                        <div class="spotify-connect-top">
+                            <span class="spotify-logo-dot">●</span>
+                            <span class="spotify-connect-title">Conecte-se</span>
+                        </div>
+                        <p class="spotify-connect-copy">Conecte para tocar playlists enquanto foca.</p>
+                        <button class="btn-spotify" type="button" (click)="connectSpotify()">Conectar</button>
                     </div>
-                    <div class="spotify-np-meta">
-                        @if (spotifySvc.currentTrack()) {
-                        <div class="spotify-np-track">{{ spotifySvc.currentTrack()!.name }}</div>
-                        <div class="spotify-np-artist">{{ spotifySvc.currentTrack()!.artistNames }}</div>
-                        } @else {
-                        <div class="spotify-np-track">{{ spotifySvc.profile()?.displayName || 'Spotify' }}</div>
-                        <div class="spotify-np-artist">{{ spotifyStatusText() }}</div>
+
+                    } @else {
+                    <!-- Now Playing -->
+                    <div class="spotify-np-block">
+                        <div class="spotify-np-art"
+                            [class.spotify-np-art--fallback]="!spotifySvc.currentTrack()?.imageUrl">
+                            @if (spotifySvc.currentTrack()?.imageUrl) {
+                            <img [src]="spotifySvc.currentTrack()!.imageUrl!" [alt]="spotifySvc.currentTrack()!.name" />
+                            } @else { <span>♫</span> }
+                        </div>
+                        <div class="spotify-np-meta">
+                            @if (spotifySvc.currentTrack()) {
+                            <div class="spotify-np-track">{{ spotifySvc.currentTrack()!.name }}</div>
+                            <div class="spotify-np-artist">{{ spotifySvc.currentTrack()!.artistNames }}</div>
+                            } @else {
+                            <div class="spotify-np-track">{{ spotifySvc.profile()?.displayName || 'Spotify' }}</div>
+                            <div class="spotify-np-artist">{{ spotifyStatusText() }}</div>
+                            }
+                        </div>
+                        @if (spotifySvc.playerReady()) {
+                        <div class="spotify-np-controls">
+                            <button class="sp-ctrl" (click)="previousSpotifyTrack()">⏮</button>
+                            <button class="sp-ctrl sp-ctrl--main" (click)="toggleSpotifyPlayback()">
+                                {{ spotifySvc.isPlaying() ? '⏸' : '▶' }}
+                            </button>
+                            <button class="sp-ctrl" (click)="nextSpotifyTrack()">⏭</button>
+                        </div>
                         }
                     </div>
-                    @if (spotifySvc.playerReady()) {
-                    <div class="spotify-np-controls">
-                        <button class="sp-ctrl" (click)="previousSpotifyTrack()">⏮</button>
-                        <button class="sp-ctrl sp-ctrl--main" (click)="toggleSpotifyPlayback()">
-                            {{ spotifySvc.isPlaying() ? '⏸' : '▶' }}
+
+                    @if (spotifySvc.playerMessage()) {
+                    <div class="spotify-msg-info">{{ spotifySvc.playerMessage() }}</div>
+                    }
+                    @if (spotifySvc.error()) {
+                    <div class="spotify-msg-error">{{ spotifySvc.error() }}</div>
+                    }
+
+                    <div class="spotify-pl-header">
+                        <span class="spotify-pl-title">Playlists</span>
+                        <div class="spotify-pl-actions">
+                            <button class="sp-link" (click)="refreshSpotifyLibrary()">↻</button>
+                            <button class="sp-link sp-link--muted" (click)="disconnectSpotify()">Desconectar</button>
+                        </div>
+                    </div>
+
+                    @if (spotifySvc.loading()) {
+                    <div class="spotify-pl-empty">Carregando...</div>
+                    } @else if (spotifyPlaylists().length === 0) {
+                    <div class="spotify-pl-empty">Nenhuma playlist encontrada.</div>
+                    } @else {
+                    <div class="spotify-pl-list">
+                        @for (pl of spotifyPlaylists(); track pl.id) {
+                        <button class="spotify-pl-row"
+                            [class.spotify-pl-row--active]="spotifySvc.activePlaylistId() === pl.id"
+                            (click)="playSpotifyPlaylist(pl)">
+                            <div class="pl-thumb" [class.pl-thumb--fallback]="!pl.imageUrl">
+                                @if (pl.imageUrl) { <img [src]="pl.imageUrl" [alt]="pl.name" /> }
+                                @else { <span>♫</span> }
+                            </div>
+                            <div class="pl-info">
+                                <span class="pl-name">{{ pl.name }}</span>
+                                <span class="pl-meta">{{ pl.totalTracks }} faixas</span>
+                            </div>
+                            <span class="pl-play-icon">▶</span>
                         </button>
-                        <button class="sp-ctrl" (click)="nextSpotifyTrack()">⏭</button>
+                        }
                     </div>
                     }
-                </div>
 
-                @if (spotifySvc.playerMessage()) {
-                <div class="spotify-msg-info">{{ spotifySvc.playerMessage() }}</div>
-                }
-                @if (spotifySvc.error()) {
-                <div class="spotify-msg-error">{{ spotifySvc.error() }}</div>
-                }
-
-                <div class="spotify-pl-header">
-                    <span class="spotify-pl-title">Playlists</span>
-                    <div class="spotify-pl-actions">
-                        <button class="sp-link" (click)="refreshSpotifyLibrary()">↻</button>
-                        <button class="sp-link sp-link--muted" (click)="disconnectSpotify()">Desconectar</button>
-                    </div>
-                </div>
-
-                @if (spotifySvc.loading()) {
-                <div class="spotify-pl-empty">Carregando...</div>
-                } @else if (spotifyPlaylists().length === 0) {
-                <div class="spotify-pl-empty">Nenhuma playlist encontrada.</div>
-                } @else {
-                <div class="spotify-pl-list">
-                    @for (pl of spotifyPlaylists(); track pl.id) {
-                    <button class="spotify-pl-row"
-                        [class.spotify-pl-row--active]="spotifySvc.activePlaylistId() === pl.id"
-                        (click)="playSpotifyPlaylist(pl)">
-                        <div class="pl-thumb" [class.pl-thumb--fallback]="!pl.imageUrl">
-                            @if (pl.imageUrl) { <img [src]="pl.imageUrl" [alt]="pl.name" /> }
-                            @else { <span>♫</span> }
-                        </div>
-                        <div class="pl-info">
-                            <span class="pl-name">{{ pl.name }}</span>
-                            <span class="pl-meta">{{ pl.totalTracks }} faixas</span>
-                        </div>
-                        <span class="pl-play-icon">▶</span>
-                    </button>
+                    <p class="spotify-footnote">Sem Premium, abre no Spotify.</p>
+                    }
                     }
                 </div>
-                }
-
-                <p class="spotify-footnote">Sem Premium, abre no Spotify.</p>
-                }
-                }
             </div>
         </div>
 

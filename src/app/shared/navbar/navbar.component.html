@@ -1,16 +1,25 @@
 <nav class="sidebar">
-    <div class="sidebar-logo">⏰</div>
-    <a routerLink="/timer" routerLinkActive="active" class="nav-item" title="Timer">
-        <span class="nav-icon">⌛</span>
-        <span class="nav-label">Timer</span>
-    </a>
-    <a routerLink="/dashboard" routerLinkActive="active" class="nav-item" title="Dashboard">
-        <span class="nav-icon">📊</span>
-        <span class="nav-label">Dashboard</span>
-    </a>
-    <button class="nav-item nav-logout" (click)="logout()" title="Sair">
-        <span class="nav-icon"><img src="../../../assets/icons/logout.png" alt=""></span>
-        <span class="nav-label">Sair</span>
-    </button>
-    <app-theme-toggle></app-theme-toggle>
+    <div class="sidebar-brand">
+        <img class="sidebar-logo-img" src="../../../assets/icons/alarm_clock_3d.png" alt="FocusFlow" />
+        <span class="sidebar-logo-text">FocusFlow</span>
+    </div>
+
+    <div class="nav-main">
+        <a routerLink="/timer" routerLinkActive="active" class="nav-item nav-route" title="Timer">
+            <span class="nav-icon"><fa-icon [icon]="faClock"></fa-icon></span>
+            <span class="nav-label">Timer</span>
+        </a>
+        <a routerLink="/dashboard" routerLinkActive="active" class="nav-item nav-route" title="Dashboard">
+            <span class="nav-icon"><fa-icon [icon]="faChartSimple"></fa-icon></span>
+            <span class="nav-label">Dashboard</span>
+        </a>
+    </div>
+
+    <div class="nav-actions">
+        <app-theme-toggle></app-theme-toggle>
+        <button class="nav-item nav-logout" (click)="logout()" title="Sair">
+            <span class="nav-icon"><img src="../../../assets/icons/logout.png" alt="Sair" /></span>
+            <span class="nav-label">Sair</span>
+        </button>
+    </div>
 </nav>

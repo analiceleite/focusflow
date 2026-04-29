@@ -293,7 +293,15 @@ export class TimerService {
       this.firestoreUnsubscribe = onSnapshot(
         docRef,
         (snapshot) => {
+          const isLocalActive = this.state() === 'running' || this.state() === 'paused';
+
           if (!snapshot.exists()) {
+            // Durante reconexão de aba, o cache local pode emitir "missing" antes do servidor.
+            // Evita zerar/retroceder o timer local por um snapshot transitório.
+            if (snapshot.metadata.fromCache && isLocalActive) {
+              return;
+            }
+
             // Não há timer sincronizado, resetar tudo
             this.activeDeviceId.set(null);
             this.syncedActivity.set(null);
@@ -307,6 +315,20 @@ export class TimerService {
           }
 
           const data = snapshot.data() as TimerSyncData;
+
+          // Ignora reaplicação do próprio payload quando este device já está ativo,
+          // evitando rollback de elapsed ao trocar de aba/reconectar listener.
+          if (data.updatedBy === this.deviceId && isLocalActive) {
+            this.activeDeviceId.set(data.initiatedBy);
+            this.syncedActivity.set({
+              id: data.activityId ?? null,
+              name: data.activityName ?? null,
+              icon: data.activityIcon ?? null,
+              color: data.activityColor ?? null
+            });
+            this.syncError.set(null);
+            return;
+          }
 
           // Atualizar activeDeviceId para controlar UI (disable/enable botões)
           this.activeDeviceId.set(data.initiatedBy);

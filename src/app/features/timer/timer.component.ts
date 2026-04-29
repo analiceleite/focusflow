@@ -101,11 +101,16 @@ export class TimerComponent implements OnInit, OnDestroy {
   showActivitySheet = signal(false);
   activityExpanded = signal(true);   // começa expandido
   presetsExpanded = signal(false);
+  spotifyExpanded = signal(true);
+  actionsExpanded = signal(false);
   savedDuration = signal('');
   savedActivity = signal('');
 
   toggleActivityExpanded(): void { this.activityExpanded.update(v => !v); }
   togglePresetsExpanded(): void { this.presetsExpanded.update(v => !v); }
+  toggleSpotifyExpanded(): void { this.spotifyExpanded.update(v => !v); }
+  toggleActionsExpanded(): void { this.actionsExpanded.update(v => !v); }
+  closeActionsExpanded(): void { this.actionsExpanded.set(false); }
 
   customMinutes = 25;
   newTypeName = '';
@@ -336,6 +341,7 @@ export class TimerComponent implements OnInit, OnDestroy {
   }
 
   startTimer(): void {
+    this.closeActionsExpanded();
     if (!this.selectedType()) {
       this.toastService.warning('Selecione um tipo de atividade primeiro!');
       return;
@@ -378,6 +384,7 @@ export class TimerComponent implements OnInit, OnDestroy {
   }
 
   pauseTimer(): void {
+    this.closeActionsExpanded();
     this.ensureAudioReady();
     this.timerSvc.pause();
 
@@ -397,6 +404,7 @@ export class TimerComponent implements OnInit, OnDestroy {
   }
 
   resumeTimer(): void {
+    this.closeActionsExpanded();
     this.ensureAudioReady();
     this.timerSvc.resume();
 
@@ -416,6 +424,7 @@ export class TimerComponent implements OnInit, OnDestroy {
   }
 
   stopAndSave(): void {
+    this.closeActionsExpanded();
     this.ensureAudioReady();
     this.currentCycleActivity ??= this.selectedType();
     const elapsed = this.timerSvc.elapsedSeconds();
@@ -441,6 +450,7 @@ export class TimerComponent implements OnInit, OnDestroy {
   }
 
   discardTimer(): void {
+    this.closeActionsExpanded();
     this.currentCycleSaved = false;
     this.currentCycleActivity = null;
     this.clearCurrentCycleActivity();
