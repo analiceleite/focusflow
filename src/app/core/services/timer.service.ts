@@ -23,6 +23,7 @@ interface TimerSyncData {
     totalSeconds: number;
   };
   paused: boolean;
+  startedAtMs: number | null;
   remaining: number;
   elapsed: number;
   // Activity info
@@ -345,15 +346,42 @@ export class TimerService {
           // garantir pausa/retomada imediata entre abas e dispositivos.
           this.mode.set(data.timerState.mode);
           this.totalSeconds.set(data.timerState.totalSeconds);
-          this.elapsedSeconds.set(data.elapsed);
+
+          // Recalcula elapsed com base no início sincronizado para evitar reset
+          // em dispositivos que reconectam após troca de aba/background.
+          let syncedElapsed = data.elapsed ?? 0;
+          const startedAtFromSync =
+            typeof data.startedAtMs === 'number' && data.startedAtMs > 0
+              ? data.startedAtMs
+              : (data.lastUpdated?.toMillis?.() ?? 0) - (data.elapsed ?? 0) * 1000;
+
+          if (!data.paused && startedAtFromSync > 0) {
+            syncedElapsed = Math.floor((Date.now() - startedAtFromSync) / 1000);
+          }
+
+          if (data.timerState.mode === 'pomodoro') {
+            syncedElapsed = Math.max(0, Math.min(syncedElapsed, data.timerState.totalSeconds));
+          } else {
+            syncedElapsed = Math.max(0, syncedElapsed);
+          }
+
+          this.elapsedSeconds.set(syncedElapsed);
 
           if (data.paused) {
             this.clearInterval();
             this.state.set('paused');
           } else {
-            this.startTimestamp = Date.now() - data.elapsed * 1000;
-            this.state.set('running');
-            this.startTimer();
+            if (data.timerState.mode === 'pomodoro' && syncedElapsed >= data.timerState.totalSeconds) {
+              this.clearInterval();
+              this.state.set('finished');
+            } else {
+              this.startTimestamp =
+                startedAtFromSync > 0
+                  ? startedAtFromSync
+                  : Date.now() - syncedElapsed * 1000;
+              this.state.set('running');
+              this.startTimer();
+            }
           }
 
           this.saveState();
@@ -415,6 +443,7 @@ export class TimerService {
             totalSeconds: this.totalSeconds()
           },
           paused: false,
+          startedAtMs: this.startTimestamp,
           remaining: this.remaining(),
           elapsed: this.elapsedSeconds(),
           activityId: activity?.id ?? null,
@@ -430,6 +459,7 @@ export class TimerService {
         const updateData: Partial<TimerSyncData> = {
           updatedBy: this.deviceId,
           paused: this.state() === 'paused',
+          startedAtMs: this.state() === 'paused' ? null : this.startTimestamp,
           remaining: this.remaining(),
           elapsed: this.elapsedSeconds(),
           activityId: activity?.id ?? null,
@@ -454,6 +484,7 @@ export class TimerService {
                 totalSeconds: this.totalSeconds()
               },
               paused: this.state() === 'paused',
+              startedAtMs: this.state() === 'paused' ? null : this.startTimestamp,
               remaining: this.remaining(),
               elapsed: this.elapsedSeconds(),
               activityId: activity?.id ?? null,
