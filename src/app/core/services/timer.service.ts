@@ -269,6 +269,20 @@ export class TimerService {
    * Retorna false se outro device já tem um timer ativo
    */
   canStartTimer(): boolean {
+    if (!this.deviceId) {
+      this.deviceId = this.getDeviceId();
+    }
+
+    // Quando o estado local já está finalizado, não deve bloquear nova sessão.
+    if (this.state() === 'finished') {
+      return true;
+    }
+
+    // Estado idle zerado nunca deve ficar travado por lock residual de sync.
+    if (this.state() === 'idle' && this.elapsedSeconds() === 0) {
+      return true;
+    }
+
     const activeDevId = this.activeDeviceId();
     // Pode iniciar se não há device ativo ou se o device ativo é este mesmo
     return !activeDevId || activeDevId === this.deviceId;
@@ -331,9 +345,6 @@ export class TimerService {
             return;
           }
 
-          // Atualizar activeDeviceId para controlar UI (disable/enable botões)
-          this.activeDeviceId.set(data.initiatedBy);
-
           // Sincronizar atividade
           this.syncedActivity.set({
             id: data.activityId ?? null,
@@ -365,23 +376,28 @@ export class TimerService {
             syncedElapsed = Math.max(0, syncedElapsed);
           }
 
+          const isRemoteFinished =
+            data.timerState.mode === 'pomodoro' &&
+            syncedElapsed >= data.timerState.totalSeconds;
+
+          // Se já terminou, libera o lock para evitar travar todos os devices.
+          this.activeDeviceId.set(isRemoteFinished ? null : data.initiatedBy);
+
           this.elapsedSeconds.set(syncedElapsed);
 
-          if (data.paused) {
+          if (isRemoteFinished) {
+            this.clearInterval();
+            this.state.set('finished');
+          } else if (data.paused) {
             this.clearInterval();
             this.state.set('paused');
           } else {
-            if (data.timerState.mode === 'pomodoro' && syncedElapsed >= data.timerState.totalSeconds) {
-              this.clearInterval();
-              this.state.set('finished');
-            } else {
-              this.startTimestamp =
-                startedAtFromSync > 0
-                  ? startedAtFromSync
-                  : Date.now() - syncedElapsed * 1000;
-              this.state.set('running');
-              this.startTimer();
-            }
+            this.startTimestamp =
+              startedAtFromSync > 0
+                ? startedAtFromSync
+                : Date.now() - syncedElapsed * 1000;
+            this.state.set('running');
+            this.startTimer();
           }
 
           this.saveState();
