@@ -43,19 +43,42 @@ export class TimerComponent implements OnInit, OnDestroy {
   private lastTimerState = 'idle';
   private currentCycleActivity: ActivityType | null = null;
 
+  private isLocalDeviceSessionOwner(): boolean {
+    const activeDeviceId = this.timerSvc.activeDeviceId();
+    return !activeDeviceId || activeDeviceId === this.timerSvc.getDeviceId();
+  }
+
+  canPersistSession(): boolean {
+    return this.isLocalDeviceSessionOwner();
+  }
+
   private autoSaveEffect = effect(() => {
     const currentState = this.timerSvc.state();
     const availableTypes = this.activityTypes();
+    const canPersistHere = this.isLocalDeviceSessionOwner();
 
     if (
       currentState === 'finished' &&
       this.lastTimerState !== 'finished' &&
       !this.currentCycleSaved &&
-      availableTypes.length > 0
+      availableTypes.length > 0 &&
+      canPersistHere
     ) {
       this.ensureValidActivityForSave(availableTypes);
       this.currentCycleSaved = true;
-      this.saveCurrentSessionSilently().then(() => {
+      this.saveCurrentSessionSilently().then((saved) => {
+        if (!saved) {
+          this.currentCycleSaved = false;
+          return;
+        }
+
+        const userId = this.authSvc.currentUser?.uid;
+        if (userId && this.timerSvc.activeDeviceId()) {
+          this.timerSvc.publishTimerToFirestore(userId, 'delete').catch(err => {
+            console.error('Erro ao deletar timer do Firestore após término automático:', err);
+          });
+        }
+
         this.showCompletionNotification();
         setTimeout(() => this.resetAfterCompletion(), 2000);
       });
@@ -426,6 +449,12 @@ export class TimerComponent implements OnInit, OnDestroy {
   stopAndSave(): void {
     this.closeActionsExpanded();
     this.ensureAudioReady();
+
+    if (!this.canPersistSession()) {
+      this.toastService.warning('Finalize e salve no dispositivo que iniciou o timer.', 4000);
+      return;
+    }
+
     this.currentCycleActivity ??= this.selectedType();
     const elapsed = this.timerSvc.elapsedSeconds();
 

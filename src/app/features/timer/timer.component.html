@@ -156,7 +156,9 @@
                                 Ações</button>
                             @if (actionsExpanded()) {
                             <div class="actions-menu">
-                                <button class="btn-secondary" (click)="stopAndSave()">✅ Salvar</button>
+                                <button class="btn-secondary" [disabled]="!canPersistSession()"
+                                    [title]="!canPersistSession() ? 'Salve no dispositivo que iniciou o timer' : ''"
+                                    (click)="stopAndSave()">✅ Salvar</button>
                                 <button class="btn-tertiary" (click)="discardTimer()">🛑 Descartar</button>
                                 <button *ngIf="pipSvc.isSupported" class="btn-pip" [class.pip-active]="pipSvc.active"
                                     (click)="togglePip(); closeActionsExpanded()">
@@ -177,7 +179,9 @@
                                 Ações</button>
                             @if (actionsExpanded()) {
                             <div class="actions-menu">
-                                <button class="btn-secondary" (click)="stopAndSave()">✅ Salvar</button>
+                                <button class="btn-secondary" [disabled]="!canPersistSession()"
+                                    [title]="!canPersistSession() ? 'Salve no dispositivo que iniciou o timer' : ''"
+                                    (click)="stopAndSave()">✅ Salvar</button>
                                 <button class="btn-tertiary" (click)="discardTimer()">🛑 Descartar</button>
                                 <button *ngIf="pipSvc.isSupported" class="btn-pip" [class.pip-active]="pipSvc.active"
                                     (click)="togglePip(); closeActionsExpanded()">
