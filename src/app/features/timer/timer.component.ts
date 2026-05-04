@@ -43,8 +43,9 @@ export class TimerComponent implements OnInit, OnDestroy {
   private lastTimerState = 'idle';
   private currentCycleActivity: ActivityType | null = null;
 
-  canPersistSession(): boolean {
-    return true;
+  private isObserverDevice(): boolean {
+    const active = this.timerSvc.activeDeviceId();
+    return !!active && active !== this.timerSvc.getDeviceId();
   }
 
   private autoSaveEffect = effect(() => {
@@ -56,7 +57,13 @@ export class TimerComponent implements OnInit, OnDestroy {
       this.lastTimerState !== 'finished' &&
       !this.currentCycleSaved
     ) {
-      // Sem atividades disponíveis para mapear o save: evita ficar preso em finished.
+      // Dispositivo observador não executa autosave
+      if (this.isObserverDevice()) {
+        this.lastTimerState = currentState;
+        return;
+      }
+
+      // Sem atividades: evita ficar preso em finished
       if (availableTypes.length === 0) {
         setTimeout(() => this.resetAfterCompletion(), 1200);
         this.lastTimerState = currentState;
@@ -74,9 +81,9 @@ export class TimerComponent implements OnInit, OnDestroy {
         }
 
         const userId = this.authSvc.currentUser?.uid;
-        if (userId && this.timerSvc.activeDeviceId()) {
+        if (userId) {
           this.timerSvc.publishTimerToFirestore(userId, 'delete').catch(err => {
-            console.error('Erro ao deletar timer do Firestore após término automático:', err);
+            console.error('Erro ao deletar timer do Firestore após término:', err);
           });
         }
 
@@ -349,8 +356,7 @@ export class TimerComponent implements OnInit, OnDestroy {
   }
 
   selectActivityType(type: ActivityType): void {
-    // Não permite trocar se outro dispositivo tem timer ativo
-    if (this.timerSvc.hasBlockingRemoteSession()) {
+    if (!this.timerSvc.canStartTimer()) {
       this.toastService.warning('Outro dispositivo tem timer ativo. Finalize antes de mudar a atividade.', 4000);
       return;
     }
@@ -402,14 +408,7 @@ export class TimerComponent implements OnInit, OnDestroy {
       };
       this.timerSvc.publishTimerToFirestore(userId, 'create', activityData).catch(err => {
         console.error('Erro ao publicar timer no Firestore:', err);
-
-        if (err instanceof Error && err.message === this.timerSvc.TIMER_SYNC_CONFLICT_ERROR) {
-          this.timerSvc.stop();
-          this.toastService.warning('Outro dispositivo tem timer ativo. Finalize lá antes de iniciar aqui.', 5000);
-          return;
-        }
-
-        this.toastService.error('Erro ao sincronizar timer. Continuando localmente.', 4000);
+        this.toastService.warning('Sincronização indisponível. Timer rodando localmente.', 3000);
       });
     }
   }
@@ -458,6 +457,15 @@ export class TimerComponent implements OnInit, OnDestroy {
     this.closeActionsExpanded();
     this.ensureAudioReady();
 
+    // Se for dispositivo observador, restaurar atividade da sessão remota
+    if (!this.currentCycleActivity) {
+      const synced = this.timerSvc.syncedActivity();
+      if (synced?.id) {
+        const match = this.activityTypes().find(t => t.id === synced.id);
+        this.currentCycleActivity = match ?? null;
+      }
+    }
+
     this.currentCycleActivity ??= this.selectedType();
     const elapsed = this.timerSvc.elapsedSeconds();
 
@@ -466,9 +474,8 @@ export class TimerComponent implements OnInit, OnDestroy {
     if (!this.currentCycleSaved) {
       this.currentCycleSaved = true;
       this.saveCurrentSession().then(() => {
-        // Limpar do Firestore após salvar
         const userId = this.authSvc.currentUser?.uid;
-        if (userId && this.timerSvc.activeDeviceId() === this.timerSvc.getDeviceId()) {
+        if (userId) {
           this.timerSvc.publishTimerToFirestore(userId, 'delete').catch(err => {
             console.error('Erro ao deletar timer do Firestore:', err);
           });
@@ -490,7 +497,6 @@ export class TimerComponent implements OnInit, OnDestroy {
     this.releaseWakeLock();
     this.timerSvc.stop();
 
-    // Limpar do Firestore após descartar (qualquer dispositivo pode descartar)
     const userId = this.authSvc.currentUser?.uid;
     if (userId && this.timerSvc.activeDeviceId()) {
       this.timerSvc.publishTimerToFirestore(userId, 'delete').catch(err => {
@@ -500,6 +506,62 @@ export class TimerComponent implements OnInit, OnDestroy {
 
     this.resetAfterCompletion();
     this.toastService.info('Timer descartado.', 2000);
+  }
+
+  /** Salva a sessão iniciada no Device A a partir do Device B */
+  async saveRemoteSession(): Promise<void> {
+    const rs = this.timerSvc.remoteSession();
+    const activity = this.timerSvc.syncedActivity();
+    if (!rs || !activity?.id) {
+      this.toastService.error('Dados da sessão remota indisponíveis.', 3000);
+      return;
+    }
+
+    const elapsed = this.timerSvc.getRemoteElapsedNow();
+    if (elapsed < 60) {
+      this.toastService.info('Sessão muito curta para salvar.', 3000);
+      return;
+    }
+
+    const type = this.activityTypes().find(t => t.id === activity.id);
+    if (!type) {
+      this.toastService.error('Atividade da sessão não encontrada.', 3000);
+      return;
+    }
+
+    const now = Date.now();
+    try {
+      await this.sessionSvc.saveSession({
+        activityTypeId: type.id!,
+        activityTypeName: type.name,
+        activityColor: type.color,
+        durationSeconds: elapsed,
+        mode: rs.mode,
+        date: this.getLocalDateString(),
+        startedAt: rs.startedAtMs,
+        completedAt: now,
+      });
+
+      const userId = this.authSvc.currentUser?.uid;
+      if (userId) {
+        await this.timerSvc.publishTimerToFirestore(userId, 'delete');
+      }
+
+      this.toastService.success(`Sessão de ${this.formatDuration(elapsed)} salva!`, 3000);
+    } catch {
+      this.toastService.error('Erro ao salvar a sessão.', 3000);
+    }
+  }
+
+  /** Descarta a sessão remota sem salvar */
+  async discardRemoteSession(): Promise<void> {
+    const userId = this.authSvc.currentUser?.uid;
+    if (userId) {
+      await this.timerSvc.publishTimerToFirestore(userId, 'delete').catch(err => {
+        console.error('Erro ao descartar sessão remota:', err);
+      });
+    }
+    this.toastService.info('Sessão descartada.', 2000);
   }
 
   applyPreset(minutes: number): void { this.timerSvc.setPomodoroDuration(minutes); this.customMinutes = minutes; }
@@ -604,7 +666,6 @@ export class TimerComponent implements OnInit, OnDestroy {
 
   private async performSave(type: ActivityType, elapsed: number, silent = false): Promise<boolean> {
     const now = Date.now();
-    const syncSessionId = this.timerSvc.getCurrentSessionId();
     try {
       await this.sessionSvc.saveSession({
         activityTypeId: type.id!,
@@ -615,7 +676,7 @@ export class TimerComponent implements OnInit, OnDestroy {
         date: this.getLocalDateString(),
         startedAt: now - elapsed * 1000,
         completedAt: now,
-      }, syncSessionId);
+      });
 
       if (!silent) {
         this.savedDuration.set(this.formatDuration(elapsed));

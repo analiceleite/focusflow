@@ -123,10 +123,17 @@
                 </div>
 
                 <div class="timer-status-row">
-                    @if (!timerSvc.canStartTimer() && timerSvc.activeDeviceId() && timerSvc.activeDeviceId() !==
-                    timerSvc.getDeviceId()) {
-                    <div class="device-badge">
-                        🔗 Outro dispositivo
+                    @if (timerSvc.remoteSession() && !timerSvc.canStartTimer()) {
+                    <div class="remote-session-panel">
+                        <div class="remote-session-info">
+                            <span class="remote-session-icon">{{ timerSvc.syncedActivity()?.icon }}</span>
+                            <span class="remote-session-name">{{ timerSvc.syncedActivity()?.name }}</span>
+                            <span class="remote-session-label">— timer ativo em outro dispositivo</span>
+                        </div>
+                        <div class="remote-session-actions">
+                            <button class="btn-secondary" (click)="saveRemoteSession()">✅ Salvar sessão</button>
+                            <button class="btn-tertiary" (click)="discardRemoteSession()">🛑 Descartar</button>
+                        </div>
                     </div>
                     }
                 </div>

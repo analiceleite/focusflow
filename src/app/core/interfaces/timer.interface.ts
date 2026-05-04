@@ -15,7 +15,6 @@ export interface Preset {
 
 export interface Session {
   id?: string;
-  syncSessionId?: string;
   userId: string;
   activityTypeId: string;
   activityTypeName: string;
