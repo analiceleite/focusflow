@@ -43,32 +43,33 @@ export class TimerComponent implements OnInit, OnDestroy {
   private lastTimerState = 'idle';
   private currentCycleActivity: ActivityType | null = null;
 
-  private isLocalDeviceSessionOwner(): boolean {
-    const activeDeviceId = this.timerSvc.activeDeviceId();
-    return !activeDeviceId || activeDeviceId === this.timerSvc.getDeviceId();
-  }
-
   canPersistSession(): boolean {
-    return this.isLocalDeviceSessionOwner();
+    return true;
   }
 
   private autoSaveEffect = effect(() => {
     const currentState = this.timerSvc.state();
     const availableTypes = this.activityTypes();
-    const canPersistHere = this.isLocalDeviceSessionOwner();
 
     if (
       currentState === 'finished' &&
       this.lastTimerState !== 'finished' &&
-      !this.currentCycleSaved &&
-      availableTypes.length > 0 &&
-      canPersistHere
+      !this.currentCycleSaved
     ) {
+      // Sem atividades disponíveis para mapear o save: evita ficar preso em finished.
+      if (availableTypes.length === 0) {
+        setTimeout(() => this.resetAfterCompletion(), 1200);
+        this.lastTimerState = currentState;
+        return;
+      }
+
       this.ensureValidActivityForSave(availableTypes);
       this.currentCycleSaved = true;
       this.saveCurrentSessionSilently().then((saved) => {
         if (!saved) {
+          this.toastService.warning('Não foi possível salvar automaticamente esta sessão.', 3500);
           this.currentCycleSaved = false;
+          setTimeout(() => this.resetAfterCompletion(), 1200);
           return;
         }
 
@@ -80,7 +81,7 @@ export class TimerComponent implements OnInit, OnDestroy {
         }
 
         this.showCompletionNotification();
-        setTimeout(() => this.resetAfterCompletion(), 2000);
+        setTimeout(() => this.resetAfterCompletion(), 1200);
       });
     }
     this.lastTimerState = currentState;
@@ -349,7 +350,7 @@ export class TimerComponent implements OnInit, OnDestroy {
 
   selectActivityType(type: ActivityType): void {
     // Não permite trocar se outro dispositivo tem timer ativo
-    if (this.timerSvc.activeDeviceId() && this.timerSvc.activeDeviceId() !== this.timerSvc.getDeviceId()) {
+    if (this.timerSvc.hasBlockingRemoteSession()) {
       this.toastService.warning('Outro dispositivo tem timer ativo. Finalize antes de mudar a atividade.', 4000);
       return;
     }
@@ -401,6 +402,13 @@ export class TimerComponent implements OnInit, OnDestroy {
       };
       this.timerSvc.publishTimerToFirestore(userId, 'create', activityData).catch(err => {
         console.error('Erro ao publicar timer no Firestore:', err);
+
+        if (err instanceof Error && err.message === this.timerSvc.TIMER_SYNC_CONFLICT_ERROR) {
+          this.timerSvc.stop();
+          this.toastService.warning('Outro dispositivo tem timer ativo. Finalize lá antes de iniciar aqui.', 5000);
+          return;
+        }
+
         this.toastService.error('Erro ao sincronizar timer. Continuando localmente.', 4000);
       });
     }
@@ -449,11 +457,6 @@ export class TimerComponent implements OnInit, OnDestroy {
   stopAndSave(): void {
     this.closeActionsExpanded();
     this.ensureAudioReady();
-
-    if (!this.canPersistSession()) {
-      this.toastService.warning('Finalize e salve no dispositivo que iniciou o timer.', 4000);
-      return;
-    }
 
     this.currentCycleActivity ??= this.selectedType();
     const elapsed = this.timerSvc.elapsedSeconds();
@@ -601,6 +604,7 @@ export class TimerComponent implements OnInit, OnDestroy {
 
   private async performSave(type: ActivityType, elapsed: number, silent = false): Promise<boolean> {
     const now = Date.now();
+    const syncSessionId = this.timerSvc.getCurrentSessionId();
     try {
       await this.sessionSvc.saveSession({
         activityTypeId: type.id!,
@@ -611,7 +615,7 @@ export class TimerComponent implements OnInit, OnDestroy {
         date: this.getLocalDateString(),
         startedAt: now - elapsed * 1000,
         completedAt: now,
-      });
+      }, syncSessionId);
 
       if (!silent) {
         this.savedDuration.set(this.formatDuration(elapsed));

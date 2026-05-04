@@ -123,7 +123,8 @@
                 </div>
 
                 <div class="timer-status-row">
-                    @if (timerSvc.activeDeviceId() && timerSvc.activeDeviceId() !== timerSvc.getDeviceId()) {
+                    @if (!timerSvc.canStartTimer() && timerSvc.activeDeviceId() && timerSvc.activeDeviceId() !==
+                    timerSvc.getDeviceId()) {
                     <div class="device-badge">
                         🔗 Outro dispositivo
                     </div>
@@ -156,9 +157,7 @@
                                 Ações</button>
                             @if (actionsExpanded()) {
                             <div class="actions-menu">
-                                <button class="btn-secondary" [disabled]="!canPersistSession()"
-                                    [title]="!canPersistSession() ? 'Salve no dispositivo que iniciou o timer' : ''"
-                                    (click)="stopAndSave()">✅ Salvar</button>
+                                <button class="btn-secondary" (click)="stopAndSave()">✅ Salvar</button>
                                 <button class="btn-tertiary" (click)="discardTimer()">🛑 Descartar</button>
                                 <button *ngIf="pipSvc.isSupported" class="btn-pip" [class.pip-active]="pipSvc.active"
                                     (click)="togglePip(); closeActionsExpanded()">
@@ -179,9 +178,7 @@
                                 Ações</button>
                             @if (actionsExpanded()) {
                             <div class="actions-menu">
-                                <button class="btn-secondary" [disabled]="!canPersistSession()"
-                                    [title]="!canPersistSession() ? 'Salve no dispositivo que iniciou o timer' : ''"
-                                    (click)="stopAndSave()">✅ Salvar</button>
+                                <button class="btn-secondary" (click)="stopAndSave()">✅ Salvar</button>
                                 <button class="btn-tertiary" (click)="discardTimer()">🛑 Descartar</button>
                                 <button *ngIf="pipSvc.isSupported" class="btn-pip" [class.pip-active]="pipSvc.active"
                                     (click)="togglePip(); closeActionsExpanded()">

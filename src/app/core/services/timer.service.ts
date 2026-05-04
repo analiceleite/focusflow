@@ -1,5 +1,5 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
-import { Firestore, doc, onSnapshot, setDoc, updateDoc, deleteDoc, Unsubscribe } from '@angular/fire/firestore';
+import { Firestore, doc, onSnapshot, setDoc, updateDoc, deleteDoc, getDoc, Unsubscribe } from '@angular/fire/firestore';
 import { serverTimestamp, Timestamp } from '@angular/fire/firestore';
 import { FirebaseError } from 'firebase/app';
 
@@ -16,6 +16,7 @@ interface TimerStateData {
 
 interface TimerSyncData {
   userId: string;
+  sessionId: string;
   initiatedBy: string;
   updatedBy: string;
   timerState: {
@@ -38,6 +39,7 @@ interface TimerSyncData {
 export class TimerService {
   private readonly TIMER_STATE_KEY = 'focusflow_timer_state';
   private readonly DEVICE_ID_KEY = 'focusflow_device_id';
+  readonly TIMER_SYNC_CONFLICT_ERROR = 'TIMER_ACTIVE_ON_OTHER_DEVICE';
 
   private firestore = inject(Firestore);
 
@@ -68,6 +70,8 @@ export class TimerService {
 
   // Multi-device sync signals
   readonly activeDeviceId = signal<string | null>(null);
+  readonly currentSessionId = signal<string | null>(null);
+  readonly hasBlockingRemoteSession = signal(false);
   readonly syncedActivity = signal<{ id: string | null; name: string | null; icon: string | null; color: string | null } | null>(null);
   readonly isSyncing = signal(false);
   readonly syncError = signal<string | null>(null);
@@ -278,14 +282,7 @@ export class TimerService {
       return true;
     }
 
-    // Estado idle zerado nunca deve ficar travado por lock residual de sync.
-    if (this.state() === 'idle' && this.elapsedSeconds() === 0) {
-      return true;
-    }
-
-    const activeDevId = this.activeDeviceId();
-    // Pode iniciar se não há device ativo ou se o device ativo é este mesmo
-    return !activeDevId || activeDevId === this.deviceId;
+    return !this.hasBlockingRemoteSession();
   }
 
   /**
@@ -319,6 +316,8 @@ export class TimerService {
 
             // Não há timer sincronizado, resetar tudo
             this.activeDeviceId.set(null);
+            this.currentSessionId.set(null);
+            this.hasBlockingRemoteSession.set(false);
             this.syncedActivity.set(null);
             this.syncError.set(null);
             // Parar timer em todos os devices quando é descartado em qualquer um
@@ -335,6 +334,8 @@ export class TimerService {
           // evitando rollback de elapsed ao trocar de aba/reconectar listener.
           if (data.updatedBy === this.deviceId && isLocalActive) {
             this.activeDeviceId.set(data.initiatedBy);
+            this.currentSessionId.set(data.sessionId ?? null);
+            this.hasBlockingRemoteSession.set(false);
             this.syncedActivity.set({
               id: data.activityId ?? null,
               name: data.activityName ?? null,
@@ -380,8 +381,16 @@ export class TimerService {
             data.timerState.mode === 'pomodoro' &&
             syncedElapsed >= data.timerState.totalSeconds;
 
-          // Se já terminou, libera o lock para evitar travar todos os devices.
-          this.activeDeviceId.set(isRemoteFinished ? null : data.initiatedBy);
+          const isRemotePaused = data.paused === true;
+
+          // activeDeviceId mantém o dono da sessão sincronizada, independente de lock.
+          this.activeDeviceId.set(data.initiatedBy);
+          this.currentSessionId.set(data.sessionId ?? null);
+          this.hasBlockingRemoteSession.set(
+            !isRemoteFinished &&
+            !isRemotePaused &&
+            data.initiatedBy !== this.deviceId
+          );
 
           this.elapsedSeconds.set(syncedElapsed);
 
@@ -424,7 +433,13 @@ export class TimerService {
       this.firestoreUnsubscribe = null;
     }
     this.activeDeviceId.set(null);
+    this.currentSessionId.set(null);
+    this.hasBlockingRemoteSession.set(false);
     this.syncError.set(null);
+  }
+
+  getCurrentSessionId(): string | null {
+    return this.currentSessionId();
   }
 
   /**
@@ -449,9 +464,53 @@ export class TimerService {
       const docRef = doc(this.firestore, 'timerSessions', userId);
 
       if (action === 'create') {
+        const newSessionId = this.generateSessionId();
+        const existingSnapshot = await getDoc(docRef);
+
+        if (existingSnapshot.exists()) {
+          const existingData = existingSnapshot.data() as Partial<TimerSyncData>;
+          const existingOwner = existingData.initiatedBy ?? null;
+          const existingMode = existingData.timerState?.mode;
+          const existingTotal = existingData.timerState?.totalSeconds ?? 0;
+          const existingElapsed = existingData.elapsed ?? 0;
+          const existingStartedAtMs =
+            typeof existingData.startedAtMs === 'number' && existingData.startedAtMs > 0
+              ? existingData.startedAtMs
+              : null;
+          const isExistingPaused = existingData.paused === true;
+          const elapsedByClock =
+            existingMode === 'pomodoro' && existingStartedAtMs
+              ? Math.floor((Date.now() - existingStartedAtMs) / 1000)
+              : existingElapsed;
+          const isInvalidSyncDoc =
+            !existingOwner ||
+            !existingMode ||
+            (existingMode === 'pomodoro' && existingTotal <= 0);
+          const isExistingFinished =
+            existingMode === 'pomodoro' &&
+            (existingElapsed >= existingTotal || elapsedByClock >= existingTotal);
+
+          // Bloqueia takeover silencioso apenas quando há evidência de sessão realmente ativa.
+          if (
+            !isInvalidSyncDoc &&
+            existingOwner &&
+            existingOwner !== this.deviceId &&
+            !isExistingFinished &&
+            !isExistingPaused
+          ) {
+            this.activeDeviceId.set(existingOwner);
+            this.hasBlockingRemoteSession.set(true);
+            throw new Error(this.TIMER_SYNC_CONFLICT_ERROR);
+          }
+
+          // Documento órfão/finalizado ou da própria sessão: limpar antes de recriar.
+          await deleteDoc(docRef);
+        }
+
         // Criar novo documento com initiatedBy = deviceId
         const syncData: TimerSyncData = {
           userId,
+          sessionId: newSessionId,
           initiatedBy: this.deviceId,
           updatedBy: this.deviceId,
           timerState: {
@@ -470,10 +529,14 @@ export class TimerService {
         };
 
         await setDoc(docRef, syncData);
+        this.activeDeviceId.set(this.deviceId);
+        this.currentSessionId.set(newSessionId);
+        this.hasBlockingRemoteSession.set(false);
       } else if (action === 'update') {
         // Atualizar apenas campos mutáveis
         const updateData: Partial<TimerSyncData> = {
           updatedBy: this.deviceId,
+          sessionId: this.currentSessionId() ?? this.generateSessionId(),
           paused: this.state() === 'paused',
           startedAtMs: this.state() === 'paused' ? null : this.startTimestamp,
           remaining: this.remaining(),
@@ -493,6 +556,7 @@ export class TimerService {
           if (fbError?.code === 'not-found') {
             const fallbackData: TimerSyncData = {
               userId,
+              sessionId: this.currentSessionId() ?? this.generateSessionId(),
               initiatedBy: this.activeDeviceId() ?? this.deviceId,
               updatedBy: this.deviceId,
               timerState: {
@@ -510,6 +574,7 @@ export class TimerService {
               lastUpdated: serverTimestamp() as Timestamp
             };
             await setDoc(docRef, fallbackData, { merge: true });
+            this.currentSessionId.set(fallbackData.sessionId);
           } else {
             throw error;
           }
@@ -517,6 +582,7 @@ export class TimerService {
       } else if (action === 'delete') {
         // Deletar documento (apenas quem iniciou pode fazer via rules)
         await deleteDoc(docRef);
+        this.currentSessionId.set(null);
       }
 
       this.syncError.set(null);
@@ -557,5 +623,9 @@ export class TimerService {
       const v = c === 'x' ? r : (r & 0x3) | 0x8;
       return v.toString(16);
     });
+  }
+
+  private generateSessionId(): string {
+    return `${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`;
   }
 }

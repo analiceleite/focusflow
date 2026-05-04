@@ -14,7 +14,7 @@ import {
   deleteDoc,
   DocumentReference
 } from '@angular/fire/firestore';
-import { ActivityType, Preset, Session} from '../interfaces/timer.interface';
+import { ActivityType, Preset, Session } from '../interfaces/timer.interface';
 import { AuthService } from './auth.service';
 import { Observable } from 'rxjs';
 
@@ -73,7 +73,17 @@ export class SessionService {
     return collectionData(q, { idField: 'id' }) as Observable<Session[]>;
   }
 
-  async saveSession(session: Omit<Session, 'userId' | 'id'>): Promise<void> {
+  async saveSession(session: Omit<Session, 'userId' | 'id'>, syncSessionId?: string | null): Promise<void> {
+    if (syncSessionId) {
+      const docId = `${this.uid}_${syncSessionId}`;
+      await setDoc(
+        doc(this.firestore, 'sessions', docId),
+        { ...session, userId: this.uid, syncSessionId },
+        { merge: true }
+      );
+      return;
+    }
+
     const col = collection(this.firestore, 'sessions');
     await addDoc(col, { ...session, userId: this.uid });
   }
