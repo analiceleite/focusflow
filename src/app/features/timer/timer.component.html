@@ -122,28 +122,10 @@
                     </div>
                 </div>
 
-                <div class="timer-status-row">
-                    @if (timerSvc.remoteSession() && !timerSvc.canStartTimer()) {
-                    <div class="remote-session-panel">
-                        <div class="remote-session-info">
-                            <span class="remote-session-icon">{{ timerSvc.syncedActivity()?.icon }}</span>
-                            <span class="remote-session-name">{{ timerSvc.syncedActivity()?.name }}</span>
-                            <span class="remote-session-label">— timer ativo em outro dispositivo</span>
-                        </div>
-                        <div class="remote-session-actions">
-                            <button class="btn-secondary" (click)="saveRemoteSession()">✅ Salvar sessão</button>
-                            <button class="btn-tertiary" (click)="discardRemoteSession()">🛑 Descartar</button>
-                        </div>
-                    </div>
-                    }
-                </div>
-
                 <div class="controls">
                     @if (timerSvc.state() === 'idle' || timerSvc.state() === 'finished') {
                     <div class="control-row control-row-primary">
                         <button class="btn-main" [style.background]="selectedType()?.color || '#6C63FF'"
-                            [disabled]="!timerSvc.canStartTimer()"
-                            [title]="!timerSvc.canStartTimer() ? 'Timer ativo em outro dispositivo' : ''"
                             (click)="startTimer()">
                             {{ timerSvc.state() === 'finished' ? '🔄 Nova sessão' : '▶ Iniciar' }}
                         </button>

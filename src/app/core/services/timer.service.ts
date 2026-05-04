@@ -1,6 +1,4 @@
-import { Injectable, signal, computed, inject } from '@angular/core';
-import { Firestore, doc, onSnapshot, setDoc, deleteDoc, Unsubscribe } from '@angular/fire/firestore';
-import { serverTimestamp, Timestamp } from '@angular/fire/firestore';
+import { Injectable, signal, computed } from '@angular/core';
 
 export type TimerMode = 'pomodoro' | 'stopwatch';
 export type TimerState = 'idle' | 'running' | 'paused' | 'finished';
@@ -13,27 +11,9 @@ interface TimerStateData {
   startTimestamp: number;
 }
 
-interface TimerSyncData {
-  userId: string;
-  initiatedBy: string;
-  mode: TimerMode;
-  totalSeconds: number;
-  startedAtMs: number;
-  elapsed: number;
-  paused: boolean;
-  activityId: string | null;
-  activityName: string | null;
-  activityIcon: string | null;
-  activityColor: string | null;
-  updatedAt: Timestamp;
-}
-
 @Injectable({ providedIn: 'root' })
 export class TimerService {
   private readonly TIMER_STATE_KEY = 'focusflow_timer_state';
-  private readonly DEVICE_ID_KEY = 'focusflow_device_id';
-
-  private firestore = inject(Firestore);
 
   // Signals
   readonly mode = signal<TimerMode>('pomodoro');
@@ -58,22 +38,8 @@ export class TimerService {
     return this.formatTime(secs);
   });
 
-  // Sync signals — populated from Firestore listener
-  readonly activeDeviceId = signal<string | null>(null);
-  readonly syncedActivity = signal<{ id: string | null; name: string | null; icon: string | null; color: string | null } | null>(null);
-  // Dados brutos da sessão remota (para o device observador poder salvar)
-  readonly remoteSession = signal<{
-    mode: TimerMode;
-    totalSeconds: number;
-    startedAtMs: number;
-    elapsed: number;
-    paused: boolean;
-  } | null>(null);
-
   private intervalId: ReturnType<typeof setInterval> | null = null;
   private startTimestamp: number = 0;
-  private deviceId: string = '';
-  private firestoreUnsubscribe: Unsubscribe | null = null;
 
   constructor() {
     this.restoreState();
@@ -152,126 +118,6 @@ export class TimerService {
         this.finish();
       }
     }, 250);
-  }
-
-  // ── Multi-device Sync ─────────────────────────────────────────────────────
-
-  getDeviceId(): string {
-    if (this.deviceId) return this.deviceId;
-    const stored = sessionStorage.getItem(this.DEVICE_ID_KEY);
-    if (stored) { this.deviceId = stored; return this.deviceId; }
-    this.deviceId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-      const r = (Math.random() * 16) | 0;
-      return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
-    });
-    sessionStorage.setItem(this.DEVICE_ID_KEY, this.deviceId);
-    return this.deviceId;
-  }
-
-  /** Retorna false apenas quando há sessão de OUTRO dispositivo ativa no Firestore */
-  canStartTimer(): boolean {
-    const active = this.activeDeviceId();
-    return !active || active === this.getDeviceId();
-  }
-
-  syncFromFirestore(userId: string): void {
-    if (!userId) return;
-    this.deviceId = this.getDeviceId();
-    if (this.firestoreUnsubscribe) this.firestoreUnsubscribe();
-
-    const docRef = doc(this.firestore, 'timerSessions', userId);
-    this.firestoreUnsubscribe = onSnapshot(docRef, (snapshot) => {
-      if (!snapshot.exists()) {
-        // Cache local pode emitir "missing" transitório — ignorar se timer local ativo
-        if (snapshot.metadata.fromCache && (this.state() === 'running' || this.state() === 'paused')) return;
-
-        // Documento deletado: sessão encerrada (por qualquer dispositivo)
-        this.activeDeviceId.set(null);
-        this.syncedActivity.set(null);
-        this.remoteSession.set(null);
-        return;
-      }
-
-      const data = snapshot.data() as TimerSyncData;
-      this.activeDeviceId.set(data.initiatedBy);
-      this.syncedActivity.set({
-        id: data.activityId,
-        name: data.activityName,
-        icon: data.activityIcon,
-        color: data.activityColor,
-      });
-
-      // Se este dispositivo iniciou a sessão, não sobrescrever o timer local
-      if (data.initiatedBy === this.deviceId) return;
-
-      // Dispositivo observador: apenas armazena dados da sessão remota para permitir save.
-      // NÃO espelha nem inicia timer localmente.
-      this.remoteSession.set({
-        mode: data.mode,
-        totalSeconds: data.totalSeconds,
-        startedAtMs: data.startedAtMs,
-        elapsed: data.elapsed,
-        paused: data.paused,
-      });
-    });
-  }
-
-  stopSync(): void {
-    if (this.firestoreUnsubscribe) {
-      this.firestoreUnsubscribe();
-      this.firestoreUnsubscribe = null;
-    }
-    this.activeDeviceId.set(null);
-    this.syncedActivity.set(null);
-    this.remoteSession.set(null);
-  }
-
-  /** Calcula o elapsed real da sessão remota no momento da chamada */
-  getRemoteElapsedNow(): number {
-    const rs = this.remoteSession();
-    if (!rs) return 0;
-    if (rs.paused) return rs.elapsed;
-    const elapsed = Math.floor((Date.now() - rs.startedAtMs) / 1000);
-    return rs.mode === 'pomodoro'
-      ? Math.max(0, Math.min(elapsed, rs.totalSeconds))
-      : Math.max(0, elapsed);
-  }
-
-  /**
-   * Publica o estado do timer no Firestore.
-   * 'create' e 'update' fazem setDoc (sobrescreve). 'delete' remove o documento.
-   */
-  async publishTimerToFirestore(
-    userId: string,
-    action: 'create' | 'update' | 'delete',
-    activity?: { id: string; name: string; icon: string; color: string } | null
-  ): Promise<void> {
-    if (!userId) return;
-    if (!this.deviceId) this.deviceId = this.getDeviceId();
-
-    const docRef = doc(this.firestore, 'timerSessions', userId);
-
-    if (action === 'delete') {
-      await deleteDoc(docRef);
-      return;
-    }
-
-    const syncData: TimerSyncData = {
-      userId,
-      initiatedBy: this.deviceId,
-      mode: this.mode(),
-      totalSeconds: this.totalSeconds(),
-      startedAtMs: this.startTimestamp,
-      elapsed: this.elapsedSeconds(),
-      paused: this.state() === 'paused',
-      activityId: activity?.id ?? null,
-      activityName: activity?.name ?? null,
-      activityIcon: activity?.icon ?? null,
-      activityColor: activity?.color ?? null,
-      updatedAt: serverTimestamp() as Timestamp,
-    };
-
-    await setDoc(docRef, syncData);
   }
 
   private formatTime(seconds: number): string {
