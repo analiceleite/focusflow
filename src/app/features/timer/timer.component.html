@@ -100,89 +100,146 @@
 
             <!-- Timer -->
             <div class="timer-card">
-                <div class="timer-ring-wrapper">
-                    <svg class="timer-ring" viewBox="0 0 240 240">
-                        <circle cx="120" cy="120" r="110" class="ring-bg" />
-                        @if (timerSvc.mode() === 'pomodoro') {
-                        <circle cx="120" cy="120" r="110" class="ring-progress"
-                            [style.stroke]="selectedType()?.color || '#6C63FF'"
-                            [style.stroke-dashoffset]="ringOffset()" />
-                        }
-                    </svg>
-                    <div class="timer-display">
-                        <div class="timer-time">{{ timerSvc.formattedTime() }}</div>
-                        @if (timerSvc.mode() === 'pomodoro') {
-                        <div class="timer-sub">
-                            @if (timerSvc.state() === 'idle') { Pronto para começar }
-                            @else if (timerSvc.state() === 'running') { Focando... }
-                            @else if (timerSvc.state() === 'paused') { Pausado }
-                            @else if (timerSvc.state() === 'finished') { ✅ Sessão concluída! }
+                <div class="timer-content-wrapper">
+                    <div class="timer-main-section">
+                        <div class="timer-ring-wrapper">
+                            <svg class="timer-ring" viewBox="0 0 240 240">
+                                <circle cx="120" cy="120" r="110" class="ring-bg" />
+                                @if (timerSvc.mode() === 'pomodoro') {
+                                <circle cx="120" cy="120" r="110" class="ring-progress"
+                                    [style.stroke]="selectedType()?.color || '#6C63FF'"
+                                    [style.stroke-dashoffset]="ringOffset()" />
+                                }
+                            </svg>
+                            <div class="timer-display">
+                                <div class="timer-time">{{ timerSvc.formattedTime() }}</div>
+                                @if (timerSvc.mode() === 'pomodoro') {
+                                <div class="timer-sub">
+                                    @if (timerSvc.state() === 'idle') { Pronto para começar }
+                                    @else if (timerSvc.state() === 'running') { Focando... }
+                                    @else if (timerSvc.state() === 'paused') { Pausado }
+                                    @else if (timerSvc.state() === 'finished') { ✅ Sessão concluída! }
+                                </div>
+                                }
+                            </div>
                         </div>
-                        }
-                    </div>
-                </div>
 
-                <div class="controls">
-                    @if (timerSvc.state() === 'idle' || timerSvc.state() === 'finished') {
-                    <div class="control-row control-row-primary">
-                        <button class="btn-main" [style.background]="selectedType()?.color || '#6C63FF'"
-                            (click)="startTimer()">
-                            {{ timerSvc.state() === 'finished' ? '🔄 Nova sessão' : '▶ Iniciar' }}
-                        </button>
-                    </div>
-                    <div class="control-row control-row-secondary">
-                        <button *ngIf="pipSvc.isSupported" class="btn-pip btn-pip-large"
-                            [class.pip-active]="pipSvc.active" (click)="togglePip()">
-                            {{ pipSvc.active ? '✕ Fechar PiP' : '⧉ Picture-in-Picture' }}
-                        </button>
-                    </div>
-                    } @else if (timerSvc.state() === 'running') {
-                    <div class="control-row control-row-primary">
-                        <button class="btn-main btn-pause" (click)="pauseTimer()">⏸ Pausar</button>
-                    </div>
-                    <div class="control-row control-row-secondary">
-                        <div class="actions-menu-wrap">
-                            <button class="btn-actions btn-actions-large" (click)="toggleActionsExpanded()">⋯
-                                Ações</button>
-                            @if (actionsExpanded()) {
-                            <div class="actions-menu">
-                                <button class="btn-secondary" (click)="stopAndSave()">✅ Salvar</button>
-                                <button class="btn-tertiary" (click)="discardTimer()">🛑 Descartar</button>
-                                <button *ngIf="pipSvc.isSupported" class="btn-pip" [class.pip-active]="pipSvc.active"
-                                    (click)="togglePip(); closeActionsExpanded()">
-                                    {{ pipSvc.active ? '✕ PiP' : '⧉ PiP' }}
+                        <div class="controls">
+                            @if (timerSvc.state() === 'idle' || timerSvc.state() === 'finished') {
+                            <div class="control-row control-row-primary">
+                                <button class="btn-main" [style.background]="selectedType()?.color || '#6C63FF'"
+                                    (click)="startTimer()">
+                                    {{ timerSvc.state() === 'finished' ? '🔄 Nova sessão' : '▶ Iniciar' }}
                                 </button>
+                            </div>
+                            <div class="control-row control-row-secondary">
+                                <button *ngIf="pipSvc.isSupported" class="btn-pip btn-pip-large"
+                                    [class.pip-active]="pipSvc.active" (click)="togglePip()">
+                                    {{ pipSvc.active ? '✕ Fechar PiP' : '⧉ Picture-in-Picture' }}
+                                </button>
+                            </div>
+                            } @else if (timerSvc.state() === 'running') {
+                            <div class="control-row control-row-primary">
+                                <button class="btn-main btn-pause" (click)="pauseTimer()">⏸ Pausar</button>
+                            </div>
+                            <div class="control-row control-row-secondary">
+                                <div class="actions-menu-wrap">
+                                    <button class="btn-actions btn-actions-large" (click)="toggleActionsExpanded()">⋯
+                                        Ações</button>
+                                    @if (actionsExpanded()) {
+                                    <div class="actions-menu">
+                                        <button class="btn-secondary" (click)="stopAndSave()">✅ Salvar</button>
+                                        <button class="btn-tertiary" (click)="discardTimer()">🛑 Descartar</button>
+                                        <button *ngIf="pipSvc.isSupported" class="btn-pip" [class.pip-active]="pipSvc.active"
+                                            (click)="togglePip(); closeActionsExpanded()">
+                                            {{ pipSvc.active ? '✕ PiP' : '⧉ PiP' }}
+                                        </button>
+                                    </div>
+                                    }
+                                </div>
+                            </div>
+                            } @else if (timerSvc.state() === 'paused') {
+                            <div class="control-row control-row-primary">
+                                <button class="btn-main" [style.background]="selectedType()?.color || '#6C63FF'"
+                                    (click)="resumeTimer()">▶ Continuar</button>
+                            </div>
+                            <div class="control-row control-row-secondary">
+                                <div class="actions-menu-wrap">
+                                    <button class="btn-actions btn-actions-large" (click)="toggleActionsExpanded()">⋯
+                                        Ações</button>
+                                    @if (actionsExpanded()) {
+                                    <div class="actions-menu">
+                                        <button class="btn-secondary" (click)="stopAndSave()">✅ Salvar</button>
+                                        <button class="btn-tertiary" (click)="discardTimer()">🛑 Descartar</button>
+                                        <button *ngIf="pipSvc.isSupported" class="btn-pip" [class.pip-active]="pipSvc.active"
+                                            (click)="togglePip(); closeActionsExpanded()">
+                                            {{ pipSvc.active ? '✕ PiP' : '⧉ PiP' }}
+                                        </button>
+                                    </div>
+                                    }
+                                </div>
                             </div>
                             }
                         </div>
+
+                        @if (showSaveBanner()) {
+                        <div class="save-banner">✅ Sessão salva! {{ savedDuration() }} de {{ savedActivity() }}</div>
+                        }
                     </div>
-                    } @else if (timerSvc.state() === 'paused') {
-                    <div class="control-row control-row-primary">
-                        <button class="btn-main" [style.background]="selectedType()?.color || '#6C63FF'"
-                            (click)="resumeTimer()">▶ Continuar</button>
-                    </div>
-                    <div class="control-row control-row-secondary">
-                        <div class="actions-menu-wrap">
-                            <button class="btn-actions btn-actions-large" (click)="toggleActionsExpanded()">⋯
-                                Ações</button>
-                            @if (actionsExpanded()) {
-                            <div class="actions-menu">
-                                <button class="btn-secondary" (click)="stopAndSave()">✅ Salvar</button>
-                                <button class="btn-tertiary" (click)="discardTimer()">🛑 Descartar</button>
-                                <button *ngIf="pipSvc.isSupported" class="btn-pip" [class.pip-active]="pipSvc.active"
-                                    (click)="togglePip(); closeActionsExpanded()">
-                                    {{ pipSvc.active ? '✕ PiP' : '⧉ PiP' }}
-                                </button>
+
+                    @if (dailyGoalMinutes()) {
+                    <div class="daily-goal-sidebar">
+                        <div class="daily-goal-sidebar-header">
+                            <span class="daily-goal-sidebar-title">🎯 Meta</span>
+                            <button class="btn-goal-settings-small" (click)="openGoalModal()">⚙️</button>
+                        </div>
+                        <div class="daily-goal-bar-vertical">
+                            <div class="daily-goal-bar-fill" [style.height.%]="dailyGoalProgress() > 100 ? 100 : dailyGoalProgress()">
+                                @for (segment of dailyGoalSegments(); track segment.activityTypeId) {
+                                <div class="daily-goal-segment-vertical"
+                                    [style.flex-basis.%]="segment.percentage"
+                                    [style.background]="segment.color"
+                                    [title]="segment.icon + ' ' + segment.name + ': ' + formatHours(segment.totalSeconds)">
+                                </div>
+                                }
+                            </div>
+                            @if (dailyGoalProgress() > 100) {
+                            <div class="daily-goal-bar-overflow" [style.height.%]="dailyGoalProgress() - 100">
+                                @for (segment of dailyGoalSegments(); track segment.activityTypeId) {
+                                <div class="daily-goal-segment-vertical"
+                                    [style.flex-basis.%]="segment.percentage"
+                                    [style.background]="segment.color"
+                                    [style.opacity]="0.6"
+                                    [title]="segment.icon + ' ' + segment.name + ': ' + formatHours(segment.totalSeconds)">
+                                </div>
+                                }
                             </div>
                             }
+                        </div>
+                        <div class="daily-goal-sidebar-stats">
+                            <div class="daily-goal-sidebar-percent" [class.goal-complete]="dailyGoalProgress() >= 100">
+                                {{ dailyGoalPercentRounded() }}%
+                            </div>
+                            <div class="daily-goal-sidebar-time">
+                                {{ formatHours(todayTotalSeconds()) }}
+                            </div>
+                            <div class="daily-goal-sidebar-target">
+                                / {{ formatHours(dailyGoalMinutes()! * 60) }}
+                            </div>
+                        </div>
+                    </div>
+                    } @else {
+                    <div class="daily-goal-sidebar daily-goal-sidebar-empty">
+                        <div class="daily-goal-sidebar-header">
+                            <span class="daily-goal-sidebar-title">🎯 Meta</span>
+                        </div>
+                        <div class="daily-goal-empty-vertical">
+                            <p>Defina uma meta diária</p>
+                            <button class="btn-goal-cta-small" (click)="openGoalModal()">Definir</button>
                         </div>
                     </div>
                     }
                 </div>
-
-                @if (showSaveBanner()) {
-                <div class="save-banner">✅ Sessão salva! {{ savedDuration() }} de {{ savedActivity() }}</div>
-                }
             </div>
 
             <div class="spotify-widget" [class.spotify-collapsed]="!spotifyExpanded()">
@@ -291,70 +348,6 @@
                     }
                 </div>
             </div>
-        </div>
-
-        <!-- ══ Meta Diária ══ -->
-        <div class="daily-goal-panel">
-            <div class="daily-goal-header">
-                <div class="daily-goal-header-left">
-                    <span class="section-label">🎯 Meta diária</span>
-                    <span class="daily-goal-value">{{ dailyGoalFormatted() }}</span>
-                </div>
-                <button class="btn-goal-settings" (click)="openGoalModal()">⚙️</button>
-            </div>
-
-            @if (dailyGoalMinutes()) {
-            <div class="daily-goal-bar-container">
-                <div class="daily-goal-bar" [style.width.%]="dailyGoalProgress() > 100 ? 100 : dailyGoalProgress()">
-                    @for (segment of dailyGoalSegments(); track segment.activityTypeId) {
-                    <div class="daily-goal-segment"
-                        [style.flex-basis.%]="segment.percentage"
-                        [style.background]="segment.color"
-                        [title]="segment.icon + ' ' + segment.name + ': ' + formatHours(segment.totalSeconds)">
-                    </div>
-                    }
-                </div>
-                @if (dailyGoalProgress() > 100) {
-                <div class="daily-goal-overflow" [style.width.%]="dailyGoalProgress() - 100">
-                    @for (segment of dailyGoalSegments(); track segment.activityTypeId) {
-                    <div class="daily-goal-segment"
-                        [style.flex-basis.%]="segment.percentage"
-                        [style.background]="segment.color"
-                        [style.opacity]="0.6"
-                        [title]="segment.icon + ' ' + segment.name + ': ' + formatHours(segment.totalSeconds)">
-                    </div>
-                    }
-                </div>
-                }
-            </div>
-
-            <div class="daily-goal-stats">
-                <span class="daily-goal-progress-text">
-                    {{ formatHours(todayTotalSeconds()) }} / {{ formatHours(dailyGoalMinutes()! * 60) }}
-                </span>
-                <span class="daily-goal-percent" [class.goal-complete]="dailyGoalProgress() >= 100">
-                    {{ dailyGoalProgress() >= 100 ? '✅ Meta atingida!' : dailyGoalPercentRounded() + '%' }}
-                </span>
-            </div>
-
-            @if (dailyGoalSegments().length > 0) {
-            <div class="daily-goal-legend">
-                @for (segment of dailyGoalSegments(); track segment.activityTypeId) {
-                <div class="legend-item">
-                    <span class="legend-dot" [style.background]="segment.color"></span>
-                    <span class="legend-icon">{{ segment.icon }}</span>
-                    <span class="legend-name">{{ segment.name }}</span>
-                    <span class="legend-time">{{ formatHours(segment.totalSeconds) }}</span>
-                </div>
-                }
-            </div>
-            }
-            } @else {
-            <div class="daily-goal-empty">
-                <p>Defina uma meta diária de foco para acompanhar seu progresso.</p>
-                <button class="btn-goal-cta" (click)="openGoalModal()">Definir meta</button>
-            </div>
-            }
         </div>
 
         <!-- ══ Estatísticas ══ -->
