@@ -11,10 +11,12 @@ import {
   setDoc,
   getDoc,
   deleteDoc,
+  docData,
 } from '@angular/fire/firestore';
 import { ActivityType, Preset, Session } from '../interfaces/timer.interface';
 import { AuthService } from './auth.service';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class SessionService {
@@ -112,5 +114,22 @@ export class SessionService {
     }
 
     await setDoc(doc(this.firestore, `userMeta/${this.uid}`), { seeded: true });
+  }
+
+  // ─── Daily Goal ──────────────────────────────────────────────────────────────
+
+  getDailyGoal$(): Observable<number | null> {
+    const userMetaDoc = doc(this.firestore, `userMeta/${this.uid}`);
+    return docData(userMetaDoc).pipe(
+      map((data: any) => data?.dailyGoalMinutes ?? null)
+    );
+  }
+
+  async updateDailyGoal(minutes: number): Promise<void> {
+    await setDoc(
+      doc(this.firestore, `userMeta/${this.uid}`),
+      { dailyGoalMinutes: minutes },
+      { merge: true }
+    );
   }
 }

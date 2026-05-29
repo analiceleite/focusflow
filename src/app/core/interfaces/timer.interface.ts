@@ -25,3 +25,12 @@ export interface Session {
   startedAt: number; // timestamp
   completedAt: number; // timestamp
 }
+
+export interface DailyGoalSegment {
+  activityTypeId: string;
+  name: string;
+  icon: string;
+  color: string;
+  totalSeconds: number;
+  percentage: number;
+}

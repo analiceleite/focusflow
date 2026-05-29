@@ -9,7 +9,7 @@ import { ToastService } from 'src/app/core/services/toast.service';
 
 import { TimerService, TimerMode } from '../../core/services/timer.service';
 import { SessionService } from '../../core/services/session.service';
-import { ActivityType, Preset, Session } from 'src/app/core/interfaces/timer.interface';
+import { ActivityType, Preset, Session, DailyGoalSegment } from 'src/app/core/interfaces/timer.interface';
 import { SpotifyPlaylist } from 'src/app/core/interfaces/spotify.interface';
 import { AuthService } from '../../core/services/auth.service';
 import { PipService } from '../../core/services/pip.service';
@@ -34,6 +34,10 @@ export class TimerComponent implements OnInit, OnDestroy {
   presets = signal<Preset[]>([]);
   selectedType = signal<ActivityType | null>(null);
   allSessions = signal<Session[]>([]);
+  dailyGoalMinutes = signal<number | null>(null);
+  showGoalModal = signal(false);
+  goalInputHours = 0;
+  goalInputMinutes = 0;
 
   private readonly SELECTED_ACTIVITY_KEY = 'focusflow_selected_activity';
   private readonly CYCLE_ACTIVITY_KEY = 'focusflow_cycle_activity';
@@ -255,6 +259,63 @@ export class TimerComponent implements OnInit, OnDestroy {
     return months.map(m => ({ ...m, percent: Math.round((m.seconds / maxSec) * 100) }));
   });
 
+  readonly dailyGoalSegments = computed<DailyGoalSegment[]>(() => {
+    const goalMinutes = this.dailyGoalMinutes();
+    if (!goalMinutes || goalMinutes <= 0) return [];
+
+    const today = this.getLocalDateString();
+    const todaySessions = this.allSessions().filter(s => s.date === today);
+    const goalSeconds = goalMinutes * 60;
+
+    const grouped = new Map<string, { seconds: number; name: string; icon: string; color: string }>();
+    for (const session of todaySessions) {
+      const existing = grouped.get(session.activityTypeId);
+      if (existing) {
+        existing.seconds += session.durationSeconds;
+      } else {
+        grouped.set(session.activityTypeId, {
+          seconds: session.durationSeconds,
+          name: session.activityTypeName,
+          icon: this.activityTypes().find(t => t.id === session.activityTypeId)?.icon || '📌',
+          color: session.activityColor,
+        });
+      }
+    }
+
+    const segments: DailyGoalSegment[] = [];
+    grouped.forEach((data, activityTypeId) => {
+      segments.push({
+        activityTypeId,
+        name: data.name,
+        icon: data.icon,
+        color: data.color,
+        totalSeconds: data.seconds,
+        percentage: (data.seconds / goalSeconds) * 100,
+      });
+    });
+
+    return segments.sort((a, b) => b.totalSeconds - a.totalSeconds);
+  });
+
+  readonly dailyGoalProgress = computed(() => {
+    const goalMinutes = this.dailyGoalMinutes();
+    if (!goalMinutes || goalMinutes <= 0) return 0;
+    const goalSeconds = goalMinutes * 60;
+    return (this.todayTotalSeconds() / goalSeconds) * 100;
+  });
+
+  readonly dailyGoalFormatted = computed(() => {
+    const goalMinutes = this.dailyGoalMinutes();
+    if (!goalMinutes) return 'Definir meta';
+    const h = Math.floor(goalMinutes / 60);
+    const m = goalMinutes % 60;
+    if (h > 0 && m > 0) return `${h}h ${m}min`;
+    if (h > 0) return `${h}h`;
+    return `${m}min`;
+  });
+
+  readonly dailyGoalPercentRounded = computed(() => Math.round(this.dailyGoalProgress()));
+
   // ─── Lifecycle ────────────────────────────────────────────────────────────
 
   ngOnInit(): void {
@@ -269,6 +330,7 @@ export class TimerComponent implements OnInit, OnDestroy {
       }),
       this.sessionSvc.getPresets$().subscribe(p => this.presets.set(p)),
       this.sessionSvc.getSessions$().subscribe(s => this.allSessions.set(s)),
+      this.sessionSvc.getDailyGoal$().subscribe(minutes => this.dailyGoalMinutes.set(minutes)),
     );
   }
 
@@ -417,6 +479,39 @@ export class TimerComponent implements OnInit, OnDestroy {
   async togglePip(): Promise<void> {
     try { await this.pipSvc.toggle(this.selectedType()?.color ?? '#6C63FF', this.selectedType()?.name ?? ''); }
     catch (err) { console.error(err); }
+  }
+
+  // ─── Daily Goal ──────────────────────────────────────────────────────────────
+
+  openGoalModal(): void {
+    const currentMinutes = this.dailyGoalMinutes() ?? 0;
+    this.goalInputHours = Math.floor(currentMinutes / 60);
+    this.goalInputMinutes = currentMinutes % 60;
+    this.showGoalModal.set(true);
+  }
+
+  async saveDailyGoal(): Promise<void> {
+    const totalMinutes = this.goalInputHours * 60 + this.goalInputMinutes;
+    if (totalMinutes <= 0) {
+      this.toastService.warning('Defina uma meta maior que zero.', 3000);
+      return;
+    }
+    if (totalMinutes > 1440) {
+      this.toastService.warning('A meta não pode exceder 24 horas.', 3000);
+      return;
+    }
+    try {
+      await this.sessionSvc.updateDailyGoal(totalMinutes);
+      this.showGoalModal.set(false);
+      this.toastService.success(`Meta diária definida: ${this.formatHours(totalMinutes * 60)}`, 3000);
+    } catch {
+      this.toastService.error('Erro ao salvar a meta diária.', 3000);
+    }
+  }
+
+  clearDailyGoal(): void {
+    this.goalInputHours = 0;
+    this.goalInputMinutes = 0;
   }
 
   // ─── Spotify ──────────────────────────────────────────────────────────────

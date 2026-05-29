@@ -293,6 +293,70 @@
             </div>
         </div>
 
+        <!-- ══ Meta Diária ══ -->
+        <div class="daily-goal-panel">
+            <div class="daily-goal-header">
+                <div class="daily-goal-header-left">
+                    <span class="section-label">🎯 Meta diária</span>
+                    <span class="daily-goal-value">{{ dailyGoalFormatted() }}</span>
+                </div>
+                <button class="btn-goal-settings" (click)="openGoalModal()">⚙️</button>
+            </div>
+
+            @if (dailyGoalMinutes()) {
+            <div class="daily-goal-bar-container">
+                <div class="daily-goal-bar" [style.width.%]="dailyGoalProgress() > 100 ? 100 : dailyGoalProgress()">
+                    @for (segment of dailyGoalSegments(); track segment.activityTypeId) {
+                    <div class="daily-goal-segment"
+                        [style.flex-basis.%]="segment.percentage"
+                        [style.background]="segment.color"
+                        [title]="segment.icon + ' ' + segment.name + ': ' + formatHours(segment.totalSeconds)">
+                    </div>
+                    }
+                </div>
+                @if (dailyGoalProgress() > 100) {
+                <div class="daily-goal-overflow" [style.width.%]="dailyGoalProgress() - 100">
+                    @for (segment of dailyGoalSegments(); track segment.activityTypeId) {
+                    <div class="daily-goal-segment"
+                        [style.flex-basis.%]="segment.percentage"
+                        [style.background]="segment.color"
+                        [style.opacity]="0.6"
+                        [title]="segment.icon + ' ' + segment.name + ': ' + formatHours(segment.totalSeconds)">
+                    </div>
+                    }
+                </div>
+                }
+            </div>
+
+            <div class="daily-goal-stats">
+                <span class="daily-goal-progress-text">
+                    {{ formatHours(todayTotalSeconds()) }} / {{ formatHours(dailyGoalMinutes()! * 60) }}
+                </span>
+                <span class="daily-goal-percent" [class.goal-complete]="dailyGoalProgress() >= 100">
+                    {{ dailyGoalProgress() >= 100 ? '✅ Meta atingida!' : dailyGoalPercentRounded() + '%' }}
+                </span>
+            </div>
+
+            @if (dailyGoalSegments().length > 0) {
+            <div class="daily-goal-legend">
+                @for (segment of dailyGoalSegments(); track segment.activityTypeId) {
+                <div class="legend-item">
+                    <span class="legend-dot" [style.background]="segment.color"></span>
+                    <span class="legend-icon">{{ segment.icon }}</span>
+                    <span class="legend-name">{{ segment.name }}</span>
+                    <span class="legend-time">{{ formatHours(segment.totalSeconds) }}</span>
+                </div>
+                }
+            </div>
+            }
+            } @else {
+            <div class="daily-goal-empty">
+                <p>Defina uma meta diária de foco para acompanhar seu progresso.</p>
+                <button class="btn-goal-cta" (click)="openGoalModal()">Definir meta</button>
+            </div>
+            }
+        </div>
+
         <!-- ══ Estatísticas ══ -->
         <div class="stats-panel">
             <div class="section-label">📊 Estatísticas de foco</div>
@@ -424,6 +488,39 @@
         <div class="modal-actions">
             <button class="btn-cancel" (click)="showAddPreset.set(false)">Cancelar</button>
             <button class="btn-confirm" (click)="addPreset()">Salvar</button>
+        </div>
+    </div>
+</div>
+}
+
+<!-- Modal: Daily Goal -->
+@if (showGoalModal()) {
+<div class="modal-overlay" (click)="showGoalModal.set(false)">
+    <div class="modal" (click)="$event.stopPropagation()">
+        <h3>🎯 Meta diária de foco</h3>
+        <p class="modal-description">Defina quantas horas por dia você deseja dedicar ao foco.</p>
+        <div class="goal-input-row">
+            <div class="modal-field goal-field">
+                <label>Horas</label>
+                <input type="number" [(ngModel)]="goalInputHours" min="0" max="23" />
+            </div>
+            <span class="goal-separator">:</span>
+            <div class="modal-field goal-field">
+                <label>Minutos</label>
+                <input type="number" [(ngModel)]="goalInputMinutes" min="0" max="59" step="15" />
+            </div>
+        </div>
+        <div class="goal-presets">
+            <button class="goal-preset-chip" (click)="goalInputHours = 1; goalInputMinutes = 0">1h</button>
+            <button class="goal-preset-chip" (click)="goalInputHours = 2; goalInputMinutes = 0">2h</button>
+            <button class="goal-preset-chip" (click)="goalInputHours = 3; goalInputMinutes = 0">3h</button>
+            <button class="goal-preset-chip" (click)="goalInputHours = 4; goalInputMinutes = 0">4h</button>
+            <button class="goal-preset-chip" (click)="goalInputHours = 6; goalInputMinutes = 0">6h</button>
+            <button class="goal-preset-chip" (click)="goalInputHours = 8; goalInputMinutes = 0">8h</button>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-cancel" (click)="showGoalModal.set(false)">Cancelar</button>
+            <button class="btn-confirm" (click)="saveDailyGoal()">Salvar</button>
         </div>
     </div>
 </div>
