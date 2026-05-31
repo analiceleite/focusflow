@@ -180,6 +180,15 @@ export class TimerComponent implements OnInit, OnDestroy {
     return this.allSessions().filter(s => s.date === today).reduce((a, s) => a + s.durationSeconds, 0);
   });
 
+  readonly todayTotalSecondsWithCurrent = computed(() => {
+    const saved = this.todayTotalSeconds();
+    const state = this.timerSvc.state();
+    if (state === 'running' || state === 'paused') {
+      return saved + this.timerSvc.elapsedSeconds();
+    }
+    return saved;
+  });
+
   readonly last7TotalSeconds = computed(() => {
     const cutoff = this.dateNDaysAgo(7);
     return this.allSessions().filter(s => s.date >= cutoff).reduce((a, s) => a + s.durationSeconds, 0);
@@ -282,6 +291,25 @@ export class TimerComponent implements OnInit, OnDestroy {
       }
     }
 
+    const state = this.timerSvc.state();
+    const elapsed = this.timerSvc.elapsedSeconds();
+    if ((state === 'running' || state === 'paused') && elapsed > 0) {
+      const type = this.selectedType();
+      if (type?.id) {
+        const existing = grouped.get(type.id);
+        if (existing) {
+          existing.seconds += elapsed;
+        } else {
+          grouped.set(type.id, {
+            seconds: elapsed,
+            name: type.name,
+            icon: type.icon || '📌',
+            color: type.color,
+          });
+        }
+      }
+    }
+
     const segments: DailyGoalSegment[] = [];
     grouped.forEach((data, activityTypeId) => {
       segments.push({
@@ -301,7 +329,7 @@ export class TimerComponent implements OnInit, OnDestroy {
     const goalMinutes = this.dailyGoalMinutes();
     if (!goalMinutes || goalMinutes <= 0) return 0;
     const goalSeconds = goalMinutes * 60;
-    return (this.todayTotalSeconds() / goalSeconds) * 100;
+    return (this.todayTotalSecondsWithCurrent() / goalSeconds) * 100;
   });
 
   readonly dailyGoalFormatted = computed(() => {
