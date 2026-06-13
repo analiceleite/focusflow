@@ -168,7 +168,7 @@ export class PipService {
 
     // ── Right panel ───────────────────────────────────────────────
     const rx = arcCX + arcR + 18;
-    const rw = this.W - rx - 14;
+    const rw = this.W - rx - 24;
 
     // Mode badge
     const modeText = mode === 'pomodoro' ? '🍅 POMODORO' : '⏱ CRONÔMETRO';
@@ -268,14 +268,14 @@ export class PipService {
       );
 
       // Barra de Meta Vertical no Canto Direito (estilo do app principal)
-      const gbx = this.W - 14;
+      const gbx = this.W - 12;
       const gby = 16;
-      const gbw = 5;
+      const gbw = 4;
       const gbh = this.H - 32; // de 16 a 132 (altura = 116px)
 
       ctx.fillStyle = theme.progressTrack;
       ctx.beginPath();
-      this.roundRect(ctx, gbx, gby, gbw, gbh, 2.5);
+      this.roundRect(ctx, gbx, gby, gbw, gbh, 2);
       ctx.fill();
 
       if (this.goalProgress > 0) {
@@ -283,7 +283,7 @@ export class PipService {
         const fillH = gbh * Math.min(this.goalProgress / 100, 1);
         const fillY = gby + gbh - fillH; // Preenchimento de baixo para cima
         ctx.beginPath();
-        this.roundRect(ctx, gbx, fillY, gbw, fillH, 2.5);
+        this.roundRect(ctx, gbx, fillY, gbw, fillH, 2);
         ctx.fill();
       }
     }
