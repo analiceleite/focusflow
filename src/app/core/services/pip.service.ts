@@ -267,11 +267,18 @@ export class PipService {
         gy
       );
 
+      // Desenhar o mini ícone da Meta (🎯) no topo da barra vertical
+      ctx.fillStyle = theme.textMuted;
+      ctx.font = `8px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('🎯', this.W - 10, 10);
+
       // Barra de Meta Vertical no Canto Direito (estilo do app principal)
       const gbx = this.W - 12;
-      const gby = 16;
+      const gby = 18;
       const gbw = 4;
-      const gbh = this.H - 32; // de 16 a 132 (altura = 116px)
+      const gbh = this.H - 34; // de 18 a 132 (altura = 114px)
 
       ctx.fillStyle = theme.progressTrack;
       ctx.beginPath();
@@ -290,7 +297,17 @@ export class PipService {
 
     // ── Bottom progress bar (pomodoro only) ──────────────────────
     if (mode === 'pomodoro') {
-      const bx = rx, by = this.H - 18, bw = rw, bh = 3;
+      // Mini ícone do Pomodoro (🍅) à esquerda da barra horizontal
+      ctx.fillStyle = theme.textMuted;
+      ctx.font = `8px sans-serif`;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('🍅', rx, this.H - 18 + 1.5);
+
+      const bx = rx + 11; // recuo para o ícone
+      const by = this.H - 18;
+      const bw = rw - 11;
+      const bh = 3;
       ctx.fillStyle = theme.progressTrack;
       ctx.beginPath();
       this.roundRect(ctx, bx, by, bw, bh, 2);
