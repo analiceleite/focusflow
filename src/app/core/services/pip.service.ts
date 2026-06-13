@@ -19,6 +19,8 @@ export class PipService {
   private isActive = false;
   private activityLabel: string = '';
   private activityColor: string = '#6C63FF';
+  private goalProgress = 0;
+  private dailyGoalMinutes = 0;
 
   // Tick animation state
   private tickAlpha = 0;
@@ -250,6 +252,37 @@ export class PipService {
     ctx.textBaseline = 'alphabetic';
     ctx.fillText(sc.label, rx + 13, dotY);
 
+    // ── Daily Goal Progress (if configured) ──────────────────────
+    if (this.dailyGoalMinutes > 0) {
+      const gy = dotY + 12;
+      const gw = rw;
+      const gh = 3;
+      const totalSeconds = (this.goalProgress / 100) * (this.dailyGoalMinutes * 60);
+
+      ctx.fillStyle = theme.textMuted;
+      ctx.font = `600 8.5px system-ui, sans-serif`;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillText(
+        `Meta: ${Math.round(this.goalProgress)}% (${this.formatHours(totalSeconds)} / ${this.formatHours(this.dailyGoalMinutes * 60)})`,
+        rx,
+        gy
+      );
+
+      const barY = gy + 4;
+      ctx.fillStyle = theme.progressTrack;
+      ctx.beginPath();
+      this.roundRect(ctx, rx, barY, gw, gh, 1.5);
+      ctx.fill();
+
+      if (this.goalProgress > 0) {
+        ctx.fillStyle = '#FF6584'; // Cor rosa-coral do widget de metas
+        ctx.beginPath();
+        this.roundRect(ctx, rx, barY, gw * Math.min(this.goalProgress / 100, 1), gh, 1.5);
+        ctx.fill();
+      }
+    }
+
     // ── Bottom progress bar (pomodoro only) ──────────────────────
     if (mode === 'pomodoro') {
       const bx = rx, by = this.H - 18, bw = rw, bh = 3;
@@ -433,6 +466,21 @@ export class PipService {
     ctx.arcTo(x, y + h, x, y, radius);
     ctx.arcTo(x, y, x + w, y, radius);
     ctx.closePath();
+  }
+
+  updateGoalProgress(progress: number, goalMinutes: number): void {
+    this.goalProgress = progress;
+    this.dailyGoalMinutes = goalMinutes;
+    try { this.draw(this.activityColor, performance.now()); } catch { }
+  }
+
+  formatHours(seconds: number): string {
+    if (seconds === 0) return '0min';
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    if (h > 0 && m > 0) return `${h}h ${m}min`;
+    if (h > 0) return `${h}h`;
+    return `${m}min`;
   }
 
   updateActivity(activityColor?: string, activityLabel?: string): void {
