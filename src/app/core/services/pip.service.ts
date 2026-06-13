@@ -254,19 +254,6 @@ export class PipService {
 
     // ── Daily Goal Progress (if configured) ──────────────────────
     if (this.dailyGoalMinutes > 0) {
-      const gy = dotY + 12;
-      const totalSeconds = (this.goalProgress / 100) * (this.dailyGoalMinutes * 60);
-
-      ctx.fillStyle = theme.textMuted;
-      ctx.font = `600 8.5px system-ui, sans-serif`;
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'alphabetic';
-      ctx.fillText(
-        `🎯 Meta: ${Math.round(this.goalProgress)}% (${this.formatHours(totalSeconds)} / ${this.formatHours(this.dailyGoalMinutes * 60)})`,
-        rx,
-        gy
-      );
-
       // Desenhar o mini ícone da Meta (🎯) no topo da barra vertical
       ctx.fillStyle = theme.textMuted;
       ctx.font = `8px sans-serif`;
@@ -293,50 +280,6 @@ export class PipService {
         this.roundRect(ctx, gbx, fillY, gbw, fillH, 2);
         ctx.fill();
       }
-    }
-
-    // ── Bottom progress bar (pomodoro only) ──────────────────────
-    if (mode === 'pomodoro') {
-      // Mini ícone do Pomodoro (🍅) à esquerda da barra horizontal
-      ctx.fillStyle = theme.textMuted;
-      ctx.font = `8px sans-serif`;
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('🍅', rx, this.H - 18 + 1.5);
-
-      const bx = rx + 11; // recuo para o ícone
-      const by = this.H - 18;
-      const bw = rw - 11;
-      const bh = 3;
-      ctx.fillStyle = theme.progressTrack;
-      ctx.beginPath();
-      this.roundRect(ctx, bx, by, bw, bh, 2);
-      ctx.fill();
-
-      if (progress > 0) {
-        ctx.fillStyle = color;
-        ctx.beginPath();
-        this.roundRect(ctx, bx, by, bw * Math.min(progress, 1), bh, 2);
-        ctx.fill();
-
-        // Glowing tip
-        if (theme.glow && progress < 0.99) {
-          const tipX = bx + bw * Math.min(progress, 1);
-          const tipGrd = ctx.createRadialGradient(tipX, by + bh / 2, 0, tipX, by + bh / 2, 8);
-          tipGrd.addColorStop(0, this.hexToRgba(color, 0.6));
-          tipGrd.addColorStop(1, 'transparent');
-          ctx.fillStyle = tipGrd;
-          ctx.fillRect(tipX - 8, by - 5, 16, bh + 10);
-        }
-      }
-
-      // Progress percentage tiny label
-      const pctStr = `${Math.round(progress * 100)}%`;
-      ctx.fillStyle = theme.textMuted;
-      ctx.font = `500 8px "SF Mono", monospace`;
-      ctx.textAlign = 'right';
-      ctx.textBaseline = 'alphabetic';
-      ctx.fillText(pctStr, bx + bw, by - 4);
     }
 
     // ── Divider line ──────────────────────────────────────────────
