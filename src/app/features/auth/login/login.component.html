@@ -8,10 +8,10 @@
         </div>
 
         <div class="tabs">
-            <button [class.active]="!isRegister()" (click)="isRegister.set(false)">
+            <button [class.active]="!isRegister()" (click)="isRegister.set(false); error.set(''); successMessage.set('');">
                 Entrar
             </button>
-            <button [class.active]="isRegister()" (click)="isRegister.set(true)">
+            <button [class.active]="isRegister()" (click)="isRegister.set(true); error.set(''); successMessage.set('');">
                 Criar conta
             </button>
         </div>
@@ -25,10 +25,21 @@
             <div class="field">
                 <label>Senha</label>
                 <input type="password" [(ngModel)]="password" name="password" placeholder="••••••••" required />
+                @if (!isRegister()) {
+                <div class="forgot-password-row">
+                    <button type="button" class="btn-forgot" (click)="recoverPassword()" [disabled]="loading()">
+                        Esqueci minha senha
+                    </button>
+                </div>
+                }
             </div>
 
             @if (error()) {
             <div class="error-msg">{{ error() }}</div>
+            }
+
+            @if (successMessage()) {
+            <div class="success-msg">{{ successMessage() }}</div>
             }
 
             <button type="submit" class="btn-submit" [disabled]="loading()">

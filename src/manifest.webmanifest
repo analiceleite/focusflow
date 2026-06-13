@@ -1,7 +1,7 @@
 {
-  "name": "FocusFlow - Timer Pomodoro",
+  "name": "FocusFlow - Timer",
   "short_name": "FocusFlow",
-  "description": "Seu tempo, seu foco. Timer Pomodoro e cronômetro para produtividade.",
+  "description": "Seu tempo, seu foco. Timer e cronômetro para produtividade.",
   "theme_color": "#f5f5f7",
   "background_color": "#0f0f14",
   "display": "standalone",

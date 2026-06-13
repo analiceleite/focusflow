@@ -310,6 +310,7 @@ export class TimerComponent implements OnInit, OnDestroy {
       }
     }
 
+    const totalToday = this.todayTotalSecondsWithCurrent();
     const segments: DailyGoalSegment[] = [];
     grouped.forEach((data, activityTypeId) => {
       segments.push({
@@ -318,7 +319,7 @@ export class TimerComponent implements OnInit, OnDestroy {
         icon: data.icon,
         color: data.color,
         totalSeconds: data.seconds,
-        percentage: (data.seconds / goalSeconds) * 100,
+        percentage: totalToday > 0 ? (data.seconds / totalToday) * 100 : 0,
       });
     });
 

@@ -22,6 +22,7 @@ export class LoginComponent {
   isRegister = signal(false);
   loading = signal(false);
   error = signal('');
+  successMessage = signal('');
 
   email = '';
   password = '';
@@ -46,6 +47,31 @@ export class LoginComponent {
         'auth/wrong-password': 'Senha incorreta.',
       };
       this.error.set(msg[err.code] || 'Ocorreu um erro. Tente novamente.');
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
+  async recoverPassword(): Promise<void> {
+    if (!this.email) {
+      this.error.set('Por favor, informe seu e-mail para recuperar a senha.');
+      this.successMessage.set('');
+      return;
+    }
+
+    this.loading.set(true);
+    this.error.set('');
+    this.successMessage.set('');
+
+    try {
+      await this.authService.resetPassword(this.email);
+      this.successMessage.set('E-mail de redefinição enviado com sucesso! Verifique sua caixa de entrada.');
+    } catch (err: any) {
+      const msg: Record<string, string> = {
+        'auth/invalid-email': 'E-mail inválido.',
+        'auth/user-not-found': 'Usuário não encontrado.',
+      };
+      this.error.set(msg[err.code] || 'Não foi possível enviar o e-mail de recuperação. Tente novamente.');
     } finally {
       this.loading.set(false);
     }

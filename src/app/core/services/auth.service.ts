@@ -4,6 +4,7 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
+  sendPasswordResetEmail,
   user,
   User
 } from '@angular/fire/auth';
@@ -30,6 +31,10 @@ export class AuthService {
   async logout(): Promise<void> {
     await signOut(this.auth);
     this.router.navigate(['/login']);
+  }
+
+  async resetPassword(email: string): Promise<void> {
+    await sendPasswordResetEmail(this.auth, email);
   }
 
   get currentUser(): User | null {
