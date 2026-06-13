@@ -255,8 +255,6 @@ export class PipService {
     // ── Daily Goal Progress (if configured) ──────────────────────
     if (this.dailyGoalMinutes > 0) {
       const gy = dotY + 12;
-      const gw = rw;
-      const gh = 3;
       const totalSeconds = (this.goalProgress / 100) * (this.dailyGoalMinutes * 60);
 
       ctx.fillStyle = theme.textMuted;
@@ -264,21 +262,28 @@ export class PipService {
       ctx.textAlign = 'left';
       ctx.textBaseline = 'alphabetic';
       ctx.fillText(
-        `Meta: ${Math.round(this.goalProgress)}% (${this.formatHours(totalSeconds)} / ${this.formatHours(this.dailyGoalMinutes * 60)})`,
+        `🎯 Meta: ${Math.round(this.goalProgress)}% (${this.formatHours(totalSeconds)} / ${this.formatHours(this.dailyGoalMinutes * 60)})`,
         rx,
         gy
       );
 
-      const barY = gy + 4;
+      // Barra de Meta Vertical no Canto Direito (estilo do app principal)
+      const gbx = this.W - 14;
+      const gby = 16;
+      const gbw = 5;
+      const gbh = this.H - 32; // de 16 a 132 (altura = 116px)
+
       ctx.fillStyle = theme.progressTrack;
       ctx.beginPath();
-      this.roundRect(ctx, rx, barY, gw, gh, 1.5);
+      this.roundRect(ctx, gbx, gby, gbw, gbh, 2.5);
       ctx.fill();
 
       if (this.goalProgress > 0) {
         ctx.fillStyle = '#FF6584'; // Cor rosa-coral do widget de metas
+        const fillH = gbh * Math.min(this.goalProgress / 100, 1);
+        const fillY = gby + gbh - fillH; // Preenchimento de baixo para cima
         ctx.beginPath();
-        this.roundRect(ctx, rx, barY, gw * Math.min(this.goalProgress / 100, 1), gh, 1.5);
+        this.roundRect(ctx, gbx, fillY, gbw, fillH, 2.5);
         ctx.fill();
       }
     }
