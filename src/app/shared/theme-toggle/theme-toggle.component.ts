@@ -1,8 +1,8 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faMoon, faSun } from '@fortawesome/free-solid-svg-icons';
-import { ThemeService } from '../../core/services/theme.service';
+import { faMoon, faSun, faDesktop } from '@fortawesome/free-solid-svg-icons';
+import { ThemeService, ThemeMode } from '../../core/services/theme.service';
 
 @Component({
   selector: 'app-theme-toggle',
@@ -12,9 +12,9 @@ import { ThemeService } from '../../core/services/theme.service';
     <button 
       class="theme-toggle" 
       (click)="toggleTheme()" 
-      [title]="isDarkMode() ? 'Mudar para tema claro' : 'Mudar para tema escuro'"
+      [title]="getButtonTitle()"
     >
-      <fa-icon [icon]="isDarkMode() ? faSun : faMoon"></fa-icon>
+      <fa-icon [icon]="getIcon()"></fa-icon>
     </button>
   `,
   styles: [`
@@ -78,8 +78,24 @@ export class ThemeToggleComponent {
 
   faSun = faSun;
   faMoon = faMoon;
+  faDesktop = faDesktop;
 
+  themeMode = this.themeService.themeMode;
   isDarkMode = this.themeService.isDarkMode;
+
+  getIcon() {
+    const mode = this.themeMode();
+    if (mode === 'light') return this.faSun;
+    if (mode === 'dark') return this.faMoon;
+    return this.faDesktop;
+  }
+
+  getButtonTitle(): string {
+    const mode = this.themeMode();
+    if (mode === 'light') return 'Tema Claro (clique para mudar para tema escuro)';
+    if (mode === 'dark') return 'Tema Escuro (clique para mudar para tema do sistema)';
+    return 'Tema do Sistema (clique para mudar para tema claro)';
+  }
 
   toggleTheme(): void {
     this.themeService.toggleTheme();
