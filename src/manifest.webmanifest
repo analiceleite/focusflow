@@ -2,60 +2,60 @@
   "name": "FocusFlow - Timer Pomodoro",
   "short_name": "FocusFlow",
   "description": "Seu tempo, seu foco. Timer Pomodoro e cronômetro para produtividade.",
-  "theme_color": "#f5f5f7",
-  "background_color": "#0f0f14",
+  "theme_color": "#15171c",
+  "background_color": "#15171c",
   "display": "standalone",
   "orientation": "portrait",
   "scope": "./",
   "start_url": "./",
   "icons": [
     {
-      "src": "assets/icons/alarm_clock_3d.png",
+      "src": "assets/icons/focusflow-icon-72.png",
       "sizes": "72x72",
       "type": "image/png",
-      "purpose": "maskable any"
+      "purpose": "any maskable"
     },
     {
-      "src": "assets/icons/alarm_clock_3d.png",
+      "src": "assets/icons/focusflow-icon-96.png",
       "sizes": "96x96",
       "type": "image/png",
-      "purpose": "maskable any"
+      "purpose": "any maskable"
     },
     {
-      "src": "assets/icons/alarm_clock_3d.png",
+      "src": "assets/icons/focusflow-icon-128.png",
       "sizes": "128x128",
       "type": "image/png",
-      "purpose": "maskable any"
+      "purpose": "any maskable"
     },
     {
-      "src": "assets/icons/alarm_clock_3d.png",
+      "src": "assets/icons/focusflow-icon-144.png",
       "sizes": "144x144",
       "type": "image/png",
-      "purpose": "maskable any"
+      "purpose": "any maskable"
     },
     {
-      "src": "assets/icons/alarm_clock_3d.png",
+      "src": "assets/icons/focusflow-icon-152.png",
       "sizes": "152x152",
       "type": "image/png",
-      "purpose": "maskable any"
+      "purpose": "any maskable"
     },
     {
-      "src": "assets/icons/alarm_clock_3d.png",
+      "src": "assets/icons/focusflow-icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "maskable any"
+      "purpose": "any maskable"
     },
     {
-      "src": "assets/icons/alarm_clock_3d.png",
+      "src": "assets/icons/focusflow-icon-384.png",
       "sizes": "384x384",
       "type": "image/png",
-      "purpose": "maskable any"
+      "purpose": "any maskable"
     },
     {
-      "src": "assets/icons/alarm_clock_3d.png",
+      "src": "assets/icons/focusflow-icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "maskable any"
+      "purpose": "any maskable"
     }
   ],
   "categories": ["productivity", "utilities", "business"],
