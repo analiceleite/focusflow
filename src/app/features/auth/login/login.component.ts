@@ -1,30 +1,57 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../core/services/auth.service';
-import { ThemeToggleComponent } from '../../../shared/theme-toggle/theme-toggle.component';
-import { faClock } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { HeroStageComponent } from '../../../shared/hero-stage/hero-stage.component';
+import { DEFAULT_AVATAR, MONSTER_VARIANTS } from '../../../core/game/game-data';
+import { SCENARIOS } from '../../../core/game/scenarios';
+
+/** Intervalo da demonstração: cada "minuto" da vitrine dura 2,4 s. */
+const DEMO_TICK_MS = 2400;
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [FormsModule, CommonModule, FontAwesomeModule, ThemeToggleComponent],
+  imports: [FormsModule, CommonModule, HeroStageComponent],
   styleUrls: ['./login.component.scss'],
   templateUrl: './login.component.html',
 })
-
-export class LoginComponent {
+export class LoginComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
-
-  faClock = faClock;
 
   isRegister = signal(false);
   loading = signal(false);
   error = signal('');
+  showPassword = signal(false);
 
   email = '';
   password = '';
+
+  // ── Vitrine: o herói golpeando um slime em loop ──
+  readonly demoAvatar = DEFAULT_AVATAR;
+  readonly demoMonster = MONSTER_VARIANTS[0];
+  readonly demoScenario = SCENARIOS[0];
+  demoMinutes = signal(0);
+  demoBoss = signal(100);
+  private demoTimer?: ReturnType<typeof setInterval>;
+
+  ngOnInit(): void {
+    const reduced = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (reduced) return;
+    this.demoTimer = setInterval(() => {
+      this.demoMinutes.update(m => m + 1);
+      this.demoBoss.update(hp => (hp <= 12 ? 100 : hp - 12));
+    }, DEMO_TICK_MS);
+  }
+
+  ngOnDestroy(): void {
+    if (this.demoTimer) clearInterval(this.demoTimer);
+  }
+
+  setMode(register: boolean): void {
+    this.isRegister.set(register);
+    this.error.set('');
+  }
 
   async submit(): Promise<void> {
     this.loading.set(true);

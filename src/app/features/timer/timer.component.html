@@ -1,482 +1,428 @@
-<div class="app-shell">
+<div class="app-shell" [class.is-focusing]="isTimerRunning()" [attr.data-state]="timerSvc.state()">
     <app-navbar></app-navbar>
     <app-toast></app-toast>
 
-    <main class="main">
+    <main class="quest">
 
-        <!-- Header -->
-        <header class="header">
-            <h2>⏰ Timer</h2>
-            <div class="mode-toggle">
-                <button [class.active]="timerSvc.mode() === 'pomodoro'" (click)="setMode('pomodoro')">🍅
-                    Pomodoro</button>
-                <button [class.active]="timerSvc.mode() === 'stopwatch'" (click)="setMode('stopwatch')">⌚
-                    Cronômetro</button>
+        <!-- ══ HUD do herói: identidade e progressão ══ -->
+        <aside class="hud px-panel" aria-label="Progresso do herói">
+            <div class="hud-id">
+                <div class="lvl-badge" [attr.aria-label]="'Nível ' + levelInfo().level">
+                    <span class="lvl-tag">NV</span>
+                    <span class="lvl-num">{{ levelInfo().level }}</span>
+                </div>
+                <div class="hud-name">
+                    <span class="px-label">Herói</span>
+                    <strong>{{ heroName() }}</strong>
+                </div>
             </div>
-        </header>
 
-        <!-- ══ Linha inferior: Atividade + Presets (largura total) ══ -->
-        <div class="bottom-widgets">
+            <div class="hud-xp">
+                <div class="px-bar" role="progressbar" [attr.aria-valuenow]="levelInfo().progressPercent | number:'1.0-0'"
+                    aria-valuemin="0" aria-valuemax="100" aria-label="Experiência até o próximo nível">
+                    <div class="px-bar-fill" [style.width.%]="levelInfo().progressPercent"></div>
+                </div>
+                <div class="hud-xp-text">
+                    <span>{{ levelInfo().xp }} XP</span>
+                    <span>faltam {{ xpToNext() }}</span>
+                </div>
+            </div>
 
-            <!-- Atividade -->
-            <div class="activity-widget">
-                <div class="activity-bar" (click)="toggleActivityExpanded()">
-                    <div class="activity-bar-left">
-                        @if (selectedType()) {
-                        <span class="activity-badge-dot" [style.background]="selectedType()!.color"></span>
-                        <span class="activity-bar-icon">{{ selectedType()!.icon }}</span>
-                        <span class="activity-bar-name">{{ selectedType()!.name }}</span>
+            <div class="session-xp" [class.live]="sessionXp() > 0">
+                <span class="px-label">Nesta sessão</span>
+                <span class="session-xp-val">+{{ sessionXp() }} <small>XP</small></span>
+            </div>
+
+            <ul class="hud-stats">
+                <li [class.on]="streakInfo().current > 0">
+                    <span class="glyph glyph-fire" aria-hidden="true"></span>
+                    <span class="hs-label">Ofensiva</span>
+                    <span class="hs-val">{{ streakInfo().current }}d</span>
+                </li>
+                <li [class.on]="weeklyBoss().combo > 1">
+                    <span class="glyph glyph-bolt" aria-hidden="true"></span>
+                    <span class="hs-label">Combo</span>
+                    <span class="hs-val">×{{ weeklyBoss().combo }}</span>
+                </li>
+                <li [class.on]="weeklyBoss().shieldAvailable">
+                    <span class="glyph glyph-shield" aria-hidden="true"></span>
+                    <span class="hs-label">Escudo</span>
+                    <span class="hs-val">{{ weeklyBoss().shieldAvailable ? 'pronto' : 'usado' }}</span>
+                </li>
+            </ul>
+
+            <div class="hud-boss">
+                <div class="hud-boss-head">
+                    <span class="px-label">Chefe da semana</span>
+                    <span class="boss-name">{{ weeklyBoss().monster.name }}</span>
+                </div>
+                <div class="px-bar hp" role="progressbar" [attr.aria-valuenow]="weeklyBoss().hpLeft" aria-valuemin="0"
+                    [attr.aria-valuemax]="weeklyBoss().hpMax" aria-label="Vida do chefe">
+                    <div class="px-bar-fill" [style.width.%]="bossPercentLive()"></div>
+                </div>
+                <div class="hud-xp-text">
+                    <span>{{ weeklyBoss().defeated ? 'Derrotado!' : (bossPercentLive() * weeklyBoss().hpMax / 100 | number:'1.0-0') + ' HP' }}</span>
+                    <span>1 min = 1 dano</span>
+                </div>
+            </div>
+
+            <a routerLink="/dashboard" class="hud-link">
+                Jornada do herói <app-icon name="chevron" [size]="14"></app-icon>
+            </a>
+        </aside>
+
+        <!-- ══ Núcleo: cronômetro + palco + controles ══ -->
+        <section class="core" aria-label="Sessão de foco">
+            <div class="core-frame">
+                <header class="core-top">
+                    <span class="state-chip">
+                        <span class="state-dot" aria-hidden="true"></span>{{ stateLabel() }}
+                    </span>
+                    @if (selectedType()) {
+                    <button class="core-activity" type="button" (click)="scrollToSetup()"
+                        [style.--act]="selectedType()!.color" title="Trocar atividade">
+                        <app-activity-icon [icon]="selectedType()!.icon" [name]="selectedType()!.name" [color]="selectedType()!.color" [size]="18"></app-activity-icon>{{ selectedType()!.name }}
+                    </button>
+                    } @else {
+                    <button class="core-activity empty" type="button" (click)="scrollToSetup()">Escolha uma atividade</button>
+                    }
+                </header>
+
+                <div class="clock">
+                    <div class="timer-time" aria-live="off">{{ timerSvc.formattedTime() }}</div>
+                    <div class="clock-sub">
+                        @if (timerSvc.mode() === 'pomodoro') {
+                        Pomodoro · {{ currentMinutes() }} min
                         } @else {
-                        <span class="activity-bar-empty">Selecione uma atividade</span>
+                        Cronômetro livre
                         }
                     </div>
-                    <div class="activity-bar-right">
-                        <span class="activity-bar-label">Atividade</span>
-                        <span class="activity-expand-icon" [class.rotated]="activityExpanded()">⌄</span>
-                    </div>
                 </div>
-                @if (activityExpanded()) {
-                <div class="activity-chips-panel">
-                    <div class="activity-grid">
-                        @for (type of activityTypes(); track type.id) {
-                        <button class="activity-chip" [style.--color]="type.color"
-                            [class.selected]="selectedType()?.id === type.id"
-                            [class.disabled]="isTimerRunning() && selectedType()?.id !== type.id"
-                            (click)="selectActivityType(type)">
-                            <span>{{ type.icon }}</span>
-                            <span class="chip-name">{{ type.name }}</span>
-                            <span class="activity-delete"
-                                (click)="$event.stopPropagation(); deleteActivityType(type.id!)">×</span>
+
+                <app-hero-stage class="core-stage" [scenario]="scenario()" [avatar]="avatar()"
+                    [weapon]="equippedWeapon()" [monsterVariant]="weeklyBoss().monster"
+                    [bossPercent]="bossPercentLive()" [state]="stageState()" [elapsedMinutes]="elapsedMinutes()"
+                    [combo]="weeklyBoss().combo"></app-hero-stage>
+
+                <div class="seg-bar" aria-hidden="true">
+                    @for (on of progressSegments(); track $index) {
+                    <span class="seg" [class.on]="on"></span>
+                    }
+                </div>
+
+                <div class="controls">
+                    @if (timerSvc.state() === 'idle' || timerSvc.state() === 'finished') {
+                    <button class="px-btn px-btn--primary btn-main" (click)="startTimer()">
+                        @if (timerSvc.state() === 'finished') {
+                        <app-icon name="restart" [size]="18"></app-icon>Nova sessão
+                        } @else {
+                        <app-icon name="play" [size]="18"></app-icon>Iniciar foco
+                        }
+                    </button>
+                    } @else if (timerSvc.state() === 'running') {
+                    <button class="px-btn px-btn--gold btn-main" (click)="pauseTimer()">
+                        <app-icon name="pause" [size]="18"></app-icon>Pausar
+                    </button>
+                    } @else {
+                    <button class="px-btn px-btn--primary btn-main" (click)="resumeTimer()">
+                        <app-icon name="play" [size]="18"></app-icon>Continuar
+                    </button>
+                    }
+
+                    <div class="controls-aux">
+                        @if (isTimerRunning()) {
+                        <button class="px-btn btn-aux" (click)="stopAndSave()" title="Encerrar e salvar">
+                            <app-icon name="check" [size]="16"></app-icon><span>Salvar</span>
+                        </button>
+                        <button class="px-btn px-btn--ghost btn-aux" (click)="discardTimer()" title="Descartar sessão">
+                            <app-icon name="stop" [size]="16"></app-icon><span>Descartar</span>
                         </button>
                         }
-                        <button class="activity-chip add-chip" (click)="showAddType.set(true)">
-                            <span>＋</span><span class="chip-name">Novo</span>
+                        @if (pipSvc.isSupported) {
+                        <button class="px-btn px-btn--ghost btn-aux" [class.on]="pipSvc.active" (click)="togglePip()"
+                            [title]="pipSvc.active ? 'Fechar Picture-in-Picture' : 'Abrir Picture-in-Picture'">
+                            <app-icon name="pip" [size]="16"></app-icon><span>{{ pipSvc.active ? 'Fechar PiP' : 'PiP' }}</span>
                         </button>
+                        }
                     </div>
                 </div>
-                }
             </div>
 
-            <!-- Presets (só pomodoro) -->
-            @if (timerSvc.mode() === 'pomodoro') {
-            <div class="presets-widget">
-                <div class="presets-bar" (click)="togglePresetsExpanded()">
-                    <div class="presets-bar-left">
-                        <span class="presets-bar-icon">⏱</span>
-                        <span class="presets-bar-name">{{ currentMinutes() }} min</span>
-                    </div>
-                    <div class="activity-bar-right">
-                        <span class="activity-bar-label">Presets</span>
-                        <span class="activity-expand-icon" [class.rotated]="presetsExpanded()">⌄</span>
-                    </div>
-                </div>
-                @if (presetsExpanded()) {
-                <div class="activity-chips-panel">
-                    <div class="presets-row">
-                        @for (preset of presets(); track preset.id) {
-                        <button class="preset-chip" [class.active]="currentMinutes() === preset.minutes"
-                            (click)="applyPreset(preset.minutes)">
-                            {{ preset.label }}
-                            <span class="preset-delete"
-                                (click)="$event.stopPropagation(); deletePreset(preset.id!)">×</span>
-                        </button>
-                        }
-                        <button class="preset-chip preset-add" (click)="showAddPreset.set(true)">＋ Salvar
-                            preset</button>
-                    </div>
-                    <div class="custom-time">
-                        <input type="number" [(ngModel)]="customMinutes" placeholder="Minutos" min="1" max="480"
-                            (keyup.enter)="applyCustomTime()" />
-                        <button (click)="applyCustomTime()">Aplicar</button>
-                    </div>
-                </div>
-                }
+            @if (showSaveBanner()) {
+            <div class="save-banner" role="status">
+                <app-icon name="check" [size]="16"></app-icon>Sessão salva! {{ savedDuration() }} de {{ savedActivity() }}
             </div>
             }
-        </div>
+        </section>
 
-        <!-- ══ Linha superior: Timer | Spotify (mesma altura) ══ -->
-        <div class="top-row">
+        <!-- ══ Preparação: modo, atividade, duração, missão, música ══ -->
+        <aside class="setup" id="setup" aria-label="Configurar sessão">
 
-            <!-- Timer -->
-            <div class="timer-card">
-                <div class="timer-content-wrapper">
-                    <div class="timer-main-section">
-                        <div class="timer-ring-wrapper">
-                            <svg class="timer-ring" viewBox="0 0 240 240">
-                                <circle cx="120" cy="120" r="110" class="ring-bg" />
-                                @if (timerSvc.mode() === 'pomodoro') {
-                                <circle cx="120" cy="120" r="110" class="ring-progress"
-                                    [style.stroke]="selectedType()?.color || '#f26b3a'"
-                                    [style.stroke-dashoffset]="ringOffset()" />
-                                }
-                            </svg>
-                            <div class="timer-display">
-                                <div class="timer-time">{{ timerSvc.formattedTime() }}</div>
-                                @if (timerSvc.mode() === 'pomodoro') {
-                                <div class="timer-sub">
-                                    @if (timerSvc.state() === 'idle') { Pronto para começar }
-                                    @else if (timerSvc.state() === 'running') { Focando... }
-                                    @else if (timerSvc.state() === 'paused') { Pausado }
-                                    @else if (timerSvc.state() === 'finished') { ✅ Sessão concluída! }
-                                </div>
-                                }
-                            </div>
-                        </div>
+            <section class="panel px-panel">
+                <div class="mode-toggle" role="tablist" aria-label="Modo do timer">
+                    <button role="tab" [attr.aria-selected]="timerSvc.mode() === 'pomodoro'"
+                        [class.active]="timerSvc.mode() === 'pomodoro'" (click)="setMode('pomodoro')">
+                        <app-icon name="focus" [size]="14"></app-icon>Pomodoro</button>
+                    <button role="tab" [attr.aria-selected]="timerSvc.mode() === 'stopwatch'"
+                        [class.active]="timerSvc.mode() === 'stopwatch'" (click)="setMode('stopwatch')">
+                        <app-icon name="stopwatch" [size]="14"></app-icon>Cronômetro</button>
+                </div>
 
-                        <div class="controls">
-                            @if (timerSvc.state() === 'idle' || timerSvc.state() === 'finished') {
-                            <div class="control-row control-row-primary">
-                                <button class="btn-main" [style.background]="selectedType()?.color || '#f26b3a'"
-                                    (click)="startTimer()">
-                                    {{ timerSvc.state() === 'finished' ? '🔄 Nova sessão' : '▶ Iniciar' }}
-                                </button>
-                            </div>
-                            <div class="control-row control-row-secondary">
-                                <button *ngIf="pipSvc.isSupported" class="btn-pip btn-pip-large"
-                                    [class.pip-active]="pipSvc.active" (click)="togglePip()">
-                                    {{ pipSvc.active ? '✕ Fechar PiP' : '⧉ Picture-in-Picture' }}
-                                </button>
-                            </div>
-                            } @else if (timerSvc.state() === 'running') {
-                            <div class="control-row control-row-primary">
-                                <button class="btn-main btn-pause" (click)="pauseTimer()">⏸ Pausar</button>
-                            </div>
-                            <div class="control-row control-row-secondary">
-                                <div class="actions-menu-wrap">
-                                    <button class="btn-actions btn-actions-large" (click)="toggleActionsExpanded()">⋯
-                                        Ações</button>
-                                    @if (actionsExpanded()) {
-                                    <div class="actions-menu">
-                                        <button class="btn-secondary" (click)="stopAndSave()">✅ Salvar</button>
-                                        <button class="btn-tertiary" (click)="discardTimer()">🛑 Descartar</button>
-                                        <button *ngIf="pipSvc.isSupported" class="btn-pip" [class.pip-active]="pipSvc.active"
-                                            (click)="togglePip(); closeActionsExpanded()">
-                                            {{ pipSvc.active ? '✕ PiP' : '⧉ PiP' }}
-                                        </button>
-                                    </div>
-                                    }
-                                </div>
-                            </div>
-                            } @else if (timerSvc.state() === 'paused') {
-                            <div class="control-row control-row-primary">
-                                <button class="btn-main" [style.background]="selectedType()?.color || '#f26b3a'"
-                                    (click)="resumeTimer()">▶ Continuar</button>
-                            </div>
-                            <div class="control-row control-row-secondary">
-                                <div class="actions-menu-wrap">
-                                    <button class="btn-actions btn-actions-large" (click)="toggleActionsExpanded()">⋯
-                                        Ações</button>
-                                    @if (actionsExpanded()) {
-                                    <div class="actions-menu">
-                                        <button class="btn-secondary" (click)="stopAndSave()">✅ Salvar</button>
-                                        <button class="btn-tertiary" (click)="discardTimer()">🛑 Descartar</button>
-                                        <button *ngIf="pipSvc.isSupported" class="btn-pip" [class.pip-active]="pipSvc.active"
-                                            (click)="togglePip(); closeActionsExpanded()">
-                                            {{ pipSvc.active ? '✕ PiP' : '⧉ PiP' }}
-                                        </button>
-                                    </div>
-                                    }
-                                </div>
-                            </div>
-                            }
-                        </div>
-
-                        @if (showSaveBanner()) {
-                        <div class="save-banner">✅ Sessão salva! {{ savedDuration() }} de {{ savedActivity() }}</div>
-                        }
-                    </div>
-
-                    @if (dailyGoalMinutes()) {
-                    <div class="daily-goal-sidebar">
-                        <div class="daily-goal-sidebar-header">
-                            <span class="daily-goal-sidebar-title">🎯 Meta</span>
-                            <button class="btn-goal-settings-small" (click)="openGoalModal()">⚙️</button>
-                        </div>
-                        <div class="daily-goal-bar-vertical">
-                            <div class="daily-goal-bar-fill" [style.height.%]="dailyGoalProgress() > 100 ? 100 : dailyGoalProgress()">
-                                @for (segment of dailyGoalSegments(); track segment.activityTypeId) {
-                                <div class="daily-goal-segment-vertical"
-                                    [style.flex-basis.%]="segment.percentage"
-                                    [style.background]="segment.color"
-                                    [title]="segment.icon + ' ' + segment.name + ': ' + formatHours(segment.totalSeconds)">
-                                </div>
-                                }
-                            </div>
-                            @if (dailyGoalProgress() > 100) {
-                            <div class="daily-goal-bar-overflow" [style.height.%]="dailyGoalProgress() - 100">
-                                @for (segment of dailyGoalSegments(); track segment.activityTypeId) {
-                                <div class="daily-goal-segment-vertical"
-                                    [style.flex-basis.%]="segment.percentage"
-                                    [style.background]="segment.color"
-                                    [style.opacity]="0.6"
-                                    [title]="segment.icon + ' ' + segment.name + ': ' + formatHours(segment.totalSeconds)">
-                                </div>
-                                }
-                            </div>
-                            }
-                        </div>
-                        <div class="daily-goal-sidebar-stats">
-                            <div class="daily-goal-sidebar-percent" [class.goal-complete]="dailyGoalProgress() >= 100">
-                                {{ dailyGoalPercentRounded() }}%
-                            </div>
-                        <div class="daily-goal-sidebar-time">
-                            {{ formatHours(todayTotalSecondsWithCurrent()) }}
-                        </div>
-                            <div class="daily-goal-sidebar-target">
-                                / {{ formatHours(dailyGoalMinutes()! * 60) }}
-                            </div>
-                        </div>
-                    </div>
-                    } @else {
-                    <div class="daily-goal-sidebar daily-goal-sidebar-empty">
-                        <div class="daily-goal-sidebar-header">
-                            <span class="daily-goal-sidebar-title">🎯 Meta</span>
-                        </div>
-                        <div class="daily-goal-empty-vertical">
-                            <p>Defina uma meta diária</p>
-                            <button class="btn-goal-cta-small" (click)="openGoalModal()">Definir</button>
-                        </div>
+                <div class="panel-head">
+                    <h3 class="px-label">Atividade</h3>
+                    <button class="link-btn" (click)="showAddType.set(true)"><app-icon name="plus" [size]="12"></app-icon>Nova</button>
+                </div>
+                <div class="activity-grid">
+                    @for (type of activityTypes(); track type.id) {
+                    <div class="activity-tile" [style.--act]="type.color"
+                        [class.selected]="selectedType()?.id === type.id"
+                        [class.locked]="isTimerRunning() && selectedType()?.id !== type.id">
+                        <button class="tile-main" (click)="selectActivityType(type)" [title]="type.name"
+                            [attr.aria-pressed]="selectedType()?.id === type.id">
+                            <app-activity-icon class="tile-icon" [icon]="type.icon" [name]="type.name" [color]="type.color" [size]="20"></app-activity-icon>
+                            <span class="tile-name">{{ type.name }}</span>
+                        </button>
+                        <button class="tile-del" (click)="deleteActivityType(type.id!)"
+                            [attr.aria-label]="'Excluir ' + type.name"><app-icon name="close" [size]="10"></app-icon></button>
                     </div>
                     }
                 </div>
-            </div>
 
-            <div class="spotify-widget" [class.spotify-collapsed]="!spotifyExpanded()">
-                <button class="spotify-collapse-bar" type="button" (click)="toggleSpotifyExpanded()">
-                    <span class="spotify-collapse-left">
-                        <span class="spotify-logo-dot">●</span>
-                        <span class="spotify-collapse-title">Spotify</span>
-                    </span>
-                    <span class="activity-expand-icon" [class.rotated]="spotifyExpanded()">⌄</span>
+                @if (timerSvc.mode() === 'pomodoro') {
+                <div class="panel-head">
+                    <h3 class="px-label">Duração</h3>
+                    <button class="link-btn" (click)="presetMinutesInput = currentMinutes(); showAddPreset.set(true)">
+                        <app-icon name="plus" [size]="12"></app-icon>Salvar</button>
+                </div>
+                <div class="presets-row">
+                    @for (preset of presets(); track preset.id) {
+                    <div class="preset-chip" [class.active]="currentMinutes() === preset.minutes">
+                        <button class="preset-main" [disabled]="isTimerRunning()" (click)="applyPreset(preset.minutes)">{{ preset.label }}</button>
+                        <button class="preset-del" (click)="deletePreset(preset.id!)"
+                            [attr.aria-label]="'Excluir preset ' + preset.label"><app-icon name="close" [size]="10"></app-icon></button>
+                    </div>
+                    }
+                    <div class="custom-time">
+                        <input type="number" [(ngModel)]="customMinutes" aria-label="Minutos personalizados" min="1"
+                            max="480" [disabled]="isTimerRunning()" (keyup.enter)="applyCustomTime()" />
+                        <button [disabled]="isTimerRunning()" (click)="applyCustomTime()">OK</button>
+                    </div>
+                </div>
+                }
+            </section>
+
+            <!-- Missão diária (meta) -->
+            <section class="panel px-panel quest-card" [class.complete]="dailyGoalProgress() >= 100">
+                <div class="panel-head">
+                    <h3 class="px-label"><app-icon name="goal" [size]="12"></app-icon>Missão diária</h3>
+                    <button class="link-btn" (click)="openGoalModal()" [attr.aria-label]="dailyGoalMinutes() ? 'Editar meta' : 'Definir meta'">
+                        <app-icon name="settings" [size]="12"></app-icon>{{ dailyGoalMinutes() ? 'Editar' : 'Definir' }}</button>
+                </div>
+                @if (dailyGoalMinutes()) {
+                <p class="quest-title">Focar {{ dailyGoalFormatted() }} hoje</p>
+                <div class="quest-bar" role="progressbar" [attr.aria-valuenow]="dailyGoalPercentRounded()" aria-valuemin="0" aria-valuemax="100">
+                    @for (segment of dailyGoalSegments(); track segment.activityTypeId) {
+                    <span class="quest-seg" [style.flex-basis.%]="segment.percentage > 100 ? 100 : segment.percentage"
+                        [style.background]="segment.color"
+                        [title]="segment.name + ': ' + formatHours(segment.totalSeconds)"></span>
+                    }
+                </div>
+                <div class="quest-foot">
+                    <span>{{ formatHours(todayTotalSecondsWithCurrent()) }} / {{ formatHours(dailyGoalMinutes()! * 60) }}</span>
+                    <strong>@if (dailyGoalProgress() >= 100) { <app-pixel-icon name="star" [size]="14"></app-pixel-icon>Completa } @else { {{ dailyGoalPercentRounded() }}% }</strong>
+                </div>
+                } @else {
+                <p class="quest-empty">Defina quanto quer focar por dia e acompanhe como uma missão.</p>
+                }
+            </section>
+
+            <!-- Spotify -->
+            <section class="panel px-panel spotify" [class.open]="spotifyExpanded()">
+                <button class="spotify-head" type="button" (click)="toggleSpotifyExpanded()"
+                    [attr.aria-expanded]="spotifyExpanded()">
+                    <span class="sp-dot" aria-hidden="true"></span>
+                    <span class="px-label">Trilha sonora</span>
+                    @if (spotifySvc.currentTrack()) {
+                    <span class="sp-mini">{{ spotifySvc.currentTrack()!.name }}</span>
+                    }
+                    <span class="chev" [class.rotated]="spotifyExpanded()"><app-icon name="chevron" [size]="14"></app-icon></span>
                 </button>
 
-                <div class="spotify-content">
-
-                    @if (!spotifySvc.isConfigured()) {
-                    <div class="spotify-connect-block">
-                        <div class="spotify-connect-top">
-                            <span class="spotify-logo-dot">●</span>
-                            <span class="spotify-connect-title">Spotify</span>
-                        </div>
-                        <p class="spotify-connect-copy">Client ID do Spotify não configurado neste ambiente.</p>
-                        <button class="btn-spotify" type="button" (click)="connectSpotify()">Conectar</button>
-                    </div>
-
+                @if (spotifyExpanded()) {
+                <div class="spotify-body">
+                    @if (!spotifySvc.isConfigured() || !spotifySvc.isConnected()) {
+                    <p class="sp-copy">{{ spotifySvc.isConfigured() ? 'Conecte para tocar playlists enquanto foca.' : 'Client ID do Spotify não configurado neste ambiente.' }}</p>
+                    <button class="px-btn btn-spotify" type="button" (click)="connectSpotify()">Conectar Spotify</button>
                     } @else {
-
-                    @if (!spotifySvc.isConnected()) {
-                    <div class="spotify-connect-block">
-                        <div class="spotify-connect-top">
-                            <span class="spotify-logo-dot">●</span>
-                            <span class="spotify-connect-title">Conecte-se</span>
-                        </div>
-                        <p class="spotify-connect-copy">Conecte para tocar playlists enquanto foca.</p>
-                        <button class="btn-spotify" type="button" (click)="connectSpotify()">Conectar</button>
-                    </div>
-
-                    } @else {
-                    <!-- Now Playing -->
-                    <div class="spotify-np-block">
-                        <div class="spotify-np-art"
-                            [class.spotify-np-art--fallback]="!spotifySvc.currentTrack()?.imageUrl">
+                    <div class="np">
+                        <div class="np-art">
                             @if (spotifySvc.currentTrack()?.imageUrl) {
                             <img [src]="spotifySvc.currentTrack()!.imageUrl!" [alt]="spotifySvc.currentTrack()!.name" />
-                            } @else { <span>♫</span> }
+                            } @else { <app-icon name="music" [size]="18"></app-icon> }
                         </div>
-                        <div class="spotify-np-meta">
+                        <div class="np-meta">
                             @if (spotifySvc.currentTrack()) {
-                            <div class="spotify-np-track">{{ spotifySvc.currentTrack()!.name }}</div>
-                            <div class="spotify-np-artist">{{ spotifySvc.currentTrack()!.artistNames }}</div>
+                            <span class="np-track">{{ spotifySvc.currentTrack()!.name }}</span>
+                            <span class="np-artist">{{ spotifySvc.currentTrack()!.artistNames }}</span>
                             } @else {
-                            <div class="spotify-np-track">{{ spotifySvc.profile()?.displayName || 'Spotify' }}</div>
-                            <div class="spotify-np-artist">{{ spotifyStatusText() }}</div>
+                            <span class="np-track">{{ spotifySvc.profile()?.displayName || 'Spotify' }}</span>
+                            <span class="np-artist">{{ spotifyStatusText() }}</span>
                             }
                         </div>
                         @if (spotifySvc.playerReady()) {
-                        <div class="spotify-np-controls">
-                            <button class="sp-ctrl" (click)="previousSpotifyTrack()">⏮</button>
-                            <button class="sp-ctrl sp-ctrl--main" (click)="toggleSpotifyPlayback()">
-                                {{ spotifySvc.isPlaying() ? '⏸' : '▶' }}
+                        <div class="np-ctrl">
+                            <button (click)="previousSpotifyTrack()" aria-label="Faixa anterior"><app-icon name="skipPrev" [size]="14"></app-icon></button>
+                            <button class="main" (click)="toggleSpotifyPlayback()" [attr.aria-label]="spotifySvc.isPlaying() ? 'Pausar música' : 'Tocar música'">
+                                @if (spotifySvc.isPlaying()) { <app-icon name="pause" [size]="14"></app-icon> } @else { <app-icon name="play" [size]="14"></app-icon> }
                             </button>
-                            <button class="sp-ctrl" (click)="nextSpotifyTrack()">⏭</button>
+                            <button (click)="nextSpotifyTrack()" aria-label="Próxima faixa"><app-icon name="skipNext" [size]="14"></app-icon></button>
                         </div>
                         }
                     </div>
 
-                    @if (spotifySvc.playerMessage()) {
-                    <div class="spotify-msg-info">{{ spotifySvc.playerMessage() }}</div>
-                    }
-                    @if (spotifySvc.error()) {
-                    <div class="spotify-msg-error">{{ spotifySvc.error() }}</div>
-                    }
+                    @if (spotifySvc.playerMessage()) { <div class="sp-msg">{{ spotifySvc.playerMessage() }}</div> }
+                    @if (spotifySvc.error()) { <div class="sp-msg error">{{ spotifySvc.error() }}</div> }
 
-                    <div class="spotify-pl-header">
-                        <span class="spotify-pl-title">Playlists</span>
-                        <div class="spotify-pl-actions">
-                            <button class="sp-link" (click)="refreshSpotifyLibrary()">↻</button>
-                            <button class="sp-link sp-link--muted" (click)="disconnectSpotify()">Desconectar</button>
+                    <div class="panel-head">
+                        <h4 class="px-label">Playlists</h4>
+                        <div class="sp-actions">
+                            <button class="link-btn" (click)="refreshSpotifyLibrary()" aria-label="Atualizar playlists">↻</button>
+                            <button class="link-btn muted" (click)="disconnectSpotify()">Desconectar</button>
                         </div>
                     </div>
 
                     @if (spotifySvc.loading()) {
-                    <div class="spotify-pl-empty">Carregando...</div>
+                    <p class="sp-copy">Carregando...</p>
                     } @else if (spotifyPlaylists().length === 0) {
-                    <div class="spotify-pl-empty">Nenhuma playlist encontrada.</div>
+                    <p class="sp-copy">Nenhuma playlist encontrada.</p>
                     } @else {
-                    <div class="spotify-pl-list">
+                    <div class="pl-list">
                         @for (pl of spotifyPlaylists(); track pl.id) {
-                        <button class="spotify-pl-row"
-                            [class.spotify-pl-row--active]="spotifySvc.activePlaylistId() === pl.id"
+                        <button class="pl-row" [class.active]="spotifySvc.activePlaylistId() === pl.id"
                             (click)="playSpotifyPlaylist(pl)">
-                            <div class="pl-thumb" [class.pl-thumb--fallback]="!pl.imageUrl">
+                            <span class="pl-thumb">
                                 @if (pl.imageUrl) { <img [src]="pl.imageUrl" [alt]="pl.name" /> }
-                                @else { <span>♫</span> }
-                            </div>
-                            <div class="pl-info">
+                                @else { <app-icon name="music" [size]="14"></app-icon> }
+                            </span>
+                            <span class="pl-info">
                                 <span class="pl-name">{{ pl.name }}</span>
                                 <span class="pl-meta">{{ pl.totalTracks }} faixas</span>
-                            </div>
-                            <span class="pl-play-icon">▶</span>
+                            </span>
+                            <app-icon name="play" [size]="10"></app-icon>
                         </button>
                         }
                     </div>
                     }
-
-                    <p class="spotify-footnote">Sem Premium, abre no Spotify.</p>
+                    <p class="sp-foot">Sem Premium, abre no Spotify.</p>
                     }
+                </div>
+                }
+            </section>
+        </aside>
+
+        <!-- ══ Registro (estatísticas) ══ -->
+        <section class="log" aria-label="Estatísticas de foco">
+            <div class="log-card px-panel">
+                <span class="px-label"><app-icon name="sun" [size]="12"></app-icon>Hoje</span>
+                <div class="stat-value">{{ formatHours(todayTotalSeconds()) }}</div>
+                <div class="stat-sub">{{ todayTotalSeconds() === 0 ? 'Nenhuma sessão ainda' : 'acumulado hoje' }}</div>
+            </div>
+            <div class="log-card px-panel">
+                <span class="px-label"><app-icon name="calendar" [size]="12"></app-icon>7 dias</span>
+                <div class="stat-value">{{ formatHours(last7TotalSeconds()) }}</div>
+                <div class="stat-sub">média {{ formatHours(avgDailyLast7Seconds()) }}/dia</div>
+                <div class="spark">
+                    @for (bar of dailySparkline(); track bar.date) {
+                    <div class="spark-col" [class.now]="bar.date === getLocalDateString()">
+                        <div class="spark-bar" [style.height.%]="bar.percent || 6"
+                            [title]="bar.label + ': ' + formatHours(bar.seconds)"></div>
+                        <span>{{ bar.label.charAt(0) }}</span>
+                    </div>
                     }
                 </div>
             </div>
-        </div>
-
-        <!-- ══ Estatísticas ══ -->
-        <div class="stats-panel">
-            <div class="section-label">📊 Estatísticas de foco</div>
-            <div class="stats-grid">
-
-                <!-- Hoje -->
-                <div class="stat-stack">
-                    <div class="stat-card stat-card-avg">
-                        <div class="stat-card-top">
-                            <span class="stat-label">Hoje</span>
-                            <span class="stat-icon">☀️</span>
-                        </div>
-                        <div class="stat-value">{{ formatHours(todayTotalSeconds()) }}</div>
-                        <div class="stat-sub">{{ todayTotalSeconds() === 0 ? 'Nenhuma sessão ainda' : 'acumulado hoje' }}</div>
+            <div class="log-card px-panel">
+                <span class="px-label"><app-icon name="calendar" [size]="12"></app-icon>30 dias</span>
+                <div class="stat-value">{{ formatHours(last30TotalSeconds()) }}</div>
+                <div class="stat-sub">média {{ formatHours(avgWeeklyLast4Seconds()) }}/semana</div>
+                <div class="spark">
+                    @for (bar of weeklySparkline(); track bar.label) {
+                    <div class="spark-col" [class.now]="bar.isCurrent">
+                        <div class="spark-bar" [style.height.%]="bar.percent || 6"
+                            [title]="bar.label + ': ' + formatHours(bar.seconds)"></div>
+                        <span>{{ bar.label }}</span>
                     </div>
+                    }
                 </div>
-
-                <!-- Últimos 7 dias: barras por dia -->
-                <div class="stat-stack">
-                    <div class="stat-card">
-                        <div class="stat-card-top">
-                            <span class="stat-label">Últimos 7 dias</span>
-                            <span class="stat-icon">📅</span>
-                        </div>
-                        <div class="stat-value">{{ formatHours(last7TotalSeconds()) }}</div>
-                        <div class="stat-sub">média de {{ formatHours(avgDailyLast7Seconds()) }} por dia</div>
-                        <div class="stat-sparkline">
-                            @for (bar of dailySparkline(); track bar.date) {
-                            <div class="spark-col" [class.today]="bar.date === getLocalDateString()">
-                                <div class="spark-bar" [style.height.%]="bar.percent || 4"
-                                    [title]="bar.label + ': ' + formatHours(bar.seconds)"></div>
-                                <span class="spark-label">{{ bar.label }}</span>
-                            </div>
-                            }
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Últimos 30 dias: barras por semana -->
-                <div class="stat-stack">
-                    <div class="stat-card">
-                        <div class="stat-card-top">
-                            <span class="stat-label">Últimos 30 dias</span>
-                            <span class="stat-icon">📅</span>
-                        </div>
-                        <div class="stat-value">{{ formatHours(last30TotalSeconds()) }}</div>
-                        <div class="stat-sub">média de {{ formatHours(avgWeeklyLast4Seconds()) }} por semana</div>
-                        <div class="stat-sparkline">
-                            @for (bar of weeklySparkline(); track bar.label) {
-                            <div class="spark-col" [class.current]="bar.isCurrent">
-                                <div class="spark-bar" [style.height.%]="bar.percent || 4"
-                                    [title]="bar.label + ': ' + formatHours(bar.seconds)"></div>
-                                <span class="spark-label">{{ bar.label }}</span>
-                            </div>
-                            }
-                        </div>
-                    </div>
-                </div>
-
             </div>
-        </div>
-
+        </section>
     </main>
 </div>
 
-<!-- Modal: Add Activity Type -->
+<!-- Modal: Nova atividade -->
 @if (showAddType()) {
 <div class="modal-overlay" (click)="showAddType.set(false)">
-    <div class="modal" (click)="$event.stopPropagation()">
-        <h3>Novo tipo de atividade</h3>
-        <div class="modal-field"><label>Nome</label><input [(ngModel)]="newTypeName" placeholder="Ex.: Idiomas" /></div>
-        <div class="modal-field"><label>Ícone (emoji)</label><input [(ngModel)]="newTypeIcon" placeholder="Ex.: 🌍"
-                maxlength="2" /></div>
-        <div class="modal-field"><label>Cor</label><input type="color" [(ngModel)]="newTypeColor" /></div>
+    <div class="modal px-panel" role="dialog" aria-modal="true" aria-labelledby="m-type" (click)="$event.stopPropagation()">
+        <h3 id="m-type">Nova atividade</h3>
+        <div class="modal-row">
+            <div class="modal-field"><label for="nt-name">Nome</label><input id="nt-name" [(ngModel)]="newTypeName" placeholder="Ex.: Idiomas" /></div>
+            <div class="modal-field color-field"><label for="nt-color">Cor</label><input id="nt-color" type="color" [(ngModel)]="newTypeColor" /></div>
+        </div>
+        <div class="modal-field">
+            <span class="field-label" id="nt-icon-label">Ícone</span>
+            <div class="icon-picker" role="radiogroup" aria-labelledby="nt-icon-label">
+                @for (ic of activityIconChoices; track ic) {
+                <button type="button" class="icon-choice" role="radio" [attr.aria-checked]="newTypeIcon === 'px:' + ic"
+                    [attr.aria-label]="ic" [class.active]="newTypeIcon === 'px:' + ic" [style.--act]="newTypeColor"
+                    (click)="newTypeIcon = 'px:' + ic"><app-pixel-icon [name]="ic" [size]="24"></app-pixel-icon></button>
+                }
+            </div>
+        </div>
         <div class="modal-actions">
-            <button class="btn-cancel" (click)="showAddType.set(false)">Cancelar</button>
-            <button class="btn-confirm" (click)="addActivityType()">Salvar</button>
+            <button class="px-btn px-btn--ghost" (click)="showAddType.set(false)">Cancelar</button>
+            <button class="px-btn px-btn--primary" (click)="addActivityType()">Salvar</button>
         </div>
     </div>
 </div>
 }
 
-<!-- Modal: Add Preset -->
+<!-- Modal: Salvar preset -->
 @if (showAddPreset()) {
 <div class="modal-overlay" (click)="showAddPreset.set(false)">
-    <div class="modal" (click)="$event.stopPropagation()">
-        <h3>Salvar preset</h3>
-        <div class="modal-field"><label>Minutos atuais</label><input type="number" [(ngModel)]="presetMinutesInput"
-                min="1" max="480" /></div>
-        <div class="modal-field"><label>Label (ex.: "25 min")</label><input [(ngModel)]="presetLabel"
-                placeholder="25 min" /></div>
+    <div class="modal px-panel" role="dialog" aria-modal="true" aria-labelledby="m-preset" (click)="$event.stopPropagation()">
+        <h3 id="m-preset">Salvar preset</h3>
+        <div class="modal-row">
+            <div class="modal-field"><label for="pr-min">Minutos</label><input id="pr-min" type="number" [(ngModel)]="presetMinutesInput" min="1" max="480" /></div>
+            <div class="modal-field"><label for="pr-label">Nome</label><input id="pr-label" [(ngModel)]="presetLabel" placeholder="25 min" /></div>
+        </div>
         <div class="modal-actions">
-            <button class="btn-cancel" (click)="showAddPreset.set(false)">Cancelar</button>
-            <button class="btn-confirm" (click)="addPreset()">Salvar</button>
+            <button class="px-btn px-btn--ghost" (click)="showAddPreset.set(false)">Cancelar</button>
+            <button class="px-btn px-btn--primary" (click)="addPreset()">Salvar</button>
         </div>
     </div>
 </div>
 }
 
-<!-- Modal: Daily Goal -->
+<!-- Modal: Missão diária -->
 @if (showGoalModal()) {
 <div class="modal-overlay" (click)="showGoalModal.set(false)">
-    <div class="modal" (click)="$event.stopPropagation()">
-        <h3>🎯 Meta diária de foco</h3>
-        <p class="modal-description">Defina quantas horas por dia você deseja dedicar ao foco.</p>
-        <div class="goal-input-row">
-            <div class="modal-field goal-field">
-                <label>Horas</label>
-                <input type="number" [(ngModel)]="goalInputHours" min="0" max="23" />
-            </div>
-            <span class="goal-separator">:</span>
-            <div class="modal-field goal-field">
-                <label>Minutos</label>
-                <input type="number" [(ngModel)]="goalInputMinutes" min="0" max="59" step="15" />
-            </div>
+    <div class="modal px-panel" role="dialog" aria-modal="true" aria-labelledby="m-goal" (click)="$event.stopPropagation()">
+        <h3 id="m-goal">Missão diária</h3>
+        <p class="modal-description">Quanto tempo de foco você quer cumprir por dia?</p>
+        <div class="modal-row goal-row">
+            <div class="modal-field"><label for="g-h">Horas</label><input id="g-h" type="number" [(ngModel)]="goalInputHours" min="0" max="23" /></div>
+            <span class="goal-sep">:</span>
+            <div class="modal-field"><label for="g-m">Minutos</label><input id="g-m" type="number" [(ngModel)]="goalInputMinutes" min="0" max="59" step="15" /></div>
         </div>
         <div class="goal-presets">
-            <button class="goal-preset-chip" (click)="goalInputHours = 1; goalInputMinutes = 0">1h</button>
-            <button class="goal-preset-chip" (click)="goalInputHours = 2; goalInputMinutes = 0">2h</button>
-            <button class="goal-preset-chip" (click)="goalInputHours = 3; goalInputMinutes = 0">3h</button>
-            <button class="goal-preset-chip" (click)="goalInputHours = 4; goalInputMinutes = 0">4h</button>
-            <button class="goal-preset-chip" (click)="goalInputHours = 6; goalInputMinutes = 0">6h</button>
-            <button class="goal-preset-chip" (click)="goalInputHours = 8; goalInputMinutes = 0">8h</button>
+            @for (h of [1, 2, 3, 4, 6, 8]; track h) {
+            <button class="goal-chip" [class.active]="goalInputHours === h && goalInputMinutes === 0"
+                (click)="goalInputHours = h; goalInputMinutes = 0">{{ h }}h</button>
+            }
         </div>
         <div class="modal-actions">
-            <button class="btn-cancel" (click)="showGoalModal.set(false)">Cancelar</button>
-            <button class="btn-confirm" (click)="saveDailyGoal()">Salvar</button>
+            <button class="px-btn px-btn--ghost" (click)="showGoalModal.set(false)">Cancelar</button>
+            <button class="px-btn px-btn--primary" (click)="saveDailyGoal()">Salvar</button>
         </div>
     </div>
 </div>

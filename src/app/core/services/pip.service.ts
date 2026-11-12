@@ -1,8 +1,53 @@
 import { Injectable, inject } from '@angular/core';
+import { drawPixelIcon, resolveActivityIcon } from '../game/pixel-icons';
+import { AvatarConfig, DEFAULT_AVATAR, MONSTER_VARIANTS, MonsterVariant, Weapon } from '../game/game-data';
+import { HeroPose, Sprite, buildHeroSprite, buildMonsterSprite } from '../game/sprites';
+import { SCENARIOS, Scenario, buildScenarioDecor } from '../game/scenarios';
 import { TimerService } from './timer.service';
 import { ThemeService } from './theme.service';
 import { DeviceService } from './device.service';
 
+/** Dados do jogo que a janela PiP mostra (enviados pela tela do Timer). */
+export interface PipScene {
+  avatar: AvatarConfig | null;
+  weapon: Weapon | null;
+  monster: MonsterVariant;
+  /** HP restante do chefe, 0..100. */
+  bossPercent: number;
+  combo: number;
+  scenario: Scenario;
+  /** Ícone salvo da atividade ("px:book", emoji antigo, ...). */
+  activityIcon: string;
+}
+
+interface Float {
+  text: string;
+  color: string;
+  born: number;
+}
+
+/** Tamanho base (px CSS). O canvas é renderizado em 2× ou mais. */
+const W = 280;
+const H = 148;
+/** Unidade dos sprites no palco (1 pixel do sprite = 3 px CSS). */
+const U = 3;
+const FPS = 30;
+const STEP_MS = 380;
+const HIT_MS = 420;
+const FLOAT_MS = 1200;
+
+const STATE_STYLE: Record<string, { label: string; color: string }> = {
+  idle: { label: 'PRONTO', color: '#8a8780' },
+  running: { label: 'EM FOCO', color: '#f26b3a' },
+  paused: { label: 'PAUSADO', color: '#f5b841' },
+  finished: { label: 'CONCLUÍDO', color: '#5fa889' },
+};
+
+/**
+ * Janela Picture-in-Picture em linguagem pixel:
+ * quadro na cor do estado · relógio em Pixelify · barra de 24 segmentos ·
+ * faixa de palco com o herói andando e golpeando o chefe a cada minuto.
+ */
 @Injectable({ providedIn: 'root' })
 export class PipService {
   private timerSvc = inject(TimerService);
@@ -17,86 +62,87 @@ export class PipService {
   private stream: MediaStream | null = null;
   private animFrameId: number | null = null;
   private isActive = false;
-  private activityLabel: string = '';
-  private activityColor: string = '#F26B3A';
+  private lastDraw = 0;
 
-  // Tick animation state
-  private tickAlpha = 0;
-  private tickDir = 1;
-  private lastTickTime = 0;
+  private activityLabel = '';
+  private activityColor = '#F26B3A';
 
-  // Pulse ring animation
-  private pulseRadius = 0;
-  private pulseAlpha = 0;
-  private lastPulseTime = 0;
-  private pulseTriggered = false;
+  // ── Cena ──
+  private scene: PipScene = {
+    avatar: DEFAULT_AVATAR,
+    weapon: null,
+    monster: MONSTER_VARIANTS[0],
+    bossPercent: 100,
+    combo: 1,
+    scenario: SCENARIOS[0],
+    activityIcon: '',
+  };
+  private heroSprites: Record<HeroPose, Sprite> | null = null;
+  private monsterSprite: Sprite | null = null;
+  private decorSprite: Sprite | null = null;
 
-  // Canvas base size — widescreen compact PiP
-  private readonly W = 280;
-  private readonly H = 148;
-
-  private getCssVar(name: string, fallback: string): string {
-    if (globalThis.window === undefined || globalThis.document === undefined) return fallback;
-    const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-    return value || fallback;
-  }
-
-  private getThemeColors() {
-    const isDark = this.themeService.isDarkMode();
-    return {
-      // Pull colors from global theme vars so PiP always mirrors app theme.
-      background: this.getCssVar('--bg-primary', isDark ? '#1c1c1e' : '#f5f5f7'),
-      surface: this.getCssVar('--bg-card', isDark ? '#1f1f21' : '#ffffff'),
-      border: this.getCssVar('--border-color', isDark ? '#3a3a3c' : '#d2d2d7'),
-      textPrimary: this.getCssVar('--text-primary', isDark ? '#f5f5f7' : '#1d1d1f'),
-      textSecondary: this.getCssVar('--text-secondary', isDark ? '#d1d1d6' : '#3a3a3c'),
-      textMuted: this.getCssVar('--text-muted', isDark ? '#8e8e93' : '#6e6e73'),
-      progressTrack: this.getCssVar('--bg-secondary', isDark ? '#232325' : '#ffffff'),
-      glow: isDark,
-    };
-  }
-
-  async toggle(activityColor: string = '#F26B3A',activityLabel: string = ''): Promise<void> {
-    if (!this.isSupported) return;
-    if (this.isActive) await this.stop();
-    else await this.start(activityColor, activityLabel);
-  }
+  // ── Animação ──
+  private lastMinute = -1;
+  private hitUntil = 0;
+  private floats: Float[] = [];
+  private lastState = 'idle';
+  private walkOffset = 0;
 
   get active(): boolean { return this.isActive; }
 
   get isSupported(): boolean { return this.deviceService.isPictureInPictureSupported(); }
 
+  async toggle(activityColor: string = '#F26B3A', activityLabel: string = ''): Promise<void> {
+    if (!this.isSupported) return;
+    if (this.isActive) await this.stop();
+    else await this.start(activityColor, activityLabel);
+  }
+
+  /** Atualiza herói, chefe, cenário e ícone da atividade. Barato: só refaz sprites que mudaram. */
+  setScene(next: PipScene): void {
+    const prev = this.scene;
+    this.scene = next;
+    if (!this.heroSprites || prev.avatar !== next.avatar || prev.weapon !== next.weapon) this.buildHeroSprites();
+    if (!this.monsterSprite || prev.monster !== next.monster) this.monsterSprite = buildMonsterSprite(next.monster);
+    if (!this.decorSprite || prev.scenario !== next.scenario) this.decorSprite = buildScenarioDecor(next.scenario);
+  }
+
+  updateActivity(activityColor?: string, activityLabel?: string): void {
+    if (typeof activityColor === 'string') this.activityColor = activityColor;
+    if (typeof activityLabel === 'string') this.activityLabel = activityLabel;
+    try { this.draw(performance.now()); } catch { }
+  }
+
   async start(activityColor: string, activityLabel: string = ''): Promise<void> {
     if (!this.isSupported || !document.pictureInPictureEnabled) return;
 
     this.canvas = document.createElement('canvas');
-    const DPR = Math.max(2, window.devicePixelRatio || 2);
-    this.canvas.width = Math.round(this.W * DPR);
-    this.canvas.height = Math.round(this.H * DPR);
-    this.canvas.style.width = `${this.W}px`;
-    this.canvas.style.height = `${this.H}px`;
+    const DPR = Math.max(2, Math.round(window.devicePixelRatio || 2));
+    this.canvas.width = W * DPR;
+    this.canvas.height = H * DPR;
     this.ctx = this.canvas.getContext('2d')!;
     this.ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-    (this.ctx as any).imageSmoothingEnabled = true;
-    try { (this.ctx as any).imageSmoothingQuality = 'high'; } catch { }
+    this.ctx.imageSmoothingEnabled = false;
 
     this.activityLabel = activityLabel || '';
     this.activityColor = activityColor || this.activityColor;
-    this.tickAlpha = 0;
-    this.tickDir = 1;
-    this.pulseRadius = 0;
-    this.pulseAlpha = 0;
+    this.lastMinute = Math.floor(this.timerSvc.elapsedSeconds() / 60);
+    this.lastState = this.timerSvc.state();
+    this.floats = [];
+    if (!this.heroSprites) this.setScene(this.scene);
 
-    try { this.draw(this.activityColor, performance.now()); } catch { }
+    // As fontes pixel precisam estar carregadas antes do 1º quadro do vídeo
+    await this.loadFonts();
+    try { this.draw(performance.now()); } catch { }
 
-    this.stream = this.canvas.captureStream(60);
+    this.stream = this.canvas.captureStream(FPS);
     this.videoEl = document.createElement('video');
     this.videoEl.srcObject = this.stream;
     this.videoEl.muted = true;
     this.videoEl.playsInline = true;
     this.videoEl.setAttribute('playsinline', '');
-    this.videoEl.width = this.W;
-    this.videoEl.height = this.H;
+    this.videoEl.width = W;
+    this.videoEl.height = H;
     this.videoEl.style.position = 'fixed';
     this.videoEl.style.left = '-9999px';
     this.videoEl.style.width = '1px';
@@ -125,320 +171,315 @@ export class PipService {
     this.cleanup();
   }
 
+  // ─── Loop ─────────────────────────────────────────────────────────────────
+
   private renderLoop(): void {
     if (!this.isActive) return;
-    this.draw(this.activityColor, performance.now());
+    const now = performance.now();
+    if (now - this.lastDraw >= 1000 / FPS - 2) {
+      this.lastDraw = now;
+      this.draw(now);
+    }
     this.animFrameId = requestAnimationFrame(() => this.renderLoop());
   }
 
-  private draw(color: string, now: number): void {
+  private draw(now: number): void {
     if (!this.ctx) return;
     const ctx = this.ctx;
-    const mode = this.timerSvc.mode();
-    const time = this.timerSvc.formattedTime();
-    const progress = this.timerSvc.progress();
     const state = this.timerSvc.state();
-    const theme = this.getThemeColors();
+    const st = STATE_STYLE[state] ?? STATE_STYLE['idle'];
+    const t = this.themeColors();
 
-    // ── Background ────────────────────────────────────────────────
-    ctx.fillStyle = theme.background;
-    ctx.fillRect(0, 0, this.W, this.H);
+    this.trackEvents(state, now);
 
-    // Subtle radial glow behind the main area (dark mode only)
-    if (theme.glow) {
-      const grd = ctx.createRadialGradient(this.W * 0.35, this.H * 0.5, 0, this.W * 0.35, this.H * 0.5, 110);
-      grd.addColorStop(0, this.hexToRgba(color, 0.07));
-      grd.addColorStop(1, 'transparent');
-      ctx.fillStyle = grd;
-      ctx.fillRect(0, 0, this.W, this.H);
-    }
+    // Fundo + quadro na cor do estado
+    ctx.fillStyle = t.bg;
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = st.color;
+    ctx.fillRect(0, 0, W, 3);
+    ctx.fillRect(0, H - 3, W, 3);
+    ctx.fillRect(0, 0, 3, H);
+    ctx.fillRect(W - 3, 0, 3, H);
 
-    // ── Layout: left panel (arc) + right panel (info) ─────────────
-    const arcCX = 60;
-    const arcCY = this.H / 2;
-    const arcR = 38;
+    this.drawHeader(ctx, st, state, now, t);
+    this.drawClock(ctx, st, t);
+    this.drawSegments(ctx, st, t);
+    this.drawStage(ctx, state, now);
+  }
 
-    if (mode === 'pomodoro') {
-      this.drawArc(ctx, arcCX, arcCY, arcR, progress, state, color, theme, now);
+  // ─── Partes ───────────────────────────────────────────────────────────────
+
+  private drawHeader(ctx: CanvasRenderingContext2D, st: { label: string; color: string }, state: string, now: number, t: ThemeColors): void {
+    // Chip de estado: quadrado (pisca em foco) + rótulo
+    const blinkOff = state === 'running' && Math.floor(now / 500) % 2 === 1;
+    ctx.fillStyle = st.color;
+    if (!blinkOff) ctx.fillRect(10, 11, 6, 6);
+    ctx.font = '8px Silkscreen, monospace';
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'left';
+    ctx.fillText(st.label, 20, 14);
+
+    // Modo (pomodoro / cronômetro) logo após o estado
+    const modeX = 20 + Math.ceil(ctx.measureText(st.label).width) + 8;
+    drawPixelIcon(ctx, this.timerSvc.mode() === 'pomodoro' ? 'tomato' : 'clock', modeX + 6, 14, 12);
+
+    // Atividade à direita: ícone pixel (ou inicial) + nome
+    const label = this.activityLabel.trim();
+    if (!label) return;
+    ctx.font = '600 11px "Pixelify Sans", sans-serif';
+    const maxW = W - (modeX + 24) - 30;
+    const text = this.ellipsize(ctx, label, maxW);
+    const tw = Math.ceil(ctx.measureText(text).width);
+    const right = W - 10;
+    ctx.fillStyle = t.textPrimary;
+    ctx.textAlign = 'right';
+    ctx.fillText(text, right, 14);
+
+    const iconCx = right - tw - 9;
+    const icon = resolveActivityIcon(this.scene.activityIcon);
+    if (icon.kind === 'pixel') {
+      drawPixelIcon(ctx, icon.name, iconCx, 14, 12);
     } else {
-      this.drawStopwatchIcon(ctx, arcCX, arcCY, arcR, state, color, theme, now);
-    }
-
-    // ── Right panel ───────────────────────────────────────────────
-    const rx = arcCX + arcR + 18;
-    const rw = this.W - rx - 14;
-
-    // Mode badge
-    const modeText = mode === 'pomodoro' ? '🍅 POMODORO' : '⏱ CRONÔMETRO';
-    ctx.fillStyle = theme.textMuted;
-    ctx.font = `600 9.5px "SF Mono", "Fira Code", monospace`;
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'alphabetic';
-    ctx.fillText(modeText, rx, 24);
-
-    // Activity pill
-    const activity = (this.activityLabel || '').trim();
-    if (activity) {
-      ctx.save();
-      ctx.font = `700 10px system-ui, sans-serif`;
-      ctx.textBaseline = 'middle';
-      const tw = ctx.measureText(activity).width;
-      const ph = 16, px = 5;
-      const pw = Math.min(rw, tw + px * 2 + 16);
-      const py = 30;
-
-      // Pill background — stronger alpha so it reads on both light/dark
-      ctx.beginPath();
-      this.roundRect(ctx, rx, py, pw, ph, ph / 2);
-      ctx.fillStyle = this.hexToRgba(color, theme.glow ? 0.18 : 0.12);
-      ctx.fill();
-
-      // Pill left dot
-      ctx.beginPath();
-      ctx.arc(rx + 9, py + ph / 2, 3, 0, Math.PI * 2);
-      ctx.fillStyle = color;
-      ctx.fill();
-
-      // Pill text — use the activity color directly, readable on both themes
-      ctx.fillStyle = color;
-      ctx.textAlign = 'left';
-      ctx.font = `700 10px system-ui, sans-serif`;
-      ctx.fillText(activity, rx + 16, py + ph / 2);
-      ctx.restore();
-    }
-
-    // Time display — the hero element
-    ctx.fillStyle = theme.textPrimary;
-    ctx.font = `300 36px "SF Pro Display", "Helvetica Neue", sans-serif`;
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'alphabetic';
-
-    // Letter spacing simulation (draw char by char for mono spacing)
-    this.drawMonoTime(ctx, time, rx, activity ? 80 : 72, theme.textPrimary);
-
-    // State label under the time
-    const stateConfig: Record<string, { label: string; dotColor: string }> = {
-      running: { label: 'focando', dotColor: color },
-      paused: { label: 'pausado', dotColor: '#F59E0B' },
-      idle: { label: 'pronto', dotColor: theme.textMuted },
-      finished: { label: 'concluído', dotColor: '#10B981' },
-    };
-    const sc = stateConfig[state] ?? stateConfig['idle'];
-
-    const dotY = activity ? 96 : 88;
-
-    // Blinking dot for running state
-    if (state === 'running') {
-      const elapsed = now - this.lastTickTime;
-      if (elapsed > 16) {
-        this.tickAlpha += this.tickDir * (elapsed / 800);
-        if (this.tickAlpha >= 1) { this.tickAlpha = 1; this.tickDir = -1; }
-        if (this.tickAlpha <= 0.2) { this.tickAlpha = 0.2; this.tickDir = 1; }
-        this.lastTickTime = now;
-      }
-      ctx.globalAlpha = this.tickAlpha;
-    }
-    ctx.beginPath();
-    ctx.arc(rx + 5, dotY - 3.5, 3.5, 0, Math.PI * 2);
-    ctx.fillStyle = sc.dotColor;
-    ctx.fill();
-    ctx.globalAlpha = 1;
-
-    ctx.fillStyle = theme.textSecondary;
-    ctx.font = `400 10px system-ui, sans-serif`;
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'alphabetic';
-    ctx.fillText(sc.label, rx + 13, dotY);
-
-    // ── Bottom progress bar (pomodoro only) ──────────────────────
-    if (mode === 'pomodoro') {
-      const bx = rx, by = this.H - 18, bw = rw, bh = 3;
-      ctx.fillStyle = theme.progressTrack;
-      ctx.beginPath();
-      this.roundRect(ctx, bx, by, bw, bh, 2);
-      ctx.fill();
-
-      if (progress > 0) {
-        ctx.fillStyle = color;
-        ctx.beginPath();
-        this.roundRect(ctx, bx, by, bw * Math.min(progress, 1), bh, 2);
-        ctx.fill();
-
-        // Glowing tip
-        if (theme.glow && progress < 0.99) {
-          const tipX = bx + bw * Math.min(progress, 1);
-          const tipGrd = ctx.createRadialGradient(tipX, by + bh / 2, 0, tipX, by + bh / 2, 8);
-          tipGrd.addColorStop(0, this.hexToRgba(color, 0.6));
-          tipGrd.addColorStop(1, 'transparent');
-          ctx.fillStyle = tipGrd;
-          ctx.fillRect(tipX - 8, by - 5, 16, bh + 10);
-        }
-      }
-
-      // Progress percentage tiny label
-      const pctStr = `${Math.round(progress * 100)}%`;
-      ctx.fillStyle = theme.textMuted;
-      ctx.font = `500 8px "SF Mono", monospace`;
-      ctx.textAlign = 'right';
-      ctx.textBaseline = 'alphabetic';
-      ctx.fillText(pctStr, bx + bw, by - 4);
-    }
-
-    // ── Divider line ──────────────────────────────────────────────
-    ctx.strokeStyle = theme.border;
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(arcCX + arcR + 9, 16);
-    ctx.lineTo(arcCX + arcR + 9, this.H - 16);
-    ctx.stroke();
-  }
-
-  // ── Arc ring (Pomodoro) ───────────────────────────────────────────────────
-
-  private drawArc(
-    ctx: CanvasRenderingContext2D,
-    cx: number, cy: number, r: number,
-    progress: number, state: string,
-    color: string, theme: any, now: number
-  ): void {
-    const TAU = Math.PI * 2;
-    const startAngle = -Math.PI / 2; // 12 o'clock
-
-    // Track circle
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, TAU);
-    ctx.strokeStyle = theme.progressTrack;
-    ctx.lineWidth = 5;
-    ctx.stroke();
-
-    // Filled arc (progress)
-    if (progress > 0.001) {
-      ctx.beginPath();
-      ctx.arc(cx, cy, r, startAngle, startAngle + TAU * Math.min(progress, 1));
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 5;
-      ctx.lineCap = 'round';
-      ctx.stroke();
-
-      // Glow on the arc tip (dark mode)
-      if (theme.glow) {
-        const tipAngle = startAngle + TAU * Math.min(progress, 1);
-        const tipX = cx + Math.cos(tipAngle) * r;
-        const tipY = cy + Math.sin(tipAngle) * r;
-        const grd = ctx.createRadialGradient(tipX, tipY, 0, tipX, tipY, 10);
-        grd.addColorStop(0, this.hexToRgba(color, 0.5));
-        grd.addColorStop(1, 'transparent');
-        ctx.fillStyle = grd;
-        ctx.beginPath();
-        ctx.arc(tipX, tipY, 10, 0, TAU);
-        ctx.fill();
-      }
-    }
-
-    // Center emoji + state
-    const emoji = state === 'finished' ? '✅' : state === 'paused' ? '⏸' : '🍅';
-    ctx.font = `${state === 'running' ? 22 : 20}px sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(emoji, cx, cy - 5);
-
-    // Percentage under emoji
-    const pct = Math.round(progress * 100);
-    ctx.fillStyle = theme.textSecondary;
-    ctx.font = `600 10px system-ui, sans-serif`;
-    ctx.textBaseline = 'middle';
-    ctx.fillText(`${pct}%`, cx, cy + 14);
-  }
-
-  // ── Stopwatch icon (Cronômetro) ────────────────────────────────────────────
-
-  private drawStopwatchIcon(
-    ctx: CanvasRenderingContext2D,
-    cx: number, cy: number, r: number,
-    state: string, color: string, theme: any, now: number
-  ): void {
-    const TAU = Math.PI * 2;
-
-    // Outer ring
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, TAU);
-    ctx.strokeStyle = theme.progressTrack;
-    ctx.lineWidth = 3;
-    ctx.stroke();
-
-    // Inner circle fill
-    ctx.beginPath();
-    ctx.arc(cx, cy, r - 4, 0, TAU);
-    ctx.fillStyle = this.hexToRgba(color, theme.glow ? 0.28 : 0.22);
-    ctx.fill();
-
-    // Animated second hand when running
-    if (state === 'running') {
-      const sec = now / 1000;
-      const angle = -Math.PI / 2 + (sec % 60) / 60 * TAU;
-      ctx.beginPath();
-      ctx.moveTo(cx, cy);
-      ctx.lineTo(cx + Math.cos(angle) * (r - 10), cy + Math.sin(angle) * (r - 10));
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 2;
-      ctx.lineCap = 'round';
-      ctx.stroke();
-    }
-
-    // Center icon
-    const icon = state === 'finished' ? '✅' : state === 'paused' ? '⏸' : '⏱';
-    ctx.font = '20px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(icon, cx, cy);
-  }
-
-  // ── Helpers ───────────────────────────────────────────────────────────────
-
-  /**
-   * Draw time with consistent character widths (monospace feel, even on proportional fonts).
-   */
-  private drawMonoTime(ctx: CanvasRenderingContext2D, time: string, x: number, y: number, color: string): void {
-    ctx.font = `200 32px "Helvetica Neue", Helvetica, Arial, sans-serif`;
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'alphabetic';
-    ctx.fillStyle = color;
-
-    let cx = x;
-    const charW = 19;
-    const colonW = 9;
-
-    for (const ch of time) {
-      const w = ch === ':' ? colonW : charW;
+      ctx.fillStyle = this.activityColor;
+      ctx.fillRect(iconCx - 6, 8, 12, 12);
+      ctx.fillStyle = '#15171c';
+      ctx.font = '7px Silkscreen, monospace';
       ctx.textAlign = 'center';
-      ctx.fillText(ch, cx + w / 2, y);
-      cx += w;
+      ctx.fillText(label[0].toUpperCase(), iconCx, 14);
+    }
+    // Faixa na cor da atividade sob o nome
+    ctx.fillStyle = this.activityColor;
+    ctx.fillRect(right - tw, 21, tw, 2);
+  }
+
+  private drawClock(ctx: CanvasRenderingContext2D, st: { color: string }, t: ThemeColors): void {
+    const time = this.timerSvc.formattedTime();
+    const size = time.length > 5 ? 34 : 42;
+    ctx.font = `700 ${size}px "Pixelify Sans", sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+    // Sombra dura deslocada na cor do estado
+    ctx.fillStyle = this.withAlpha(st.color, 0.45);
+    ctx.fillText(time, W / 2 + 3, 62 + 3);
+    ctx.fillStyle = t.textPrimary;
+    ctx.fillText(time, W / 2, 62);
+  }
+
+  private drawSegments(ctx: CanvasRenderingContext2D, st: { color: string }, t: ThemeColors): void {
+    const total = 24;
+    const ratio = this.timerSvc.mode() === 'pomodoro'
+      ? this.timerSvc.progress()
+      : (this.timerSvc.elapsedSeconds() % 3600) / 3600;
+    const filled = Math.floor(Math.min(1, ratio) * total);
+    const gap = 2;
+    const x0 = 10;
+    const segW = (W - x0 * 2 - gap * (total - 1)) / total;
+    const y = 72;
+    for (let i = 0; i < total; i++) {
+      const x = Math.round(x0 + i * (segW + gap));
+      const w = Math.round(x0 + (i + 1) * (segW + gap) - gap) - x;
+      ctx.fillStyle = i < filled ? st.color : t.inset;
+      ctx.fillRect(x, y, w, 7);
+      if (i < filled) {
+        ctx.fillStyle = 'rgba(0,0,0,0.22)';
+        ctx.fillRect(x, y + 5, w, 2);
+      }
     }
   }
 
-  private hexToRgba(hex: string, alpha: number): string {
-    const clean = hex.replace('#', '');
-    const r = parseInt(clean.substring(0, 2), 16);
-    const g = parseInt(clean.substring(2, 4), 16);
-    const b = parseInt(clean.substring(4, 6), 16);
+  private drawStage(ctx: CanvasRenderingContext2D, state: string, now: number): void {
+    const top = 86;
+    const bottom = H - 3;
+    const sh = bottom - top;
+    const scn = this.scene.scenario;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(3, top, W - 6, sh);
+    ctx.clip();
+
+    // Céu
+    const sky = ctx.createLinearGradient(0, top, 0, bottom);
+    sky.addColorStop(0, scn.skyTop);
+    sky.addColorStop(1, scn.skyBottom);
+    ctx.fillStyle = sky;
+    ctx.fillRect(3, top, W - 6, sh);
+
+    // Cenário rolando (2 px do sprite por unidade para caber na faixa)
+    if (this.decorSprite) {
+      if (state === 'running') this.walkOffset = (this.walkOffset + 0.6) % (this.decorSprite.width * 2);
+      const du = 2;
+      const tileW = this.decorSprite.width * du;
+      const dy = bottom - 6 - this.decorSprite.height * du;
+      const off = Math.floor(this.walkOffset);
+      for (let x = -off; x < W; x += tileW) this.drawSprite(ctx, this.decorSprite, x, dy, du, false);
+    }
+
+    // Chão
+    ctx.fillStyle = 'rgba(26, 18, 8, 0.85)';
+    ctx.fillRect(3, bottom - 6, W - 6, 6);
+
+    // Herói
+    const hero = this.heroSprites;
+    const finished = state === 'finished';
+    const bob = state === 'idle' ? (Math.floor(now / 800) % 2) : finished ? (Math.floor(now / 200) % 2) * 3 : 0;
+    const lunge = now < this.hitUntil ? 6 : 0;
+    if (hero) {
+      const pose: HeroPose = finished ? 'cheer'
+        : state === 'running' ? (Math.floor(now / STEP_MS) % 2 ? 'step' : 'stand')
+        : 'stand';
+      const sp = hero[pose];
+      this.drawSprite(ctx, sp, 34 + lunge, bottom - 6 - sp.height * U - bob, U, false);
+    }
+
+    // Chefe + barra de HP
+    if (this.monsterSprite) {
+      const sp = this.monsterSprite;
+      const bw = sp.width * U;
+      const bx = W - 34 - bw;
+      const shake = now < this.hitUntil ? (Math.floor(now / 60) % 2 ? 2 : -2) : 0;
+      const by = bottom - 6 - sp.height * U;
+      const defeated = this.scene.bossPercent <= 0;
+      ctx.globalAlpha = defeated ? 0.35 : 1;
+      this.drawSprite(ctx, sp, bx + shake, by, U, false);
+      if (now < this.hitUntil && Math.floor(now / 70) % 2 === 0) {
+        ctx.fillStyle = 'rgba(255,255,255,0.55)';
+        ctx.fillRect(bx + shake, by, bw, sp.height * U);
+      }
+      ctx.globalAlpha = 1;
+
+      ctx.fillStyle = '#0a0b0e';
+      ctx.fillRect(bx, by - 8, bw, 5);
+      ctx.fillStyle = '#2a0f12';
+      ctx.fillRect(bx + 1, by - 7, bw - 2, 3);
+      ctx.fillStyle = '#e5484d';
+      ctx.fillRect(bx + 1, by - 7, Math.round((bw - 2) * Math.max(0, this.scene.bossPercent) / 100), 3);
+    }
+
+    // Pausado: cena escurece e o herói cochila
+    if (state === 'paused') {
+      ctx.fillStyle = 'rgba(10, 11, 14, 0.45)';
+      ctx.fillRect(3, top, W - 6, sh);
+      this.drawBubble(ctx, 'Zz', 34 + 30, top + 4);
+    }
+
+    // Floats (dano / XP)
+    ctx.font = '700 12px "Pixelify Sans", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+    this.floats = this.floats.filter(f => now - f.born < FLOAT_MS);
+    for (const f of this.floats) {
+      const p = (now - f.born) / FLOAT_MS;
+      // XP sobe sobre o herói; dano sobe à esquerda do chefe (sem cobrir a barra de HP)
+      const isXp = f.color === '#f5b841';
+      const fx = isXp ? 34 + 18 : W - 34 - 36 - 16;
+      const fy = Math.round(bottom - (isXp ? 40 : 22) - p * 16);
+      ctx.globalAlpha = p < 0.8 ? 1 : (1 - p) / 0.2;
+      ctx.fillStyle = '#0a0b0e';
+      ctx.fillText(f.text, fx + 1, fy + 1);
+      ctx.fillStyle = f.color;
+      ctx.fillText(f.text, fx, fy);
+      ctx.globalAlpha = 1;
+    }
+
+    ctx.restore();
+
+    // Linha que separa palco do painel
+    ctx.fillStyle = '#0a0b0e';
+    ctx.fillRect(3, top - 2, W - 6, 2);
+  }
+
+  // ─── Eventos de animação ─────────────────────────────────────────────────
+
+  /** Detecta minuto completo (golpe) e conclusão (XP) a partir do timer. */
+  private trackEvents(state: string, now: number): void {
+    const minute = Math.floor(this.timerSvc.elapsedSeconds() / 60);
+    if (state === 'running' && minute > this.lastMinute && this.lastMinute >= 0) {
+      this.hitUntil = now + HIT_MS;
+      const c = this.scene.combo;
+      this.floats.push({ text: `-${Number.isInteger(c) ? c : c.toFixed(1)}`, color: '#ffffff', born: now });
+    }
+    if (state === 'finished' && this.lastState !== 'finished') {
+      const xp = Math.floor(minute * this.scene.combo);
+      if (xp > 0) this.floats.push({ text: `+${xp} XP`, color: '#f5b841', born: now });
+    }
+    this.lastMinute = minute;
+    this.lastState = state;
+  }
+
+  // ─── Helpers ──────────────────────────────────────────────────────────────
+
+  private buildHeroSprites(): void {
+    const a = this.scene.avatar ?? DEFAULT_AVATAR;
+    const w = this.scene.weapon;
+    this.heroSprites = {
+      stand: buildHeroSprite(a, w, 'stand'),
+      step: buildHeroSprite(a, w, 'step'),
+      cheer: buildHeroSprite(a, w, 'cheer'),
+    };
+  }
+
+  private drawSprite(ctx: CanvasRenderingContext2D, sp: Sprite, x: number, y: number, u: number, mirror: boolean): void {
+    const x0 = Math.round(x);
+    const y0 = Math.round(y);
+    for (const p of sp.pixels) {
+      const px = mirror ? sp.width - 1 - p.x : p.x;
+      ctx.fillStyle = p.fill;
+      ctx.fillRect(x0 + px * u, y0 + p.y * u, u, u);
+    }
+  }
+
+  private drawBubble(ctx: CanvasRenderingContext2D, text: string, x: number, y: number): void {
+    ctx.font = '8px Silkscreen, monospace';
+    const w = Math.ceil(ctx.measureText(text).width) + 8;
+    ctx.fillStyle = '#0a0b0e';
+    ctx.fillRect(x - 1, y - 1, w + 2, 14);
+    ctx.fillStyle = '#f4f2ee';
+    ctx.fillRect(x, y, w, 12);
+    ctx.fillStyle = '#15171c';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, x + 4, y + 6);
+  }
+
+  private ellipsize(ctx: CanvasRenderingContext2D, text: string, maxW: number): string {
+    if (ctx.measureText(text).width <= maxW) return text;
+    let out = text;
+    while (out.length > 1 && ctx.measureText(out + '…').width > maxW) out = out.slice(0, -1);
+    return out + '…';
+  }
+
+  private async loadFonts(): Promise<void> {
+    if (!document.fonts?.load) return;
+    const wait = Promise.all([
+      document.fonts.load('700 42px "Pixelify Sans"'),
+      document.fonts.load('600 11px "Pixelify Sans"'),
+      document.fonts.load('8px Silkscreen'),
+    ]).catch(() => undefined);
+    // Não segura a abertura do PiP por mais de 800 ms
+    await Promise.race([wait, new Promise(r => setTimeout(r, 800))]);
+  }
+
+  private cssVar(name: string, fallback: string): string {
+    const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    return value || fallback;
+  }
+
+  private themeColors(): ThemeColors {
+    const dark = this.themeService.isDarkMode();
+    return {
+      bg: this.cssVar('--bg-card', dark ? '#1a1d24' : '#fffdf8'),
+      inset: this.cssVar('--bg-inset', dark ? '#101216' : '#e6dfd0'),
+      textPrimary: this.cssVar('--text-primary', dark ? '#f4f2ee' : '#17181c'),
+    };
+  }
+
+  private withAlpha(hex: string, alpha: number): string {
+    const c = hex.replace('#', '');
+    const r = parseInt(c.substring(0, 2), 16);
+    const g = parseInt(c.substring(2, 4), 16);
+    const b = parseInt(c.substring(4, 6), 16);
     return `rgba(${r},${g},${b},${alpha})`;
-  }
-
-  private roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number): void {
-    if ((ctx as any).roundRect) { (ctx as any).roundRect(x, y, w, h, r); return; }
-    const radius = Math.min(r, w / 2, h / 2);
-    ctx.moveTo(x + radius, y);
-    ctx.arcTo(x + w, y, x + w, y + h, radius);
-    ctx.arcTo(x + w, y + h, x, y + h, radius);
-    ctx.arcTo(x, y + h, x, y, radius);
-    ctx.arcTo(x, y, x + w, y, radius);
-    ctx.closePath();
-  }
-
-  updateActivity(activityColor?: string, activityLabel?: string): void {
-    if (typeof activityColor === 'string') this.activityColor = activityColor;
-    if (typeof activityLabel === 'string') this.activityLabel = activityLabel;
-    try { this.draw(this.activityColor, performance.now()); } catch { }
   }
 
   private cleanup(): void {
@@ -456,4 +497,10 @@ export class PipService {
     this.canvas = null;
     this.ctx = null;
   }
+}
+
+interface ThemeColors {
+  bg: string;
+  inset: string;
+  textPrimary: string;
 }

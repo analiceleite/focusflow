@@ -99,12 +99,12 @@ export class SessionService {
     if (snapshot.exists()) return; // already seeded
 
     const defaults: Omit<ActivityType, 'userId' | 'id'>[] = [
-      { name: 'Estudo', icon: '📚', color: '#6C63FF' },
-      { name: 'Trabalho', icon: '💼', color: '#FF6584' },
-      { name: 'Exercício', icon: '🏋️', color: '#43D9AD' },
-      { name: 'Leitura', icon: '📖', color: '#F4A261' },
-      { name: 'Meditação', icon: '🧘', color: '#A8DADC' },
-      { name: 'Projeto Pessoal', icon: '🚀', color: '#F7C948' },
+      { name: 'Estudo', icon: 'px:book', color: '#6C63FF' },
+      { name: 'Trabalho', icon: 'px:briefcase', color: '#FF6584' },
+      { name: 'Exercício', icon: 'px:dumbbell', color: '#43D9AD' },
+      { name: 'Leitura', icon: 'px:book-open', color: '#F4A261' },
+      { name: 'Meditação', icon: 'px:lotus', color: '#A8DADC' },
+      { name: 'Projeto Pessoal', icon: 'px:rocket', color: '#F7C948' },
     ];
 
     const defaultPresets: Omit<Preset, 'userId' | 'id'>[] = [

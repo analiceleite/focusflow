@@ -19,6 +19,7 @@ import { AvatarConfig, DEFAULT_AVATAR, findWeapon } from '../../core/game/game-d
 import { computeTotalXp, computeVictories, levelFromXp, ownedWeapons } from '../../core/game/progress';
 import { BossBattleComponent } from './boss-battle/boss-battle.component';
 import { GamePanelComponent } from './game-panel/game-panel.component';
+import { ActivityIconComponent, PixelIconComponent } from 'src/app/shared/pixel-icon/pixel-icon.component';
 import {
   DEFAULT_SCENARIO_ID,
   Scenario,
@@ -30,7 +31,7 @@ import { GameProfile } from '../../core/services/session.service';
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, FontAwesomeModule, NavbarComponent, ThemeToggleComponent, BossBattleComponent, GamePanelComponent],
+  imports: [CommonModule, RouterLink, FormsModule, FontAwesomeModule, NavbarComponent, ThemeToggleComponent, BossBattleComponent, GamePanelComponent, PixelIconComponent, ActivityIconComponent],
   styleUrls: ['./dashboard.component.scss'],
   templateUrl: './dashboard.component.html',
 })
@@ -220,7 +221,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       if (!map.has(key)) {
         map.set(key, {
           name: s.activityTypeName,
-          icon: '📌',
+          icon: 'px:pin',
           color: s.activityColor,
           totalSeconds: 0,
           sessionCount: 0
@@ -278,6 +279,53 @@ export class DashboardComponent implements OnInit, OnDestroy {
       });
     }
     return days;
+  });
+
+  // ─── Ofensiva: calendário em semanas + trilha de combo ────────────────────
+
+  /** Células vazias antes do 1º dia para alinhar o calendário ao dia da semana (domingo = linha 1). */
+  readonly calendarOffset = computed(() => {
+    const first = this.calendarDays()[0];
+    if (!first) return [];
+    return Array.from({ length: this.parseLocalDate(first.date).getDay() });
+  });
+
+  readonly weekdayLabels = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
+
+  /** Intensidade 0..4 pelo tempo focado no dia (0 · <30min · <1h · <2h · 2h+). */
+  calendarLevel(seconds: number): number {
+    if (seconds <= 0) return 0;
+    if (seconds < 30 * 60) return 1;
+    if (seconds < 60 * 60) return 2;
+    if (seconds < 120 * 60) return 3;
+    return 4;
+  }
+
+  isShieldedDay(date: string): boolean {
+    return this.streakInfo().shieldedDates.has(date);
+  }
+
+  /** Trilha até o combo máximo (7 dias): marcos em 3 (×1,2) e 7 (×1,5). */
+  readonly comboTrack = computed(() => {
+    const streak = this.currentStreak();
+    return Array.from({ length: 7 }, (_, i) => ({
+      day: i + 1,
+      reached: streak >= i + 1,
+      milestone: i + 1 === 3 ? '×1,2' : i + 1 === 7 ? '×1,5' : null,
+    }));
+  });
+
+  readonly comboNow = computed(() => {
+    const s = this.currentStreak();
+    return s >= 7 ? '×1,5' : s >= 3 ? '×1,2' : '×1';
+  });
+
+  readonly comboHint = computed(() => {
+    const s = this.currentStreak();
+    if (s >= 7) return 'Combo máximo ativo. Mantenha a chama acesa!';
+    const target = s >= 3 ? 7 : 3;
+    const left = target - s;
+    return `Faltam ${left} dia${left > 1 ? 's' : ''} para o combo ${target === 3 ? '×1,2' : '×1,5'}.`;
   });
 
   // ─── Lifecycle ────────────────────────────────────────────────────────────

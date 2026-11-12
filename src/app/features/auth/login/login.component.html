@@ -1,39 +1,75 @@
 <div class="auth-page">
-    <!-- Theme Toggle moved into navbar; removed duplicate -->
-    <div class="auth-card">
-        <div class="logo">
-            <img class="logo-icon" src="assets/icons/focusflow-mark.svg" alt="" aria-hidden="true" />
-            <h1>FocusFlow</h1>
-            <p>Seu tempo, seu foco.</p>
+
+    <!-- ══ Vitrine: a promessa do produto em ação ══ -->
+    <section class="showcase" aria-label="Como o FocusFlow funciona">
+        <div class="brand">
+            <img class="brand-mark" src="assets/icons/focusflow-mark.svg" alt="" aria-hidden="true" />
+            <span class="brand-name">FocusFlow</span>
         </div>
 
-        <div class="tabs">
-            <button [class.active]="!isRegister()" (click)="isRegister.set(false)">
-                Entrar
-            </button>
-            <button [class.active]="isRegister()" (click)="isRegister.set(true)">
-                Criar conta
-            </button>
+        <div class="pitch">
+            <span class="px-label">Foco gamificado</span>
+            <h1>Cada minuto de foco é um golpe.</h1>
+            <p>Concentre-se, derrote o chefe da semana e veja seu herói evoluir.</p>
         </div>
 
-        <form (ngSubmit)="submit()">
-            <div class="field">
-                <label>E-mail</label>
-                <input type="email" [(ngModel)]="email" name="email" placeholder="seu@email.com" required />
+        <div class="stage-frame">
+            <app-hero-stage class="stage" [scenario]="demoScenario" [avatar]="demoAvatar"
+                [monsterVariant]="demoMonster" [bossPercent]="demoBoss()" state="running"
+                [elapsedMinutes]="demoMinutes()" [combo]="1"></app-hero-stage>
+        </div>
+
+        <ol class="loop">
+            <li><span class="step">1</span><span><strong>Foque</strong> no timer</span></li>
+            <li><span class="step">2</span><span><strong>Golpeie</strong> o chefe</span></li>
+            <li><span class="step">3</span><span><strong>Evolua</strong> seu herói</span></li>
+        </ol>
+    </section>
+
+    <!-- ══ Formulário ══ -->
+    <section class="auth-side">
+        <div class="auth-card px-panel">
+            <header class="card-head">
+                <span class="px-label">{{ isRegister() ? 'Nova jornada' : 'Bem-vindo de volta' }}</span>
+                <h2>{{ isRegister() ? 'Crie seu herói' : 'Continue sua jornada' }}</h2>
+            </header>
+
+            <div class="tabs" role="tablist" aria-label="Acesso">
+                <button type="button" role="tab" [attr.aria-selected]="!isRegister()" [class.active]="!isRegister()"
+                    (click)="setMode(false)">Entrar</button>
+                <button type="button" role="tab" [attr.aria-selected]="isRegister()" [class.active]="isRegister()"
+                    (click)="setMode(true)">Criar conta</button>
             </div>
 
-            <div class="field">
-                <label>Senha</label>
-                <input type="password" [(ngModel)]="password" name="password" placeholder="••••••••" required />
-            </div>
+            <form (ngSubmit)="submit()">
+                <div class="field">
+                    <label for="login-email">E-mail</label>
+                    <input id="login-email" type="email" [(ngModel)]="email" name="email" placeholder="seu@email.com"
+                        autocomplete="email" required />
+                </div>
 
-            @if (error()) {
-            <div class="error-msg">{{ error() }}</div>
-            }
+                <div class="field">
+                    <label for="login-password">Senha</label>
+                    <div class="pw">
+                        <input id="login-password" [type]="showPassword() ? 'text' : 'password'" [(ngModel)]="password"
+                            name="password" placeholder="••••••••" required
+                            [attr.autocomplete]="isRegister() ? 'new-password' : 'current-password'" />
+                        <button type="button" class="pw-toggle" (click)="showPassword.set(!showPassword())"
+                            [attr.aria-label]="showPassword() ? 'Ocultar senha' : 'Mostrar senha'"
+                            [attr.aria-pressed]="showPassword()">{{ showPassword() ? 'Ocultar' : 'Ver' }}</button>
+                    </div>
+                    @if (isRegister()) { <span class="hint">Mínimo de 6 caracteres.</span> }
+                </div>
 
-            <button type="submit" class="btn-submit" [disabled]="loading()">
-                {{ loading() ? 'Aguarde...' : (isRegister() ? 'Criar conta' : 'Entrar') }}
-            </button>
-        </form>
-    </div>
+                @if (error()) {
+                <div class="error-msg" role="alert">{{ error() }}</div>
+                }
+
+                <button type="submit" class="px-btn px-btn--primary btn-submit" [disabled]="loading()">
+                    @if (loading()) { Carregando<span class="dots" aria-hidden="true"></span> }
+                    @else { {{ isRegister() ? 'Começar jornada' : 'Entrar' }} ▸ }
+                </button>
+            </form>
+        </div>
+    </section>
 </div>

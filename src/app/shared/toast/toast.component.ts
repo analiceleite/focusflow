@@ -1,11 +1,12 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ToastService } from '../../core/services/toast.service';
+import { PixelIconComponent } from '../pixel-icon/pixel-icon.component';
 
 @Component({
   selector: 'app-toast',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, PixelIconComponent],
   template: `
     <div class="toast-container">
       @for (toast of toastService.toasts(); track toast.id) {
@@ -15,14 +16,14 @@ import { ToastService } from '../../core/services/toast.service';
           (click)="toastService.remove(toast.id)">
           <div class="toast-icon">
             @switch (toast.type) {
-              @case ('success') { ✅ }
-              @case ('error') { ❌ }
-              @case ('warning') { ⚠️ }
-              @case ('info') { ℹ️ }
+              @case ('success') { <app-pixel-icon name="check" [size]="24"></app-pixel-icon> }
+              @case ('error') { <app-pixel-icon name="cross" [size]="24"></app-pixel-icon> }
+              @case ('warning') { <app-pixel-icon name="warning" [size]="24"></app-pixel-icon> }
+              @case ('info') { <app-pixel-icon name="info" [size]="24"></app-pixel-icon> }
             }
           </div>
           <div class="toast-message">{{ toast.message }}</div>
-          <button class="toast-close" (click)="toastService.remove(toast.id)">×</button>
+          <button class="toast-close" aria-label="Fechar aviso" (click)="toastService.remove(toast.id)">×</button>
         </div>
       }
     </div>
@@ -39,50 +40,29 @@ import { ToastService } from '../../core/services/toast.service';
       max-width: 400px;
     }
 
+    /* Caixa de diálogo pixel: fundo neutro, faixa lateral na cor do tipo */
     .toast {
+      --tone: var(--brand-primary);
       display: flex;
       align-items: center;
       gap: 12px;
-      padding: 12px 16px;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      padding: 10px 12px;
+      color: var(--text-primary);
+      background: var(--bg-card);
+      border: 2px solid var(--px-shadow-color);
+      border-left: 8px solid var(--tone);
+      box-shadow: 4px 4px 0 var(--px-shadow-color);
       cursor: pointer;
-      transition: all 0.3s ease;
-      animation: slideIn 0.3s ease;
-      backdrop-filter: blur(10px);
+      animation: slideIn 0.24s steps(4);
     }
 
-    .toast:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
-    }
-
-    .toast-success {
-      background: rgba(67, 217, 173, 0.9);
-      border-left: 4px solid #5FA889;
-      color: #0f1419;
-    }
-
-    .toast-error {
-      background: rgba(255, 101, 132, 0.9);
-      border-left: 4px solid #ff6584;
-      color: #fff;
-    }
-
-    .toast-warning {
-      background: rgba(255, 193, 7, 0.9);
-      border-left: 4px solid #ffc107;
-      color: #0f1419;
-    }
-
-    .toast-info {
-      background: rgba(108, 99, 255, 0.9);
-      border-left: 4px solid #F26B3A;
-      color: #fff;
-    }
+    .toast-success { --tone: var(--state-done); }
+    .toast-error { --tone: var(--accent-error); }
+    .toast-warning { --tone: var(--accent-warning); }
+    .toast-info { --tone: #4a90b8; }
 
     .toast-icon {
-      font-size: 18px;
+      display: inline-flex;
       flex-shrink: 0;
     }
 
@@ -94,25 +74,21 @@ import { ToastService } from '../../core/services/toast.service';
     }
 
     .toast-close {
+      width: 26px;
+      height: 26px;
+      display: grid;
+      place-items: center;
+      font-family: var(--font-hud);
+      font-size: 14px;
+      color: var(--text-muted);
       background: none;
-      border: none;
-      color: inherit;
-      font-size: 20px;
-      font-weight: bold;
+      border: 2px solid transparent;
       cursor: pointer;
-      opacity: 0.7;
-      transition: opacity 0.2s;
-      width: 24px;
-      height: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 4px;
     }
 
     .toast-close:hover {
-      opacity: 1;
-      background: rgba(0, 0, 0, 0.1);
+      color: var(--text-primary);
+      border-color: var(--border-strong);
     }
 
     @keyframes slideIn {

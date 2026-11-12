@@ -5,7 +5,10 @@
 
         <!-- Header + Filtros (largura total) -->
         <header class="header">
-            <h2>📊 Dashboard</h2>
+            <div class="title-block">
+                <span class="px-label">Sua evolução</span>
+                <h2>Jornada do herói</h2>
+            </div>
 
             <div class="filter-bar">
                 <div class="view-mode-tabs">
@@ -55,47 +58,51 @@
             </div>
         </header>
 
+        <!-- Herói e chefe: o coração da jornada -->
+        <div class="hero-row">
+            <!-- Chefe da semana -->
+            <app-boss-battle [state]="weeklyBoss()" [avatar]="avatar()" [weapon]="equippedWeapon()"
+                             [scenario]="scenario()"></app-boss-battle>
+
+            <!-- Herói: nível, visual, armas e bestiário -->
+            <app-game-panel
+                [level]="levelInfo()"
+                [avatar]="avatar()"
+                [weapon]="equippedWeapon()"
+                [victories]="victories()"
+                (avatarChange)="onAvatarChange($event)"
+                [scenario]="scenario()"
+                (weaponChange)="onWeaponChange($event)"
+                (scenarioChange)="onScenarioChange($event)">
+            </app-game-panel>
+
+        </div>
+
         <!-- Grid principal: esquerda (sessões) + direita (calendário + atividades) -->
         <div class="dashboard-grid">
 
             <!-- ── Coluna esquerda ── -->
             <div class="col-left">
 
-                <!-- Chefe da semana -->
-                <app-boss-battle [state]="weeklyBoss()" [avatar]="avatar()" [weapon]="equippedWeapon()"
-                                 [scenario]="scenario()"></app-boss-battle>
-
-                <!-- Herói: nível, visual, armas e bestiário -->
-                <app-game-panel
-                    [level]="levelInfo()"
-                    [avatar]="avatar()"
-                    [weapon]="equippedWeapon()"
-                    [victories]="victories()"
-                    (avatarChange)="onAvatarChange($event)"
-                    [scenario]="scenario()"
-                    (weaponChange)="onWeaponChange($event)"
-                    (scenarioChange)="onScenarioChange($event)">
-                </app-game-panel>
-
                 <!-- 4 cards de métricas -->
                 <div class="cards-grid">
                     <div class="card">
-                        <div class="card-icon">⏳</div>
+                        <div class="card-icon"><app-pixel-icon name="hourglass" [size]="24"></app-pixel-icon></div>
                         <div class="card-value">{{ formatDuration(totalSeconds()) }}</div>
                         <div class="card-label">Tempo total</div>
                     </div>
                     <div class="card">
-                        <div class="card-icon">🔥</div>
+                        <div class="card-icon"><app-pixel-icon name="fire" [size]="24"></app-pixel-icon></div>
                         <div class="card-value">{{ currentStreak() }}<span class="unit">dias</span></div>
                         <div class="card-label">Ofensiva atual</div>
                     </div>
                     <div class="card">
-                        <div class="card-icon">✅</div>
+                        <div class="card-icon"><app-pixel-icon name="check" [size]="24"></app-pixel-icon></div>
                         <div class="card-value">{{ filteredSessions().length }}</div>
                         <div class="card-label">Sessões</div>
                     </div>
                     <div class="card">
-                        <div class="card-icon">📈</div>
+                        <div class="card-icon"><app-pixel-icon name="chart" [size]="24"></app-pixel-icon></div>
                         <div class="card-value">{{ formatDuration(avgSessionSeconds()) }}</div>
                         <div class="card-label">Média/sessão</div>
                     </div>
@@ -117,7 +124,7 @@
                                 <span class="session-date">{{ formatDate(session.date) }}</span>
                             </div>
                             <span class="session-duration">{{ formatDuration(session.durationSeconds) }}</span>
-                            <span class="session-mode">{{ session.mode === 'pomodoro' ? '🍅' : '⏰' }}</span>
+                            <span class="session-mode" [title]="session.mode === 'pomodoro' ? 'Pomodoro' : 'Cronômetro'"><app-pixel-icon [name]="session.mode === 'pomodoro' ? 'tomato' : 'clock'" [size]="16"></app-pixel-icon></span>
                             <span class="session-delete" (click)="deleteSession(session.id!)"
                                 title="Excluir sessão">×</span>
                         </div>
@@ -135,7 +142,7 @@
 
                 } @else {
                 <div class="empty-state">
-                    <div class="empty-icon">🎯</div>
+                    <div class="empty-icon"><app-pixel-icon name="target" [size]="48"></app-pixel-icon></div>
                     <p>Nenhuma sessão registrada ainda.</p>
                     <a routerLink="/timer" class="btn-start">Começar agora →</a>
                 </div>
@@ -146,33 +153,67 @@
             <!-- ── Coluna direita ── -->
             <div class="col-right">
 
-                <!-- Calendário de ofensiva -->
-                <div class="section">
-                    <div class="section-label">
-                        🔥 Ofensiva — {{ currentStreak() }} dia(s) consecutivo(s)
-                        @if (bestStreak() > 0) { · Recorde: {{ bestStreak() }} dias }
-                    </div>
-                    <div class="calendar-grid" style="touch-action: none;" (pointerdown)="onGridPointerDown($event)"
-                        (pointermove)="onGridPointerMove($event)" (pointerup)="onCalendarMouseUp()"
-                        (pointerleave)="onCalendarMouseUp()">
-                        @for (day of calendarDays(); track day.date) {
-                        <div class="cal-day" [class.has-session]="day.hasSession"
-                            [class.today]="day.isToday && !isCalendarDaySelected(day.date)"
-                            [class.selected]="isCalendarDaySelected(day.date)"
-                            [class.disabled]="isCalendarDayDisabled(day.date)" [attr.data-date]="day.date"
-                            [attr.title]="'Dia ' + day.date + (day.seconds > 0 ? (' — ' + formatDuration(day.seconds)) : '')"
-                            (click)="onCalendarDayClick(day.date, $event)"
-                            [attr.tabindex]="isCalendarDayDisabled(day.date) ? -1 : 0" role="button"
-                            [attr.aria-pressed]="isCalendarDaySelected(day.date) ? 'true' : 'false'"
-                            [attr.aria-disabled]="isCalendarDayDisabled(day.date) ? 'true' : null">
+                <!-- Ofensiva: chama, trilha de combo e calendário por semana -->
+                <div class="section streak" [class.lit]="currentStreak() > 0">
+                    <div class="streak-head">
+                        <div class="flame" aria-hidden="true"><span></span></div>
+                        <div class="streak-count">
+                            <span class="px-label">Ofensiva</span>
+                            <strong>{{ currentStreak() }}<small>{{ currentStreak() === 1 ? 'dia' : 'dias' }}</small></strong>
                         </div>
-                        }
+                        <div class="streak-meta">
+                            <span class="streak-chip"><span class="px-label">Recorde</span>{{ bestStreak() }}d</span>
+                            <span class="streak-chip" [class.off]="!streakInfo().shieldAvailableThisWeek"
+                                title="Um escudo por semana cobre um dia sem foco">
+                                <span class="px-label">Escudo</span>{{ streakInfo().shieldAvailableThisWeek ? 'pronto' : 'usado' }}
+                            </span>
+                        </div>
                     </div>
+
+                    <div class="combo">
+                        <div class="combo-track" role="img"
+                            [attr.aria-label]="'Combo ' + comboNow() + ', ' + currentStreak() + ' de 7 dias'">
+                            @for (step of comboTrack(); track step.day) {
+                            <span class="combo-step" [class.on]="step.reached" [class.mile]="step.milestone">
+                                @if (step.milestone) { <em>{{ step.milestone }}</em> }
+                            </span>
+                            }
+                        </div>
+                        <p class="combo-hint"><strong>Combo {{ comboNow() }}</strong> · {{ comboHint() }}</p>
+                    </div>
+
+                    <div class="cal">
+                        <div class="cal-weekdays" aria-hidden="true">
+                            @for (w of weekdayLabels; track $index) { <span>{{ w }}</span> }
+                        </div>
+                        <div class="calendar-grid" style="touch-action: none;" (pointerdown)="onGridPointerDown($event)"
+                            (pointermove)="onGridPointerMove($event)" (pointerup)="onCalendarMouseUp()"
+                            (pointerleave)="onCalendarMouseUp()">
+                            @for (pad of calendarOffset(); track $index) { <span class="cal-pad" aria-hidden="true"></span> }
+                            @for (day of calendarDays(); track day.date) {
+                            <div class="cal-day" [attr.data-level]="calendarLevel(day.seconds)"
+                                [class.has-session]="day.hasSession" [class.shielded]="isShieldedDay(day.date)"
+                                [class.today]="day.isToday && !isCalendarDaySelected(day.date)"
+                                [class.selected]="isCalendarDaySelected(day.date)"
+                                [class.disabled]="isCalendarDayDisabled(day.date)" [attr.data-date]="day.date"
+                                [attr.title]="formatDate(day.date) + (day.seconds > 0 ? (' — ' + formatDuration(day.seconds)) : (isShieldedDay(day.date) ? ' — protegido pelo escudo' : ''))"
+                                (click)="onCalendarDayClick(day.date, $event)"
+                                [attr.tabindex]="isCalendarDayDisabled(day.date) ? -1 : 0" role="button"
+                                [attr.aria-pressed]="isCalendarDaySelected(day.date) ? 'true' : 'false'"
+                                [attr.aria-disabled]="isCalendarDayDisabled(day.date) ? 'true' : null">
+                            </div>
+                            }
+                        </div>
+                    </div>
+
                     <div class="calendar-legend">
-                        <span class="legend-dot empty"></span> Sem sessão
-                        <span class="legend-dot filled"></span> Com sessão
-                        <span class="legend-dot selected"></span> Selecionado
+                        <span class="legend-scale">Menos
+                            @for (l of [0, 1, 2, 3, 4]; track l) { <span class="legend-dot" [attr.data-level]="l"></span> }
+                            Mais</span>
+                        <span><span class="legend-dot shield"></span>Escudo</span>
+                        <span><span class="legend-dot selected"></span>Filtro</span>
                     </div>
+                    <p class="cal-tip">Toque ou arraste nos dias para filtrar o período.</p>
                 </div>
 
                 <!-- Por tipo de atividade -->
@@ -184,7 +225,7 @@
                         <div class="activity-bar-item">
                             <div class="bar-header">
                                 <div class="bar-info">
-                                    <span class="bar-icon">{{ stat.icon }}</span>
+                                    <app-activity-icon class="bar-icon" [icon]="stat.icon" [name]="stat.name" [color]="stat.color" [size]="18"></app-activity-icon>
                                     <span class="bar-name">{{ stat.name }}</span>
                                     <span class="bar-sessions">{{ stat.sessionCount }} sessão(ões)</span>
                                 </div>
@@ -211,7 +252,7 @@
 @if (showDeleteModal()) {
 <div class="modal-overlay" (click)="closeDeleteModal()">
     <div class="delete-modal" (click)="$event.stopPropagation()">
-        <div class="modal-icon">🗑️</div>
+        <div class="modal-icon"><app-pixel-icon name="trash" [size]="48"></app-pixel-icon></div>
         <h3 class="modal-title">Excluir Sessão</h3>
         <p class="modal-message">
             Tem certeza que deseja excluir esta sessão?<br>

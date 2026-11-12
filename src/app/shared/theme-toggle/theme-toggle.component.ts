@@ -1,20 +1,19 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faMoon, faSun } from '@fortawesome/free-solid-svg-icons';
 import { ThemeService } from '../../core/services/theme.service';
+import { IconComponent } from '../icon/icon.component';
 
 @Component({
   selector: 'app-theme-toggle',
   standalone: true,
-  imports: [CommonModule, FontAwesomeModule],
+  imports: [CommonModule, IconComponent],
   template: `
-    <button 
-      class="theme-toggle" 
-      (click)="toggleTheme()" 
+    <button
+      class="theme-toggle"
+      (click)="toggleTheme()"
       [title]="isDarkMode() ? 'Mudar para tema claro' : 'Mudar para tema escuro'"
     >
-      <fa-icon [icon]="isDarkMode() ? faSun : faMoon"></fa-icon>
+      <app-icon [name]="isDarkMode() ? 'sun' : 'moon'" [size]="18"></app-icon>
     </button>
   `,
   styles: [`
@@ -26,45 +25,20 @@ import { ThemeService } from '../../core/services/theme.service';
     .theme-toggle {
       min-height: 40px;
       min-width: 44px;
-      padding: 0.45rem 0.7rem;
-      background: transparent;
-      border: 1px solid transparent;
-      border-radius: 12px;
+      padding: 0.4rem;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       line-height: 1;
       cursor: pointer;
       color: var(--text-muted);
-      transition: all 0.2s;
-
-      fa-icon {
-        font-size: 0.95rem;
-      }
+      background: transparent;
+      border: 2px solid transparent;
+      transition: color 0.15s, background 0.15s;
 
       &:hover {
-        background: color-mix(in srgb, var(--bg-secondary) 80%, transparent);
-        border-color: color-mix(in srgb, var(--border-color) 60%, transparent);
-        color: var(--text-primary);
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      }
-
-      &:active {
-        transform: none;
-      }
-    }
-
-    @media (max-width: 768px) {
-      .theme-toggle {
-        min-height: 44px;
-        padding: 0.2rem 0.35rem;
-        border-radius: 10px;
-
-        &:hover {
-          transform: none;
-          box-shadow: none;
-        }
+        color: var(--xp);
+        background: var(--bg-tertiary);
       }
     }
 
@@ -75,9 +49,6 @@ import { ThemeService } from '../../core/services/theme.service';
 })
 export class ThemeToggleComponent {
   private themeService = inject(ThemeService);
-
-  faSun = faSun;
-  faMoon = faMoon;
 
   isDarkMode = this.themeService.isDarkMode;
 

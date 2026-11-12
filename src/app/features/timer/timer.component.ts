@@ -6,20 +6,29 @@ import { Subscription } from 'rxjs';
 import { NavbarComponent } from 'src/app/shared/navbar/navbar.component';
 import { ToastComponent } from 'src/app/shared/toast/toast.component';
 import { ToastService } from 'src/app/core/services/toast.service';
+import { IconComponent } from 'src/app/shared/icon/icon.component';
+import { HeroStageComponent, StageState } from 'src/app/shared/hero-stage/hero-stage.component';
+import { ActivityIconComponent, PixelIconComponent } from 'src/app/shared/pixel-icon/pixel-icon.component';
+import { ACTIVITY_ICONS } from 'src/app/core/game/pixel-icons';
 
 import { TimerService, TimerMode } from '../../core/services/timer.service';
-import { SessionService } from '../../core/services/session.service';
+import { GameProfile, SessionService } from '../../core/services/session.service';
 import { ActivityType, Preset, Session, DailyGoalSegment } from 'src/app/core/interfaces/timer.interface';
 import { SpotifyPlaylist } from 'src/app/core/interfaces/spotify.interface';
 import { AuthService } from '../../core/services/auth.service';
 import { PipService } from '../../core/services/pip.service';
 import { SpotifyService } from 'src/app/core/services/spotify.service';
 import { computeWeeklyBoss } from 'src/app/core/game/weekly-boss';
+import { computeStreakInfo } from 'src/app/core/game/streak';
+import { computeTotalXp, computeVictories, levelFromXp, ownedWeapons } from 'src/app/core/game/progress';
+import { DEFAULT_AVATAR, findWeapon } from 'src/app/core/game/game-data';
+import { DEFAULT_SCENARIO_ID, findScenario, unlockedScenarios } from 'src/app/core/game/scenarios';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-timer',
   standalone: true,
-  imports: [CommonModule, FormsModule, NavbarComponent, ToastComponent],
+  imports: [CommonModule, FormsModule, RouterLink, NavbarComponent, ToastComponent, IconComponent, HeroStageComponent, PixelIconComponent, ActivityIconComponent],
   templateUrl: './timer.component.html',
   styleUrls: ['./timer.component.scss'],
 })
@@ -36,6 +45,7 @@ export class TimerComponent implements OnInit, OnDestroy {
   selectedType = signal<ActivityType | null>(null);
   allSessions = signal<Session[]>([]);
   dailyGoalMinutes = signal<number | null>(null);
+  profile = signal<GameProfile>({ avatar: null, equippedWeapon: null, scenario: null });
   showGoalModal = signal(false);
   goalInputHours = 0;
   goalInputMinutes = 0;
@@ -75,7 +85,8 @@ export class TimerComponent implements OnInit, OnDestroy {
         }
 
         this.showCompletionNotification();
-        setTimeout(() => this.resetAfterCompletion(), 1200);
+        // Tempo para a comemoração do herói no palco
+        setTimeout(() => this.resetAfterCompletion(), 2600);
       });
     }
     this.lastTimerState = currentState;
@@ -115,9 +126,15 @@ export class TimerComponent implements OnInit, OnDestroy {
   toggleActionsExpanded(): void { this.actionsExpanded.update(v => !v); }
   closeActionsExpanded(): void { this.actionsExpanded.set(false); }
 
+  /** No mobile o painel de preparação fica abaixo do palco: rola até ele. */
+  scrollToSetup(): void {
+    document.getElementById('setup')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
   customMinutes = 25;
   newTypeName = '';
-  newTypeIcon = '📌';
+  newTypeIcon = 'px:book';
+  readonly activityIconChoices = ACTIVITY_ICONS;
   newTypeColor = '#F26B3A';
   presetMinutesInput = 25;
   presetLabel = '';
@@ -258,7 +275,7 @@ export class TimerComponent implements OnInit, OnDestroy {
         grouped.set(session.activityTypeId, {
           seconds: session.durationSeconds,
           name: session.activityTypeName,
-          icon: this.activityTypes().find(t => t.id === session.activityTypeId)?.icon || '📌',
+          icon: this.activityTypes().find(t => t.id === session.activityTypeId)?.icon || 'px:pin',
           color: session.activityColor,
         });
       }
@@ -276,7 +293,7 @@ export class TimerComponent implements OnInit, OnDestroy {
           grouped.set(type.id, {
             seconds: elapsed,
             name: type.name,
-            icon: type.icon || '📌',
+            icon: type.icon || 'px:pin',
             color: type.color,
           });
         }
@@ -317,6 +334,84 @@ export class TimerComponent implements OnInit, OnDestroy {
 
   readonly dailyGoalPercentRounded = computed(() => Math.round(this.dailyGoalProgress()));
 
+  // ─── Computed: jogo (herói, chefe, XP) ────────────────────────────────────
+
+  readonly streakInfo = computed(() => computeStreakInfo(this.allSessions()));
+  readonly levelInfo = computed(() => levelFromXp(computeTotalXp(this.allSessions(), this.streakInfo())));
+  readonly weeklyBoss = computed(() => computeWeeklyBoss(this.allSessions(), new Date(), this.streakInfo()));
+  readonly avatar = computed(() => this.profile().avatar ?? DEFAULT_AVATAR);
+
+  readonly equippedWeapon = computed(() => {
+    const id = this.profile().equippedWeapon;
+    if (!id) return null;
+    const owned = ownedWeapons(computeVictories(this.allSessions(), this.streakInfo()));
+    return owned.some(w => w.id === id) ? findWeapon(id) : null;
+  });
+
+  readonly scenario = computed(() => {
+    const chosen = findScenario(this.profile().scenario);
+    const unlocked = unlockedScenarios(this.levelInfo().level);
+    if (chosen && unlocked.some(s => s.id === chosen.id)) return chosen;
+    return findScenario(DEFAULT_SCENARIO_ID)!;
+  });
+
+  readonly heroName = computed(() => {
+    const email = this.userEmail();
+    return email ? email.split('@')[0] : 'Herói';
+  });
+
+  /** Estado visual da sessão (palco, cores e rótulos). */
+  readonly stageState = computed<StageState>(() => this.timerSvc.state());
+
+  readonly stateLabel = computed(() => {
+    switch (this.timerSvc.state()) {
+      case 'running': return 'Em foco';
+      case 'paused': return 'Pausado';
+      case 'finished': return 'Concluído';
+      default: return 'Pronto';
+    }
+  });
+
+  readonly elapsedMinutes = computed(() => Math.floor(this.timerSvc.elapsedSeconds() / 60));
+
+  /** XP que a sessão em andamento vai render (minutos × combo). */
+  readonly sessionXp = computed(() => {
+    if (!this.isTimerRunning() && this.timerSvc.state() !== 'finished') return 0;
+    return Math.floor(this.elapsedMinutes() * this.weeklyBoss().combo);
+  });
+
+  /** HP do chefe já descontando o golpe da sessão em andamento. */
+  readonly bossPercentLive = computed(() => {
+    const boss = this.weeklyBoss();
+    const pending = this.isTimerRunning() ? this.sessionXp() : 0;
+    return Math.max(0, ((boss.hpLeft - pending) / boss.hpMax) * 100);
+  });
+
+  readonly xpToNext = computed(() => this.levelInfo().nextLevelXp - this.levelInfo().xp);
+
+  /** Barra de progresso segmentada (24 blocos). Cronômetro: minutos da hora atual. */
+  readonly progressSegments = computed(() => {
+    const total = 24;
+    const ratio = this.timerSvc.mode() === 'pomodoro'
+      ? this.timerSvc.progress()
+      : (this.timerSvc.elapsedSeconds() % 3600) / 3600;
+    const filled = Math.floor(ratio * total);
+    return Array.from({ length: total }, (_, i) => i < filled);
+  });
+
+  /** Mantém a janela PiP com o mesmo herói, chefe e cenário do palco. */
+  private pipSceneEffect = effect(() => {
+    this.pipSvc.setScene({
+      avatar: this.avatar(),
+      weapon: this.equippedWeapon(),
+      monster: this.weeklyBoss().monster,
+      bossPercent: this.bossPercentLive(),
+      combo: this.weeklyBoss().combo,
+      scenario: this.scenario(),
+      activityIcon: this.selectedType()?.icon ?? '',
+    });
+  });
+
   // ─── Lifecycle ────────────────────────────────────────────────────────────
 
   ngOnInit(): void {
@@ -332,6 +427,7 @@ export class TimerComponent implements OnInit, OnDestroy {
       this.sessionSvc.getPresets$().subscribe(p => this.presets.set(p)),
       this.sessionSvc.getSessions$().subscribe(s => this.allSessions.set(s)),
       this.sessionSvc.getDailyGoal$().subscribe(minutes => this.dailyGoalMinutes.set(minutes)),
+      this.sessionSvc.getGameProfile$().subscribe(p => this.profile.set(p)),
     );
   }
 
@@ -458,8 +554,8 @@ export class TimerComponent implements OnInit, OnDestroy {
 
   async addActivityType(): Promise<void> {
     if (!this.newTypeName.trim()) return;
-    await this.sessionSvc.addActivityType({ name: this.newTypeName.trim(), icon: this.newTypeIcon || '📌', color: this.newTypeColor });
-    this.newTypeName = ''; this.newTypeIcon = '📌'; this.newTypeColor = '#F26B3A';
+    await this.sessionSvc.addActivityType({ name: this.newTypeName.trim(), icon: this.newTypeIcon || 'px:pin', color: this.newTypeColor });
+    this.newTypeName = ''; this.newTypeIcon = 'px:book'; this.newTypeColor = '#F26B3A';
     this.showAddType.set(false);
   }
 
@@ -616,7 +712,7 @@ export class TimerComponent implements OnInit, OnDestroy {
         this.bannerTimeout = setTimeout(() => this.showSaveBanner.set(false), 4000);
         const combo = bossAfter.combo > 1 ? ` (combo ×${bossAfter.combo})` : '';
         this.toastService.success(
-          `Sessão de ${this.formatDuration(elapsed)} salva! ⚔️ -${bossDamage} HP no chefe${combo}`,
+          `Sessão de ${this.formatDuration(elapsed)} salva! -${bossDamage} HP no chefe${combo}`,
           3500
         );
       }
@@ -765,7 +861,7 @@ export class TimerComponent implements OnInit, OnDestroy {
     const elapsed = this.timerSvc.elapsedSeconds();
     const activity = this.currentCycleActivity?.name || 'Atividade';
     this.playNotificationSound();
-    if (this.isAppVisible) this.toastService.success(`🎉 ${mode === 'pomodoro' ? 'Pomodoro' : 'Cronômetro'} concluído! ${activity} · ${this.formatDuration(elapsed)}`, 5000);
+    if (this.isAppVisible) this.toastService.success(`${mode === 'pomodoro' ? 'Pomodoro' : 'Cronômetro'} concluído! ${activity} · ${this.formatDuration(elapsed)}`, 5000);
     this.showSystemNotification(mode, activity, elapsed);
   }
 

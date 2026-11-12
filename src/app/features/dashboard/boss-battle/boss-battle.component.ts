@@ -1,10 +1,12 @@
 import { Component, Input, OnChanges, SimpleChanges, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { WeeklyBossState } from '../../../core/game/weekly-boss';
-import { AvatarConfig, Weapon, DEFAULT_AVATAR } from '../../../core/game/game-data';
+import { WeeklyBossState, monsterForWeek } from '../../../core/game/weekly-boss';
+import { parseDateKey, toDateKey } from '../../../core/game/streak';
+import { AvatarConfig, MonsterVariant, Weapon, DEFAULT_AVATAR } from '../../../core/game/game-data';
 import { Sprite, buildHeroSprite, buildMonsterSprite } from '../../../core/game/sprites';
 import { Scenario, buildScenarioDecor, DEFAULT_SCENARIO_ID, findScenario, SCENARIOS } from '../../../core/game/scenarios';
 import { PixelSpriteComponent } from '../../../shared/pixel-sprite/pixel-sprite.component';
+import { PixelIconComponent } from '../../../shared/pixel-icon/pixel-icon.component';
 
 interface DamageFloat {
   id: number;
@@ -18,11 +20,11 @@ const CELEBRATE_MS = 1800;
 @Component({
   selector: 'app-boss-battle',
   standalone: true,
-  imports: [CommonModule, PixelSpriteComponent],
+  imports: [CommonModule, PixelSpriteComponent, PixelIconComponent],
   template: `
     <section class="boss-card" [class.defeated]="state?.defeated">
       <header class="boss-header">
-        <h3>⚔️ Chefe da semana</h3>
+        <h3>Chefe da semana</h3>
         @if (state) {
           <span class="week">{{ formatWeek(state.weekStart, state.weekEnd) }}</span>
         }
@@ -38,7 +40,7 @@ const CELEBRATE_MS = 1800;
           <div class="stage">
             <app-pixel-sprite class="hero" [sprite]="hero" label="Seu personagem"></app-pixel-sprite>
 
-            <span class="vs" aria-hidden="true">⚔</span>
+            <span class="vs" aria-hidden="true"><app-pixel-icon name="sword" [size]="24"></app-pixel-icon></span>
 
             <div class="monster-wrap">
               <div class="float-layer" aria-hidden="true">
@@ -49,6 +51,7 @@ const CELEBRATE_MS = 1800;
               <app-pixel-sprite class="monster" [class.hit]="hitting" [sprite]="monster"
                                 [label]="state.monster.name"></app-pixel-sprite>
               <span class="monster-name">{{ state.monster.name }}</span>
+              <span class="monster-title">{{ state.monster.title }}</span>
             </div>
           </div>
         </div>
@@ -65,14 +68,24 @@ const CELEBRATE_MS = 1800;
         </div>
 
         @if (state.defeated) {
-          <p class="victory">🏆 Chefe derrotado! Nova batalha começa no próximo domingo.</p>
+          <p class="victory"><app-pixel-icon name="trophy" [size]="16"></app-pixel-icon> Chefe derrotado! Nova batalha começa no próximo domingo.</p>
         } @else {
           <div class="status">
-            <span class="combo" [class.active]="state.combo > 1">⚡ Combo ×{{ state.combo }}</span>
+            <span class="combo" [class.active]="state.combo > 1"><app-pixel-icon name="bolt" [size]="14"></app-pixel-icon> Combo ×{{ state.combo }}</span>
             <span class="shield" [class.used]="!state.shieldAvailable">
-              🛡️ {{ state.shieldAvailable ? 'Escudo disponível' : 'Escudo usado' }}
+              <app-pixel-icon name="shield" [size]="14"></app-pixel-icon> {{ state.shieldAvailable ? 'Escudo disponível' : 'Escudo usado' }}
             </span>
             <span class="hint">1 min de foco = 1 de dano</span>
+          </div>
+        }
+
+        @if (nextMonster && nextSprite) {
+          <div class="next-boss">
+            <app-pixel-sprite class="next-sprite" [sprite]="nextSprite" [label]="nextMonster.name"></app-pixel-sprite>
+            <div class="next-info">
+              <span class="next-label">Próximo chefe · domingo</span>
+              <strong>{{ nextMonster.name }}</strong>
+            </div>
           </div>
         }
       }
@@ -82,14 +95,14 @@ const CELEBRATE_MS = 1800;
     :host { display: block; }
 
     .boss-card {
-      background: color-mix(in srgb, var(--bg-tertiary) 82%, transparent);
-      border: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
-      border-radius: 20px;
+      height: 100%;
+      background: var(--bg-card);
+      border: 2px solid var(--border-strong);
+      box-shadow: 4px 4px 0 var(--px-shadow-color);
       padding: 1.25rem;
       display: flex;
       flex-direction: column;
       gap: 1rem;
-      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1);
     }
 
     .boss-header {
@@ -99,15 +112,15 @@ const CELEBRATE_MS = 1800;
       gap: 0.5rem;
       flex-wrap: wrap;
 
-      h3 { margin: 0; font-size: 1rem; color: var(--text-primary); }
+      h3 { margin: 0; font-family: var(--font-pixel); font-size: 1.2rem; font-weight: 600; color: var(--text-primary); }
       .week { font-size: 0.8rem; color: var(--text-muted); }
     }
 
     .arena {
       position: relative;
       overflow: hidden;
-      border-radius: 12px;
-      min-height: 170px;
+      border: 3px solid var(--px-shadow-color);
+      min-height: 190px;
       padding: 1rem 0.5rem 0;
     }
 
@@ -170,7 +183,8 @@ const CELEBRATE_MS = 1800;
       left: 50%;
       top: 10px;
       transform: translateX(-50%);
-      font-weight: 800;
+      font-family: var(--font-pixel);
+      font-weight: 700;
       font-size: 1.1rem;
       color: #ff4d6d;
       text-shadow: 2px 2px 0 #1c1c1e;
@@ -182,6 +196,44 @@ const CELEBRATE_MS = 1800;
       font-size: 0.75rem;
       color: #f5f5f7;
       text-shadow: 1px 1px 0 #1c1c1e;
+    }
+
+    .monster-title {
+      font-family: var(--font-hud);
+      font-size: 0.5rem;
+      text-transform: uppercase;
+      color: #f5f5f7;
+      background: rgba(10, 11, 14, 0.55);
+      padding: 1px 5px;
+    }
+
+    .next-boss {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.5rem 0.75rem;
+      background: var(--bg-inset);
+      border: 2px dashed var(--border-strong);
+    }
+
+    .next-sprite {
+      width: 36px;
+      filter: brightness(0.25) saturate(0);
+    }
+
+    .next-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+
+      strong { font-family: var(--font-pixel); font-size: 0.95rem; color: var(--text-primary); }
+    }
+
+    .next-label {
+      font-family: var(--font-hud);
+      font-size: 0.55rem;
+      text-transform: uppercase;
+      color: var(--text-muted);
     }
 
     .vs {
@@ -198,17 +250,19 @@ const CELEBRATE_MS = 1800;
 
     .hp-bar {
       height: 14px;
-      border-radius: 7px;
-      background: var(--bg-primary);
-      border: 1px solid var(--border-color);
+      background: var(--bg-inset);
+      border: 2px solid var(--px-shadow-color);
       overflow: hidden;
     }
 
     .hp-fill {
       height: 100%;
-      background: linear-gradient(90deg, #ff4d6d, #ffb366);
-      transition: width 0.6s ease;
+      background: var(--hp);
+      box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.25);
+      transition: width 0.6s steps(12);
     }
+
+    .combo, .shield, .victory, .vs { display: inline-flex; align-items: center; gap: 0.35rem; }
 
     .hp-text {
       margin-top: 0.4rem;
@@ -295,6 +349,8 @@ export class BossBattleComponent implements OnChanges, OnDestroy {
 
   hero: Sprite | null = null;
   monster: Sprite | null = null;
+  nextMonster: MonsterVariant | null = null;
+  nextSprite: Sprite | null = null;
   decor: Sprite | null = null;
   skyGradient = '';
 
@@ -308,6 +364,12 @@ export class BossBattleComponent implements OnChanges, OnDestroy {
   ngOnChanges(changes: SimpleChanges): void {
     this.hero = buildHeroSprite(this.avatar, this.weapon);
     this.monster = this.state ? buildMonsterSprite(this.state.monster) : null;
+    if (this.state) {
+      const next = parseDateKey(this.state.weekEnd);
+      next.setDate(next.getDate() + 1);
+      this.nextMonster = monsterForWeek(toDateKey(next));
+      this.nextSprite = buildMonsterSprite(this.nextMonster);
+    }
 
     const scn = this.scenario ?? findScenario(DEFAULT_SCENARIO_ID) ?? SCENARIOS[0];
     this.decor = buildScenarioDecor(scn);
