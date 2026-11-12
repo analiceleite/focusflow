@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" role="img" aria-label="FocusFlow">
+  <!-- Trilha: anel completo, suave -->
+  <circle cx="24" cy="24" r="17" fill="none" stroke="#F26B3A" stroke-opacity="0.22" stroke-width="5"/>
+  <!-- Progresso: 3/4 do anel, a partir do topo -->
+  <circle cx="24" cy="24" r="17" fill="none" stroke="#F26B3A" stroke-width="5" stroke-linecap="round"
+          stroke-dasharray="80.1 106.8" transform="rotate(-90 24 24)"/>
+  <!-- Foco: o ponto no centro -->
+  <circle cx="24" cy="24" r="4.5" fill="#F26B3A"/>
+</svg>
