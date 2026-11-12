@@ -114,7 +114,13 @@ const MONSTER = buildSprite(
         @if (state.defeated) {
           <p class="victory">🏆 Chefe derrotado! Nova batalha começa no próximo domingo.</p>
         } @else {
-          <p class="hint">Cada minuto de foco causa 1 de dano.</p>
+          <div class="status">
+            <span class="combo" [class.active]="state.combo > 1">⚡ Combo ×{{ state.combo }}</span>
+            <span class="shield" [class.used]="!state.shieldAvailable">
+              🛡️ {{ state.shieldAvailable ? 'Escudo disponível' : 'Escudo usado' }}
+            </span>
+            <span class="hint">1 min de foco = 1 de dano</span>
+          </div>
         }
       }
     </section>
@@ -204,6 +210,38 @@ const MONSTER = buildSprite(
       color: var(--text-secondary);
       strong { color: var(--text-primary); }
       .dmg { color: var(--text-muted); }
+    }
+
+    .status {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+      font-size: 0.8rem;
+    }
+
+    .status span {
+      padding: 0.2rem 0.6rem;
+      border-radius: 999px;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+    }
+
+    .combo.active {
+      border-color: var(--accent-warning);
+      color: var(--accent-warning);
+      font-weight: 600;
+    }
+
+    .shield.used {
+      opacity: 0.55;
+    }
+
+    .status .hint {
+      border: none;
+      padding: 0;
+      margin-left: auto;
+      color: var(--text-muted);
     }
 
     .hint, .victory {

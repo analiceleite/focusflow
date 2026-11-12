@@ -14,6 +14,7 @@ import { SessionService } from '../../core/services/session.service';
 import { Session } from 'src/app/core/interfaces/timer.interface';
 import { AuthService } from '../../core/services/auth.service';
 import { computeWeeklyBoss } from '../../core/game/weekly-boss';
+import { computeStreakInfo } from '../../core/game/streak';
 import { BossBattleComponent } from './boss-battle/boss-battle.component';
 
 @Component({
@@ -162,7 +163,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // ─── Computed: métricas ───────────────────────────────────────────────────
 
   // Chefe da semana (Fase 1 da gamificação): depende só das sessões já carregadas
-  readonly weeklyBoss = computed(() => computeWeeklyBoss(this.sessions()));
+  readonly weeklyBoss = computed(() => computeWeeklyBoss(this.sessions(), new Date(), this.streakInfo()));
 
   readonly totalSeconds = computed(() =>
     this.filteredSessions().reduce((acc, s) => acc + s.durationSeconds, 0)
@@ -193,27 +194,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return Array.from(map.values()).sort((a, b) => b.totalSeconds - a.totalSeconds);
   });
 
-  readonly currentStreak = computed(() => {
-    const dates = new Set(this.sessions().map(s => s.date));
-    const today = new Date();
-    let streak = 0;
-    let current = new Date(today);
-
-    while (true) {
-      const dateStr = this.getLocalDateString(current);
-      if (dates.has(dateStr)) {
-        streak++;
-        current.setDate(current.getDate() - 1);
-      } else {
-        if (streak === 0 && dateStr === this.getLocalDateString(today)) {
-          current.setDate(current.getDate() - 1);
-          continue;
-        }
-        break;
-      }
-    }
-    return streak;
-  });
+  // Ofensiva e escudo vêm da mesma lógica usada pelo chefe da semana
+  readonly streakInfo = computed(() => computeStreakInfo(this.sessions()));
+  readonly currentStreak = computed(() => this.streakInfo().current);
 
   readonly bestStreak = computed(() => {
     const allDates = [...new Set(this.sessions().map(s => s.date))].sort();

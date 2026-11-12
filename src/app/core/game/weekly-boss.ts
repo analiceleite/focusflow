@@ -1,9 +1,10 @@
 import { Session } from '../interfaces/timer.interface';
+import { StreakInfo, comboMultiplier, computeStreakInfo, toDateKey } from './streak';
 
 /** Meta semanal que define o HP do chefe: 10 h de foco = 600 HP. */
 export const BOSS_HP_MINUTES = 600;
 
-/** Dano causado por cada minuto de foco. */
+/** Dano base causado por cada minuto de foco (antes do combo). */
 export const DAMAGE_PER_MINUTE = 1;
 
 export interface WeeklyBossState {
@@ -14,33 +15,48 @@ export interface WeeklyBossState {
   hpLeft: number;
   percent: number; // 0..100 de HP restante
   defeated: boolean;
+  /** Combo atual da ofensiva (1, 1.2 ou 1.5). */
+  combo: number;
+  /** Dias seguidos ativos. */
+  streak: number;
+  /** Se ainda há escudo nesta semana. */
+  shieldAvailable: boolean;
 }
 
-function toLocalDateString(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
+/**
+ * Calcula o estado do chefe da semana (domingo a sábado).
+ * O dano é somado por dia: minutos do dia × multiplicador de combo daquele dia.
+ */
+export function computeWeeklyBoss(
+  sessions: Session[],
+  now: Date = new Date(),
+  streak: StreakInfo = computeStreakInfo(sessions, now)
+): WeeklyBossState {
+  const weekStartDate = new Date(now);
+  weekStartDate.setHours(0, 0, 0, 0);
+  weekStartDate.setDate(weekStartDate.getDate() - weekStartDate.getDay());
 
-/** Calcula o estado do chefe da semana (domingo a sábado) a partir das sessões. */
-export function computeWeeklyBoss(sessions: Session[], now: Date = new Date()): WeeklyBossState {
-  const start = new Date(now);
-  start.setHours(0, 0, 0, 0);
-  start.setDate(start.getDate() - start.getDay());
+  const weekEndDate = new Date(weekStartDate);
+  weekEndDate.setDate(weekEndDate.getDate() + 6);
 
-  const end = new Date(start);
-  end.setDate(end.getDate() + 6);
+  const weekStart = toDateKey(weekStartDate);
+  const weekEnd = toDateKey(weekEndDate);
 
-  const weekStart = toLocalDateString(start);
-  const weekEnd = toLocalDateString(end);
+  // Segundos por dia dentro da semana. Datas são YYYY-MM-DD, então a comparação é segura.
+  const secondsByDay = new Map<string, number>();
+  for (const s of sessions) {
+    if (s.date >= weekStart && s.date <= weekEnd) {
+      secondsByDay.set(s.date, (secondsByDay.get(s.date) ?? 0) + s.durationSeconds);
+    }
+  }
 
-  // Datas são strings YYYY-MM-DD, então a comparação lexicográfica é segura.
-  const seconds = sessions
-    .filter(s => s.date >= weekStart && s.date <= weekEnd)
-    .reduce((acc, s) => acc + s.durationSeconds, 0);
+  let damage = 0;
+  for (const [date, seconds] of secondsByDay) {
+    const minutes = Math.floor(seconds / 60);
+    const combo = streak.comboByDate.get(date) ?? 1;
+    damage += Math.floor(minutes * DAMAGE_PER_MINUTE * combo);
+  }
 
-  const damage = Math.floor(seconds / 60) * DAMAGE_PER_MINUTE;
   const hpLeft = Math.max(0, BOSS_HP_MINUTES - damage);
 
   return {
@@ -51,5 +67,8 @@ export function computeWeeklyBoss(sessions: Session[], now: Date = new Date()): 
     hpLeft,
     percent: (hpLeft / BOSS_HP_MINUTES) * 100,
     defeated: hpLeft === 0,
+    combo: comboMultiplier(streak.current),
+    streak: streak.current,
+    shieldAvailable: streak.shieldAvailableThisWeek,
   };
 }

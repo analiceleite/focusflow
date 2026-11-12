@@ -14,6 +14,7 @@ import { SpotifyPlaylist } from 'src/app/core/interfaces/spotify.interface';
 import { AuthService } from '../../core/services/auth.service';
 import { PipService } from '../../core/services/pip.service';
 import { SpotifyService } from 'src/app/core/services/spotify.service';
+import { computeWeeklyBoss } from 'src/app/core/game/weekly-boss';
 
 @Component({
   selector: 'app-timer',
@@ -615,6 +616,14 @@ export class TimerComponent implements OnInit, OnDestroy {
 
   private async performSave(type: ActivityType, elapsed: number, silent = false): Promise<boolean> {
     const now = Date.now();
+    const date = this.getLocalDateString();
+    // Dano ao chefe = diferença do estado da semana com e sem esta sessão
+    const bossBefore = computeWeeklyBoss(this.allSessions());
+    const bossAfter = computeWeeklyBoss([
+      ...this.allSessions(),
+      { date, durationSeconds: elapsed } as Session,
+    ]);
+    const bossDamage = bossAfter.damage - bossBefore.damage;
     try {
       await this.sessionSvc.saveSession({
         activityTypeId: type.id!,
@@ -633,7 +642,11 @@ export class TimerComponent implements OnInit, OnDestroy {
         this.showSaveBanner.set(true);
         if (this.bannerTimeout) clearTimeout(this.bannerTimeout);
         this.bannerTimeout = setTimeout(() => this.showSaveBanner.set(false), 4000);
-        this.toastService.success(`Sessão de ${this.formatDuration(elapsed)} salva!`, 3000);
+        const combo = bossAfter.combo > 1 ? ` (combo ×${bossAfter.combo})` : '';
+        this.toastService.success(
+          `Sessão de ${this.formatDuration(elapsed)} salva! ⚔️ -${bossDamage} HP no chefe${combo}`,
+          3500
+        );
       }
       return true;
     } catch {
