@@ -11,6 +11,7 @@ import {
 } from '../../../core/game/game-data';
 import { LevelInfo, Victory, ownedWeapons } from '../../../core/game/progress';
 import { Sprite, buildHeroSprite } from '../../../core/game/sprites';
+import { SCENARIOS, Scenario } from '../../../core/game/scenarios';
 
 type ColorField = keyof AvatarConfig;
 
@@ -59,6 +60,18 @@ type ColorField = keyof AvatarConfig;
                       (click)="setColor('shirt', c)" [attr.aria-label]="'Roupa ' + c"></button>
             }
           </div>
+        </div>
+      </div>
+
+      <div class="block">
+        <h4>Cenário</h4>
+        <div class="weapons">
+          @for (s of scenarios; track s.id) {
+            <button class="chip" [class.selected]="scenario?.id === s.id" [disabled]="(level?.level ?? 1) < s.minLevel"
+                    (click)="scenarioChange.emit(s.id)">
+              {{ (level?.level ?? 1) < s.minLevel ? '🔒 Nível ' + s.minLevel + ' · ' + s.name : s.name }}
+            </button>
+          }
         </div>
       </div>
 
@@ -203,6 +216,11 @@ type ColorField = keyof AvatarConfig;
       cursor: pointer;
     }
 
+    .chip:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
     .chip.selected {
       border-color: var(--accent-primary);
       color: var(--accent-primary);
@@ -243,9 +261,13 @@ export class GamePanelComponent implements OnChanges {
   @Input() weapon: Weapon | null = null;
   @Input() victories: Victory[] = [];
 
+  @Input() scenario: Scenario | null = null;
+
   @Output() avatarChange = new EventEmitter<AvatarConfig>();
   @Output() weaponChange = new EventEmitter<string | null>();
+  @Output() scenarioChange = new EventEmitter<string>();
 
+  readonly scenarios = SCENARIOS;
   readonly hairOptions = HAIR_OPTIONS;
   readonly skinOptions = SKIN_OPTIONS;
   readonly shirtOptions = SHIRT_OPTIONS;

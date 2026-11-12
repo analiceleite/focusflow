@@ -62,7 +62,8 @@
             <div class="col-left">
 
                 <!-- Chefe da semana -->
-                <app-boss-battle [state]="weeklyBoss()" [avatar]="avatar()" [weapon]="equippedWeapon()"></app-boss-battle>
+                <app-boss-battle [state]="weeklyBoss()" [avatar]="avatar()" [weapon]="equippedWeapon()"
+                                 [scenario]="scenario()"></app-boss-battle>
 
                 <!-- Herói: nível, visual, armas e bestiário -->
                 <app-game-panel
@@ -71,7 +72,9 @@
                     [weapon]="equippedWeapon()"
                     [victories]="victories()"
                     (avatarChange)="onAvatarChange($event)"
-                    (weaponChange)="onWeaponChange($event)">
+                    [scenario]="scenario()"
+                    (weaponChange)="onWeaponChange($event)"
+                    (scenarioChange)="onScenarioChange($event)">
                 </app-game-panel>
 
                 <!-- 4 cards de métricas -->

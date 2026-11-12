@@ -7,6 +7,7 @@ import { Sprite } from '../../core/game/sprites';
   standalone: true,
   template: `
     <svg [attr.viewBox]="'0 0 ' + sprite.width + ' ' + sprite.height"
+         [attr.preserveAspectRatio]="stretch ? 'none' : null"
          shape-rendering="crispEdges" role="img" [attr.aria-label]="label">
       @for (p of sprite.pixels; track $index) {
         <rect [attr.x]="p.x" [attr.y]="p.y" width="1" height="1" [attr.fill]="p.fill"/>
@@ -26,4 +27,6 @@ import { Sprite } from '../../core/game/sprites';
 export class PixelSpriteComponent {
   @Input({ required: true }) sprite!: Sprite;
   @Input() label = '';
+  /** Estica o sprite para preencher a caixa (usado em cenários de fundo). */
+  @Input() stretch = false;
 }

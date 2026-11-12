@@ -22,6 +22,7 @@ import { AvatarConfig } from '../game/game-data';
 export interface GameProfile {
   avatar: AvatarConfig | null;
   equippedWeapon: string | null;
+  scenario: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -139,6 +140,7 @@ export class SessionService {
       map((data: any) => ({
         avatar: data?.avatar ?? null,
         equippedWeapon: data?.equippedWeapon ?? null,
+        scenario: data?.scenario ?? null,
       }))
     );
   }

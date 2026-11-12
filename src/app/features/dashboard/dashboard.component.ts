@@ -19,6 +19,12 @@ import { AvatarConfig, DEFAULT_AVATAR, findWeapon } from '../../core/game/game-d
 import { computeTotalXp, computeVictories, levelFromXp, ownedWeapons } from '../../core/game/progress';
 import { BossBattleComponent } from './boss-battle/boss-battle.component';
 import { GamePanelComponent } from './game-panel/game-panel.component';
+import {
+  DEFAULT_SCENARIO_ID,
+  Scenario,
+  findScenario,
+  unlockedScenarios,
+} from '../../core/game/scenarios';
 import { GameProfile } from '../../core/services/session.service';
 
 @Component({
@@ -56,7 +62,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private sub?: Subscription;
   private profileSub?: Subscription;
 
-  profile = signal<GameProfile>({ avatar: null, equippedWeapon: null });
+  profile = signal<GameProfile>({ avatar: null, equippedWeapon: null, scenario: null });
+
+  /** Só fica true após a primeira leitura das sessões (evita animar o histórico ao abrir). */
+  sessionsLoaded = signal(false);
+
+  readonly scenario = computed<Scenario>(() => {
+    const unlocked = unlockedScenarios(this.levelInfo().level);
+    const chosen = findScenario(this.profile().scenario);
+    if (chosen && unlocked.some(s => s.id === chosen.id)) return chosen;
+    return findScenario(DEFAULT_SCENARIO_ID)!;
+  });
 
   readonly avatar = computed<AvatarConfig>(() => this.profile().avatar ?? DEFAULT_AVATAR);
 
@@ -184,7 +200,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // ─── Computed: métricas ───────────────────────────────────────────────────
 
   // Chefe da semana (Fase 1 da gamificação): depende só das sessões já carregadas
-  readonly weeklyBoss = computed(() => computeWeeklyBoss(this.sessions(), new Date(), this.streakInfo()));
+  readonly weeklyBoss = computed(() =>
+    this.sessionsLoaded() ? computeWeeklyBoss(this.sessions(), new Date(), this.streakInfo()) : null
+  );
 
   readonly totalSeconds = computed(() =>
     this.filteredSessions().reduce((acc, s) => acc + s.durationSeconds, 0)
@@ -265,7 +283,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // ─── Lifecycle ────────────────────────────────────────────────────────────
 
   ngOnInit(): void {
-    this.sub = this.sessionSvc.getSessions$().subscribe(s => this.sessions.set(s));
+    this.sub = this.sessionSvc.getSessions$().subscribe(s => {
+      this.sessions.set(s);
+      this.sessionsLoaded.set(true);
+    });
     this.profileSub = this.sessionSvc.getGameProfile$().subscribe(p => this.profile.set(p));
   }
 
@@ -279,6 +300,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
   onAvatarChange(avatar: AvatarConfig): void {
     this.profile.update(p => ({ ...p, avatar }));
     this.sessionSvc.updateGameProfile({ avatar }).catch(() => alert('Erro ao salvar o visual do herói.'));
+  }
+
+  onScenarioChange(id: string): void {
+    this.profile.update(p => ({ ...p, scenario: id }));
+    this.sessionSvc.updateGameProfile({ scenario: id }).catch(() => alert('Erro ao salvar o cenário.'));
   }
 
   onWeaponChange(id: string | null): void {

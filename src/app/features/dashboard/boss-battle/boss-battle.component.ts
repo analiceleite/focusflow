@@ -1,9 +1,19 @@
-import { Component, Input, OnChanges } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { WeeklyBossState } from '../../../core/game/weekly-boss';
 import { AvatarConfig, Weapon, DEFAULT_AVATAR } from '../../../core/game/game-data';
 import { Sprite, buildHeroSprite, buildMonsterSprite } from '../../../core/game/sprites';
+import { Scenario, buildScenarioDecor, DEFAULT_SCENARIO_ID, findScenario, SCENARIOS } from '../../../core/game/scenarios';
 import { PixelSpriteComponent } from '../../../shared/pixel-sprite/pixel-sprite.component';
+
+interface DamageFloat {
+  id: number;
+  value: number;
+}
+
+const HIT_MS = 450;
+const FLOAT_MS = 1100;
+const CELEBRATE_MS = 1800;
 
 @Component({
   selector: 'app-boss-battle',
@@ -19,14 +29,27 @@ import { PixelSpriteComponent } from '../../../shared/pixel-sprite/pixel-sprite.
       </header>
 
       @if (state && hero && monster) {
-        <div class="arena">
-          <app-pixel-sprite class="hero" [sprite]="hero" label="Seu personagem"></app-pixel-sprite>
+        <div class="arena" [class.celebrate]="celebrating" [style.background]="skyGradient">
+          @if (decor) {
+            <app-pixel-sprite class="decor" [sprite]="decor" [stretch]="true"
+                              [label]="scenario?.name ?? ''"></app-pixel-sprite>
+          }
 
-          <span class="vs" aria-hidden="true">⚔</span>
+          <div class="stage">
+            <app-pixel-sprite class="hero" [sprite]="hero" label="Seu personagem"></app-pixel-sprite>
 
-          <div class="monster-wrap">
-            <app-pixel-sprite class="monster" [sprite]="monster" [label]="state.monster.name"></app-pixel-sprite>
-            <span class="monster-name">{{ state.monster.name }}</span>
+            <span class="vs" aria-hidden="true">⚔</span>
+
+            <div class="monster-wrap">
+              <div class="float-layer" aria-hidden="true">
+                @for (f of floats; track f.id) {
+                  <span class="float">-{{ f.value }}</span>
+                }
+              </div>
+              <app-pixel-sprite class="monster" [class.hit]="hitting" [sprite]="monster"
+                                [label]="state.monster.name"></app-pixel-sprite>
+              <span class="monster-name">{{ state.monster.name }}</span>
+            </div>
           </div>
         </div>
 
@@ -81,15 +104,34 @@ import { PixelSpriteComponent } from '../../../shared/pixel-sprite/pixel-sprite.
     }
 
     .arena {
+      position: relative;
+      overflow: hidden;
+      border-radius: 12px;
+      min-height: 170px;
+      padding: 1rem 0.5rem 0;
+    }
+
+    .arena.celebrate {
+      animation: flash 0.6s steps(3) 3;
+    }
+
+    .decor {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 56px;
+      z-index: 0;
+    }
+
+    .stage {
+      position: relative;
+      z-index: 1;
       display: flex;
       align-items: flex-end;
       justify-content: space-around;
       gap: 0.75rem;
-      padding: 1rem 0.5rem 0.25rem;
-      background:
-        linear-gradient(to top, color-mix(in srgb, var(--border-color) 60%, transparent) 0 6px, transparent 6px);
-      border-radius: 12px;
-      min-height: 150px;
+      padding-bottom: 56px;
     }
 
     .hero {
@@ -98,6 +140,7 @@ import { PixelSpriteComponent } from '../../../shared/pixel-sprite/pixel-sprite.
     }
 
     .monster-wrap {
+      position: relative;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -109,9 +152,36 @@ import { PixelSpriteComponent } from '../../../shared/pixel-sprite/pixel-sprite.
       animation: idle 1.6s steps(2) infinite;
     }
 
+    .monster.hit {
+      animation: shake 0.45s steps(4) 1;
+    }
+
+    .float-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 0;
+      pointer-events: none;
+    }
+
+    .float {
+      position: absolute;
+      left: 50%;
+      top: 10px;
+      transform: translateX(-50%);
+      font-weight: 800;
+      font-size: 1.1rem;
+      color: #ff4d6d;
+      text-shadow: 2px 2px 0 #1c1c1e;
+      animation: rise 1.1s ease-out forwards;
+      white-space: nowrap;
+    }
+
     .monster-name {
       font-size: 0.75rem;
-      color: var(--text-muted);
+      color: #f5f5f7;
+      text-shadow: 1px 1px 0 #1c1c1e;
     }
 
     .vs {
@@ -192,22 +262,88 @@ import { PixelSpriteComponent } from '../../../shared/pixel-sprite/pixel-sprite.
       50% { transform: translateY(-4px); }
     }
 
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-6px); }
+      75% { transform: translateX(6px); }
+    }
+
+    @keyframes rise {
+      0% { opacity: 0; transform: translate(-50%, 0); }
+      15% { opacity: 1; }
+      100% { opacity: 0; transform: translate(-50%, -48px); }
+    }
+
+    @keyframes flash {
+      0%, 100% { filter: none; }
+      50% { filter: brightness(1.6); }
+    }
+
     @media (prefers-reduced-motion: reduce) {
-      .hero, .monster { animation: none; }
+      .hero, .monster, .monster.hit, .arena.celebrate, .float {
+        animation: none;
+      }
+      .float { opacity: 1; }
     }
   `],
 })
-export class BossBattleComponent implements OnChanges {
+export class BossBattleComponent implements OnChanges, OnDestroy {
   @Input() state: WeeklyBossState | null = null;
   @Input() avatar: AvatarConfig = DEFAULT_AVATAR;
   @Input() weapon: Weapon | null = null;
+  @Input() scenario: Scenario | null = null;
 
   hero: Sprite | null = null;
   monster: Sprite | null = null;
+  decor: Sprite | null = null;
+  skyGradient = '';
 
-  ngOnChanges(): void {
+  floats: DamageFloat[] = [];
+  hitting = false;
+  celebrating = false;
+
+  private nextFloatId = 1;
+  private timers: ReturnType<typeof setTimeout>[] = [];
+
+  ngOnChanges(changes: SimpleChanges): void {
     this.hero = buildHeroSprite(this.avatar, this.weapon);
     this.monster = this.state ? buildMonsterSprite(this.state.monster) : null;
+
+    const scn = this.scenario ?? findScenario(DEFAULT_SCENARIO_ID) ?? SCENARIOS[0];
+    this.decor = buildScenarioDecor(scn);
+    this.skyGradient = `linear-gradient(to bottom, ${scn.skyTop}, ${scn.skyBottom})`;
+
+    if (changes['state']) {
+      this.reactToStateChange(changes['state'].previousValue, changes['state'].currentValue);
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.timers.forEach(clearTimeout);
+  }
+
+  /** Animações só disparam em transições dentro da mesma semana, nunca no carregamento inicial. */
+  private reactToStateChange(prev: WeeklyBossState | null, cur: WeeklyBossState | null): void {
+    if (!prev || !cur || prev.weekStart !== cur.weekStart) return;
+
+    const dealt = cur.damage - prev.damage;
+    if (dealt > 0) {
+      this.hitting = true;
+      this.track(() => (this.hitting = false), HIT_MS);
+
+      const id = this.nextFloatId++;
+      this.floats = [...this.floats, { id, value: dealt }];
+      this.track(() => (this.floats = this.floats.filter(f => f.id !== id)), FLOAT_MS);
+    }
+
+    if (!prev.defeated && cur.defeated) {
+      this.celebrating = true;
+      this.track(() => (this.celebrating = false), CELEBRATE_MS);
+    }
+  }
+
+  private track(fn: () => void, ms: number): void {
+    this.timers.push(setTimeout(fn, ms));
   }
 
   formatWeek(start: string, end: string): string {
