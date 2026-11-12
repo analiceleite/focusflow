@@ -107,7 +107,7 @@
                                 <circle cx="120" cy="120" r="110" class="ring-bg" />
                                 @if (timerSvc.mode() === 'pomodoro') {
                                 <circle cx="120" cy="120" r="110" class="ring-progress"
-                                    [style.stroke]="selectedType()?.color || '#6C63FF'"
+                                    [style.stroke]="selectedType()?.color || '#f26b3a'"
                                     [style.stroke-dashoffset]="ringOffset()" />
                                 }
                             </svg>
@@ -127,7 +127,7 @@
                         <div class="controls">
                             @if (timerSvc.state() === 'idle' || timerSvc.state() === 'finished') {
                             <div class="control-row control-row-primary">
-                                <button class="btn-main" [style.background]="selectedType()?.color || '#6C63FF'"
+                                <button class="btn-main" [style.background]="selectedType()?.color || '#f26b3a'"
                                     (click)="startTimer()">
                                     {{ timerSvc.state() === 'finished' ? '🔄 Nova sessão' : '▶ Iniciar' }}
                                 </button>
@@ -160,7 +160,7 @@
                             </div>
                             } @else if (timerSvc.state() === 'paused') {
                             <div class="control-row control-row-primary">
-                                <button class="btn-main" [style.background]="selectedType()?.color || '#6C63FF'"
+                                <button class="btn-main" [style.background]="selectedType()?.color || '#f26b3a'"
                                     (click)="resumeTimer()">▶ Continuar</button>
                             </div>
                             <div class="control-row control-row-secondary">

@@ -18,7 +18,7 @@ export class PipService {
   private animFrameId: number | null = null;
   private isActive = false;
   private activityLabel: string = '';
-  private activityColor: string = '#6C63FF';
+  private activityColor: string = '#F26B3A';
 
   // Tick animation state
   private tickAlpha = 0;
@@ -56,7 +56,7 @@ export class PipService {
     };
   }
 
-  async toggle(activityColor: string = '#6C63FF', activityLabel: string = ''): Promise<void> {
+  async toggle(activityColor: string = '#F26B3A',activityLabel: string = ''): Promise<void> {
     if (!this.isSupported) return;
     if (this.isActive) await this.stop();
     else await this.start(activityColor, activityLabel);

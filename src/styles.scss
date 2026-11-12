@@ -1,85 +1,102 @@
-/* Theme Variables */
+/* Theme Variables · Brasa
+ * Tinta (escuro) e papel (claro) como base neutra.
+ * Brasa (#F26B3A) é o destaque da marca: só para ação principal, progresso e foco.
+ * Cores de atividade são definidas pelo usuário e não usam estes tokens.
+ */
 :root {
   /* Default (Dark Theme) */
-  --bg-primary: #1c1c1e;
-  --bg-secondary: #232325;
-  --bg-tertiary: #2c2c2e;
-  --bg-card: #1f1f21;
-  --bg-card-rgb: 31, 31, 33;
+  --bg-primary: #15171c;
+  --bg-secondary: #1b1e25;
+  --bg-tertiary: #222630;
+  --bg-card: #1a1d24;
+  --bg-card-rgb: 26, 29, 36;
 
-  --text-primary: #f5f5f7;
-  --text-secondary: #d1d1d6;
-  --text-muted: #8e8e93;
-  --text-disabled: #5a5a5f;
+  --text-primary: #f4f2ee;
+  --text-secondary: #cfcbc3;
+  --text-muted: #8a8780;
+  --text-disabled: #56534e;
 
-  --border-color: #3a3a3c;
-  --border-hover: #43D9AD;
+  --border-color: #2e3240;
+  --border-hover: #f26b3a;
 
-  --accent-primary: #6C63FF;
-  --accent-success: #43D9AD;
-  --accent-warning: #FFB366;
-  --accent-error: #ff6b6b;
+  --brand-primary: #f26b3a;
+  --brand-on-primary: #15171c;
 
-  --shadow-light: rgba(0, 0, 0, 0.12);
-  --shadow-medium: rgba(0, 0, 0, 0.22);
-  --shadow-strong: rgba(0, 0, 0, 0.32);
+  --accent-primary: #f26b3a;
+  --accent-success: #5fa889;
+  --accent-warning: #f5b841;
+  --accent-error: #e5484d;
+
+  --shadow-light: rgba(0, 0, 0, 0.14);
+  --shadow-medium: rgba(0, 0, 0, 0.24);
+  --shadow-strong: rgba(0, 0, 0, 0.34);
 
   /* Breakpoints */
   --mobile: 480px;
   --tablet: 768px;
   --desktop: 1024px;
+
+  /* Raio e espaçamento */
+  --radius-card: 12px;
+  --radius-control: 8px;
 }
 
 /* Light Theme */
 .light-theme {
-  --bg-primary: #f5f5f7;
+  --bg-primary: #f7f5f0;
   --bg-secondary: #ffffff;
-  --bg-tertiary: #f0f0f2;
+  --bg-tertiary: #efebe3;
   --bg-card: #ffffff;
   --bg-card-rgb: 255, 255, 255;
 
-  --text-primary: #1d1d1f;
-  --text-secondary: #3a3a3c;
-  --text-muted: #6e6e73;
-  --text-disabled: #a1a1a6;
+  --text-primary: #17181c;
+  --text-secondary: #3a3a40;
+  --text-muted: #6f6b63;
+  --text-disabled: #a8a398;
 
-  --border-color: #d2d2d7;
-  --border-hover: #43D9AD;
+  --border-color: #e2ddd2;
+  --border-hover: #f26b3a;
 
-  --accent-primary: #6C63FF;
-  --accent-success: #43D9AD;
-  --accent-warning: #FFB366;
-  --accent-error: #ff6b6b;
+  --brand-primary: #f26b3a;
+  --brand-on-primary: #15171c;
 
-  --shadow-light: rgba(0, 0, 0, 0.08);
-  --shadow-medium: rgba(0, 0, 0, 0.14);
-  --shadow-strong: rgba(0, 0, 0, 0.2);
+  --accent-primary: #f26b3a;
+  --accent-success: #5fa889;
+  --accent-warning: #f5b841;
+  --accent-error: #e5484d;
+
+  --shadow-light: rgba(40, 30, 10, 0.06);
+  --shadow-medium: rgba(40, 30, 10, 0.12);
+  --shadow-strong: rgba(40, 30, 10, 0.18);
 }
 
 /* Dark Theme (explicit) */
 .dark-theme {
-  --bg-primary: #1c1c1e;
-  --bg-secondary: #232325;
-  --bg-tertiary: #2c2c2e;
-  --bg-card: #1f1f21;
-  --bg-card-rgb: 31, 31, 33;
+  --bg-primary: #15171c;
+  --bg-secondary: #1b1e25;
+  --bg-tertiary: #222630;
+  --bg-card: #1a1d24;
+  --bg-card-rgb: 26, 29, 36;
 
-  --text-primary: #f5f5f7;
-  --text-secondary: #d1d1d6;
-  --text-muted: #8e8e93;
-  --text-disabled: #5a5a5f;
+  --text-primary: #f4f2ee;
+  --text-secondary: #cfcbc3;
+  --text-muted: #8a8780;
+  --text-disabled: #56534e;
 
-  --border-color: #3a3a3c;
-  --border-hover: #43D9AD;
+  --border-color: #2e3240;
+  --border-hover: #f26b3a;
 
-  --accent-primary: #6C63FF;
-  --accent-success: #43D9AD;
-  --accent-warning: #FFB366;
-  --accent-error: #ff6b6b;
+  --brand-primary: #f26b3a;
+  --brand-on-primary: #15171c;
 
-  --shadow-light: rgba(0, 0, 0, 0.12);
-  --shadow-medium: rgba(0, 0, 0, 0.22);
-  --shadow-strong: rgba(0, 0, 0, 0.32);
+  --accent-primary: #f26b3a;
+  --accent-success: #5fa889;
+  --accent-warning: #f5b841;
+  --accent-error: #e5484d;
+
+  --shadow-light: rgba(0, 0, 0, 0.14);
+  --shadow-medium: rgba(0, 0, 0, 0.24);
+  --shadow-strong: rgba(0, 0, 0, 0.34);
 }
 
 *,
@@ -93,11 +110,18 @@
 html,
 body {
   height: 100%;
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
   background: var(--bg-primary);
   color: var(--text-secondary);
   -webkit-font-smoothing: antialiased;
   transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Números tabulares: cronômetro e estatísticas não "pulam" ao mudar */
+.timer-time,
+.stat-value,
+.card-value {
+  font-variant-numeric: tabular-nums;
 }
 
 /* Remove number input arrows */

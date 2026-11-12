@@ -118,7 +118,7 @@ export class TimerComponent implements OnInit, OnDestroy {
   customMinutes = 25;
   newTypeName = '';
   newTypeIcon = '📌';
-  newTypeColor = '#6C63FF';
+  newTypeColor = '#F26B3A';
   presetMinutesInput = 25;
   presetLabel = '';
 
@@ -487,7 +487,7 @@ export class TimerComponent implements OnInit, OnDestroy {
   async addActivityType(): Promise<void> {
     if (!this.newTypeName.trim()) return;
     await this.sessionSvc.addActivityType({ name: this.newTypeName.trim(), icon: this.newTypeIcon || '📌', color: this.newTypeColor });
-    this.newTypeName = ''; this.newTypeIcon = '📌'; this.newTypeColor = '#6C63FF';
+    this.newTypeName = ''; this.newTypeIcon = '📌'; this.newTypeColor = '#F26B3A';
     this.showAddType.set(false);
   }
 
@@ -506,7 +506,7 @@ export class TimerComponent implements OnInit, OnDestroy {
   async deletePreset(id: string): Promise<void> { await this.sessionSvc.deletePreset(id); }
 
   async togglePip(): Promise<void> {
-    try { await this.pipSvc.toggle(this.selectedType()?.color ?? '#6C63FF', this.selectedType()?.name ?? ''); }
+    try { await this.pipSvc.toggle(this.selectedType()?.color ?? '#F26B3A',this.selectedType()?.name ?? ''); }
     catch (err) { console.error(err); }
   }
 

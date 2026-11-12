@@ -6,8 +6,8 @@ import { Injectable, signal, effect } from '@angular/core';
 export class ThemeService {
   private readonly THEME_KEY = 'focusflow-theme';
   private readonly THEME_BAR_COLORS = {
-    dark: '#1c1c1e',
-    light: '#f5f5f7'
+    dark: '#15171c',
+    light: '#f7f5f0'
   } as const;
 
   // Signal para o estado do tema

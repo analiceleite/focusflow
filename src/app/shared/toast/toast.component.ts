@@ -59,7 +59,7 @@ import { ToastService } from '../../core/services/toast.service';
 
     .toast-success {
       background: rgba(67, 217, 173, 0.9);
-      border-left: 4px solid #43D9AD;
+      border-left: 4px solid #5FA889;
       color: #0f1419;
     }
 
@@ -77,7 +77,7 @@ import { ToastService } from '../../core/services/toast.service';
 
     .toast-info {
       background: rgba(108, 99, 255, 0.9);
-      border-left: 4px solid #6C63FF;
+      border-left: 4px solid #F26B3A;
       color: #fff;
     }
 
