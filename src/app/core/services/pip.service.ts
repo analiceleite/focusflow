@@ -66,6 +66,9 @@ export class PipService {
 
   private activityLabel = '';
   private activityColor = '#F26B3A';
+  /** Meta diária: progresso (0..100+) e minutos da meta (0 = sem meta, barra escondida). */
+  private goalProgress = 0;
+  private dailyGoalMinutes = 0;
 
   // ── Cena ──
   private scene: PipScene = {
@@ -105,6 +108,12 @@ export class PipService {
     if (!this.heroSprites || prev.avatar !== next.avatar || prev.weapon !== next.weapon) this.buildHeroSprites();
     if (!this.monsterSprite || prev.monster !== next.monster) this.monsterSprite = buildMonsterSprite(next.monster);
     if (!this.decorSprite || prev.scenario !== next.scenario) this.decorSprite = buildScenarioDecor(next.scenario);
+  }
+
+  updateGoalProgress(progress: number, goalMinutes: number): void {
+    this.goalProgress = progress;
+    this.dailyGoalMinutes = goalMinutes;
+    try { this.draw(performance.now()); } catch { }
   }
 
   updateActivity(activityColor?: string, activityLabel?: string): void {
@@ -205,6 +214,7 @@ export class PipService {
     this.drawClock(ctx, st, t);
     this.drawSegments(ctx, st, t);
     this.drawStage(ctx, state, now);
+    this.drawGoal(ctx, t);
   }
 
   // ─── Partes ───────────────────────────────────────────────────────────────
@@ -227,10 +237,10 @@ export class PipService {
     const label = this.activityLabel.trim();
     if (!label) return;
     ctx.font = '600 11px "Pixelify Sans", sans-serif';
-    const maxW = W - (modeX + 24) - 30;
+    const maxW = this.rightEdge() - (modeX + 14) - 30;
     const text = this.ellipsize(ctx, label, maxW);
     const tw = Math.ceil(ctx.measureText(text).width);
-    const right = W - 10;
+    const right = this.rightEdge();
     ctx.fillStyle = t.textPrimary;
     ctx.textAlign = 'right';
     ctx.fillText(text, right, 14);
@@ -260,9 +270,10 @@ export class PipService {
     ctx.textBaseline = 'alphabetic';
     // Sombra dura deslocada na cor do estado
     ctx.fillStyle = this.withAlpha(st.color, 0.45);
-    ctx.fillText(time, W / 2 + 3, 62 + 3);
+    const cx = Math.round((10 + this.rightEdge()) / 2);
+    ctx.fillText(time, cx + 3, 62 + 3);
     ctx.fillStyle = t.textPrimary;
-    ctx.fillText(time, W / 2, 62);
+    ctx.fillText(time, cx, 62);
   }
 
   private drawSegments(ctx: CanvasRenderingContext2D, st: { color: string }, t: ThemeColors): void {
@@ -273,7 +284,7 @@ export class PipService {
     const filled = Math.floor(Math.min(1, ratio) * total);
     const gap = 2;
     const x0 = 10;
-    const segW = (W - x0 * 2 - gap * (total - 1)) / total;
+    const segW = (this.rightEdge() - x0 - gap * (total - 1)) / total;
     const y = 72;
     for (let i = 0; i < total; i++) {
       const x = Math.round(x0 + i * (segW + gap));
@@ -387,6 +398,34 @@ export class PipService {
     // Linha que separa palco do painel
     ctx.fillStyle = '#0a0b0e';
     ctx.fillRect(3, top - 2, W - 6, 2);
+  }
+
+  /** Borda direita do painel superior: abre espaço para a barra de meta quando existe meta. */
+  private rightEdge(): number {
+    return this.dailyGoalMinutes > 0 ? W - 22 : W - 10;
+  }
+
+  /** Meta diária: barra vertical segmentada à direita, enche de baixo para cima. */
+  private drawGoal(ctx: CanvasRenderingContext2D, t: ThemeColors): void {
+    if (this.dailyGoalMinutes <= 0) return;
+    const x = W - 16;
+    const w = 8;
+    const top = 22;
+    const bottom = 80;
+    const total = 8;
+    const gap = 2;
+    const segH = (bottom - top - gap * (total - 1)) / total;
+    const filled = Math.floor(Math.min(1, this.goalProgress / 100) * total);
+    const done = this.goalProgress >= 100;
+
+    drawPixelIcon(ctx, done ? 'star' : 'target', x + w / 2, 13, 12);
+    for (let i = 0; i < total; i++) {
+      // i = 0 é o segmento de baixo
+      const y2 = Math.round(bottom - i * (segH + gap));
+      const y1 = Math.round(bottom - i * (segH + gap) - segH);
+      ctx.fillStyle = i < filled ? (done ? '#f5b841' : '#5fa889') : t.inset;
+      ctx.fillRect(x, y1, w, y2 - y1);
+    }
   }
 
   // ─── Eventos de animação ─────────────────────────────────────────────────

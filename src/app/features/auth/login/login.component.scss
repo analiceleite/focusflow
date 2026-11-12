@@ -293,6 +293,43 @@ form {
     border-left: 4px solid var(--accent-error);
 }
 
+// Recuperação de senha e mensagem de sucesso
+.forgot-password-row {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.btn-forgot {
+    padding: 0.2rem 0;
+    font-family: var(--font-hud);
+    font-size: 0.58rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--text-muted);
+    background: none;
+    border: none;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+        color: var(--brand-primary);
+        text-decoration: underline;
+        text-underline-offset: 3px;
+    }
+
+    &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+}
+
+.success-msg {
+    padding: 0.6rem 0.75rem;
+    font-size: var(--fs-sm);
+    color: var(--text-primary);
+    background: color-mix(in srgb, var(--accent-success) 14%, var(--bg-card));
+    border-left: 4px solid var(--accent-success);
+}
+
 .btn-submit {
     width: 100%;
     min-height: 52px;

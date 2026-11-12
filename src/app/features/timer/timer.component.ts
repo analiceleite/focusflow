@@ -106,6 +106,15 @@ export class TimerComponent implements OnInit, OnDestroy {
     this.spotifySvc.consumeFlashMessage();
   }, { allowSignalWrites: true });
 
+  /** Mantém a barra de meta diária da janela PiP atualizada. */
+  private pipGoalEffect = effect(() => {
+    const progress = this.dailyGoalProgress();
+    const goalMinutes = this.dailyGoalMinutes() ?? 0;
+    if (this.pipSvc.active) {
+      this.pipSvc.updateGoalProgress(progress, goalMinutes);
+    }
+  }, { allowSignalWrites: true });
+
   // ── UI state ──────────────────────────────────────────────────────────────
 
   showAddType = signal(false);
@@ -300,6 +309,8 @@ export class TimerComponent implements OnInit, OnDestroy {
       }
     }
 
+    // Cada segmento é a fatia da atividade no total de hoje (inclui a sessão em andamento)
+    const totalToday = this.todayTotalSecondsWithCurrent();
     const segments: DailyGoalSegment[] = [];
     grouped.forEach((data, activityTypeId) => {
       segments.push({
@@ -308,7 +319,7 @@ export class TimerComponent implements OnInit, OnDestroy {
         icon: data.icon,
         color: data.color,
         totalSeconds: data.seconds,
-        percentage: (data.seconds / goalSeconds) * 100,
+        percentage: totalToday > 0 ? (data.seconds / totalToday) * 100 : 0,
       });
     });
 
@@ -574,7 +585,12 @@ export class TimerComponent implements OnInit, OnDestroy {
   async deletePreset(id: string): Promise<void> { await this.sessionSvc.deletePreset(id); }
 
   async togglePip(): Promise<void> {
-    try { await this.pipSvc.toggle(this.selectedType()?.color ?? '#F26B3A',this.selectedType()?.name ?? ''); }
+    try {
+      await this.pipSvc.toggle(this.selectedType()?.color ?? '#F26B3A', this.selectedType()?.name ?? '');
+      if (this.pipSvc.active) {
+        this.pipSvc.updateGoalProgress(this.dailyGoalProgress(), this.dailyGoalMinutes() ?? 0);
+      }
+    }
     catch (err) { console.error(err); }
   }
 

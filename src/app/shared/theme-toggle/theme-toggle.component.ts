@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ThemeService } from '../../core/services/theme.service';
-import { IconComponent } from '../icon/icon.component';
+import { IconComponent, IconName } from '../icon/icon.component';
 
 @Component({
   selector: 'app-theme-toggle',
@@ -11,9 +11,10 @@ import { IconComponent } from '../icon/icon.component';
     <button
       class="theme-toggle"
       (click)="toggleTheme()"
-      [title]="isDarkMode() ? 'Mudar para tema claro' : 'Mudar para tema escuro'"
+      [title]="getButtonTitle()"
+      [attr.aria-label]="getButtonTitle()"
     >
-      <app-icon [name]="isDarkMode() ? 'sun' : 'moon'" [size]="18"></app-icon>
+      <app-icon [name]="getIcon()" [size]="18"></app-icon>
     </button>
   `,
   styles: [`
@@ -50,7 +51,23 @@ import { IconComponent } from '../icon/icon.component';
 export class ThemeToggleComponent {
   private themeService = inject(ThemeService);
 
+  themeMode = this.themeService.themeMode;
   isDarkMode = this.themeService.isDarkMode;
+
+  /** Ciclo: sistema → claro → escuro → sistema. O ícone mostra o modo atual. */
+  getIcon(): IconName {
+    const mode = this.themeMode();
+    if (mode === 'light') return 'sun';
+    if (mode === 'dark') return 'moon';
+    return 'monitor';
+  }
+
+  getButtonTitle(): string {
+    const mode = this.themeMode();
+    if (mode === 'light') return 'Tema Claro (clique para mudar para tema escuro)';
+    if (mode === 'dark') return 'Tema Escuro (clique para mudar para tema do sistema)';
+    return 'Tema do Sistema (clique para mudar para tema claro)';
+  }
 
   toggleTheme(): void {
     this.themeService.toggleTheme();

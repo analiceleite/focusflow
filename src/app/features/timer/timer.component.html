@@ -221,11 +221,14 @@
                 @if (dailyGoalMinutes()) {
                 <p class="quest-title">Focar {{ dailyGoalFormatted() }} hoje</p>
                 <div class="quest-bar" role="progressbar" [attr.aria-valuenow]="dailyGoalPercentRounded()" aria-valuemin="0" aria-valuemax="100">
-                    @for (segment of dailyGoalSegments(); track segment.activityTypeId) {
-                    <span class="quest-seg" [style.flex-basis.%]="segment.percentage > 100 ? 100 : segment.percentage"
-                        [style.background]="segment.color"
-                        [title]="segment.name + ': ' + formatHours(segment.totalSeconds)"></span>
-                    }
+                    <!-- Preenchimento = progresso da meta; dentro dele, a fatia de cada atividade -->
+                    <div class="quest-fill" [style.width.%]="dailyGoalProgress() > 100 ? 100 : dailyGoalProgress()">
+                        @for (segment of dailyGoalSegments(); track segment.activityTypeId) {
+                        <span class="quest-seg" [style.flex-basis.%]="segment.percentage"
+                            [style.background]="segment.color"
+                            [title]="segment.name + ': ' + formatHours(segment.totalSeconds)"></span>
+                        }
+                    </div>
                 </div>
                 <div class="quest-foot">
                     <span>{{ formatHours(todayTotalSecondsWithCurrent()) }} / {{ formatHours(dailyGoalMinutes()! * 60) }}</span>

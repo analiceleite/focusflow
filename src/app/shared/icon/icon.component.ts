@@ -59,6 +59,7 @@ const ICONS: Record<string, Shape[]> = {
     path('M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4'),
   ],
   moon: [path('M19.5 14.5A8 8 0 0 1 9.5 4.5a8 8 0 1 0 10 10z')],
+  monitor: [rect(3, 4.5, 18, 12, 2.5), path('M9 20h6M12 16.5V20')],
   music: [path('M9 17.5V6l10-2v11.5'), circle(6.5, 17.5, 2.5), circle(16.5, 15.5, 2.5)],
   logout: [path('M14 4.5h3.5a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H14'), path('M10 8l-4 4 4 4M6 12h9')],
 };
