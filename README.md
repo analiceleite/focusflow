@@ -1,48 +1,85 @@
 # FocusFlow
 
-Personal productivity timer focused on consistency and clarity.
+**A gamified focus timer where every minute of concentration is a hit on the weekly boss.**
+
+Pomodoro and stopwatch sessions power a pixel-art RPG: your hero walks into battle while you focus, earns XP, levels up, unlocks gear and scenarios, and collects the monsters it defeats.
+
+![FocusFlow focus screen: hero, timer and weekly boss](./docs/screenshots/focus-desktop.jpg)
+
+---
+
+## How it works
+
+```
+Focus 1 minute  →  1 damage to the weekly boss (× combo)  →  XP for your hero
+```
+
+1. **Focus.** Pick an activity, start the timer. Your hero walks across the scenario while the clock runs.
+2. **Hit the boss.** Every full minute lands a hit on the boss of the week. The damage floats up and its HP bar drops live.
+3. **Evolve.** Damage becomes XP. Levels unlock outfits, headgear and new scenarios. Defeated bosses drop weapons and join your bestiary.
 
 ---
 
 ## Screenshots
 
-| Login | Timer | Statistics | Picture-in-Picture |
-|---|---|---|---|
-| ![Login](./src/assets/demo/login.png) | ![Timer](./src/assets/demo/timer.png) | ![Statistics](./src/assets/demo/stats.png) | ![PiP](./src/assets/demo/pip-demo.png) |
+| Focus mode (mobile) | Journey: boss, hero and bestiary |
+|---|---|
+| <img src="./docs/screenshots/focus-mobile.jpg" alt="Focus screen on mobile" width="300"> | <img src="./docs/screenshots/jornada-desktop.jpg" alt="Journey page with weekly boss and hero customization" width="520"> |
+
+| Streak, combo and heatmap | Picture-in-Picture |
+|---|---|
+| <img src="./docs/screenshots/streak.png" alt="Streak section with combo track and weekly heatmap" width="300"> | <img src="./docs/screenshots/pip.png" alt="Pixel art Picture-in-Picture window" width="420"> |
 
 ---
 
 ## Features
 
-**🍅 Timer**
-- Pomodoro mode with configurable duration and user-saved presets (e.g., 25, 50, 90 min)
-- Free stopwatch mode with no time limit
-- Activity type per session (Study, Work, Exercise, Reading, Meditation, Personal Project, or custom)
-- Animated progress bar, audio notification on completion, and pause/resume support
-- Spotify integration to focus while listening to your favorite songs
+### ⚔️ Weekly boss
 
-**� Multi-Device Sync**
-- Real-time timer synchronization across all your devices and browser tabs via Firebase Firestore
-- Pause/resume instantly reflected everywhere — start on desktop, continue on mobile
-- Activity category synced automatically — the selected activity on one device automatically selects on others
-- Device indicator showing which device is currently running the timer
+- A new boss every week (Sunday to Saturday) with **600 HP**, which is 10 hours of focus.
+- **8 monster species** rotate weekly, each with its own sprite and epithet. The next boss is shown as a silhouette.
+- Defeating a boss drops a **weapon** for your hero and adds the monster to your **bestiary**.
 
-**�🖼️ Picture-in-Picture**
-- Floating mini window (110×120px) with live time and progress
-- Works across all apps and browser tabs, light/dark theme support
+![The 8 monster species](./docs/screenshots/bestiary.png)
 
-**📊 Dashboard**
-- Streak tracking (current and personal record) and 70-day calendar heatmap
-- Activity breakdown with color-coded bars, session count, and accumulated time
-- Stats inline on the timer view: today, last 7d, last 30d, daily/weekly/monthly averages
-- Filters by 7d / 30d / all time, with interactive calendar
+### 🧙 Hero and progression
 
-**🎨 Theme & PWA**
-- Light/dark mode with system detection and persistent preference
-- Installable as a desktop or mobile app via PWA, with offline support
+- **XP and levels:** all damage dealt becomes XP. Level *L* requires `200 × (L−1)²` XP.
+- **Customization:** 5 hairstyles, 4 outfits (t-shirt, robe, cape, armor) and 6 pieces of headgear (cap, headband, helmet, wizard hat, crown…), plus hair, skin, shirt and pants colors.
+- **Level unlocks:** outfits and headgear unlock as you level up, up to the crown at level 10. Locked items show as silhouettes with the level required.
+- **Scenarios:** Campo Verde, Floresta Sombria (level 3), Caverna de Cristal (level 5) and Castelo em Chamas (level 8).
 
-**🔐 Authentication**
-- Email/password login — each account sees only its own data
+### 🔥 Streak, combo and shield
+
+- **Streak:** consecutive days with at least one session.
+- **Combo:** 3-day streak = ×1.2 damage, 7-day streak = ×1.5.
+- **Shield:** one per week, covers a missed day so the streak survives.
+- Weekly heatmap colored by daily focus time, with shield-covered days marked. Tap or drag across days to filter the journey stats.
+
+### 🍅 Timer
+
+- **Pomodoro** with saved presets (25, 50, 90 min…) or a custom duration, and a free **stopwatch** mode.
+- Activities with color and pixel icon (Study, Work, Exercise… or your own).
+- **Visual states:** the frame and scene change for focusing, paused (the hero dozes off) and finished (the hero celebrates with an XP burst).
+- **Daily quest:** set a daily focus goal and track it as a bar split by activity, including the session in progress.
+- Sound and system notification on completion, plus Spotify integration to play playlists while you focus.
+
+### 🖼️ Picture-in-Picture
+
+- A floating pixel-art window with the timer, a 24-segment progress bar, the daily goal and a mini stage where the hero keeps fighting the boss.
+- Stays on top of other apps and browser tabs.
+
+### 🎨 Pixel art design
+
+- Custom design system: Pixelify Sans and Silkscreen typefaces, notched panels, hard shadows and segmented bars.
+- **Own pixel icon set** (no system emojis), including an icon picker for activities.
+- Light, dark and system themes. Responsive layouts for desktop, tablet and mobile.
+
+### ☁️ Account, sync and PWA
+
+- Email/password login with password reset.
+- Sessions, goals, presets and your hero are stored in Cloud Firestore, so they follow you to any device.
+- Installable as a desktop or mobile app (PWA).
 
 ---
 
@@ -55,8 +92,11 @@ Personal productivity timer focused on consistency and clarity.
 | Auth & DB | Firebase Authentication + Cloud Firestore |
 | Hosting | Firebase Hosting |
 | PWA | @angular/pwa |
-| Styling | SCSS (modular, per component) |
+| Styling | SCSS (per component) with a shared pixel design system |
+| Pixel art | Sprites defined as text grids, rendered to SVG (`crispEdges`) and Canvas |
 | PiP | Canvas API + Picture-in-Picture API |
+
+The game rules live in `src/app/core/game/`: XP and levels (`progress.ts`), streak and shield (`streak.ts`), weekly boss (`weekly-boss.ts`), sprites (`sprites.ts`), monsters and cosmetics (`game-data.ts`) and pixel icons (`pixel-icons.ts`).
 
 ---
 
