@@ -104,7 +104,7 @@ export class TimerComponent implements OnInit, OnDestroy {
   showActivitySheet = signal(false);
   activityExpanded = signal(true);   // começa expandido
   presetsExpanded = signal(false);
-  spotifyExpanded = signal(true);
+  spotifyExpanded = signal(false);   // recolhido por padrão: o foco é o cronômetro
   actionsExpanded = signal(false);
   savedDuration = signal('');
   savedActivity = signal('');
@@ -168,12 +168,6 @@ export class TimerComponent implements OnInit, OnDestroy {
     return this.getLocalDateString(d);
   }
 
-  private dateNMonthsAgo(n: number): string {
-    const d = new Date();
-    d.setMonth(d.getMonth() - n);
-    return this.getLocalDateString(d);
-  }
-
   // ─── Computed: estatísticas ───────────────────────────────────────────────
 
   readonly todayTotalSeconds = computed(() => {
@@ -206,12 +200,6 @@ export class TimerComponent implements OnInit, OnDestroy {
     const cutoff = this.dateNDaysAgo(28);
     const total = this.allSessions().filter(s => s.date >= cutoff).reduce((a, s) => a + s.durationSeconds, 0);
     return Math.round(total / 4);
-  });
-
-  readonly avgMonthlyLast12Seconds = computed(() => {
-    const cutoff = this.dateNMonthsAgo(12);
-    const total = this.allSessions().filter(s => s.date >= cutoff).reduce((a, s) => a + s.durationSeconds, 0);
-    return Math.round(total / 12);
   });
 
   readonly dailySparkline = computed(() => {
@@ -251,22 +239,6 @@ export class TimerComponent implements OnInit, OnDestroy {
 
     const maxSec = Math.max(...weeks.map(w => w.seconds), 1);
     return weeks.map(w => ({ ...w, percent: Math.round((w.seconds / maxSec) * 100) }));
-  });
-
-  readonly monthlySparkline = computed(() => {
-    const today = new Date();
-    const months: { label: string; seconds: number; percent: number; isCurrent: boolean }[] = [];
-
-    for (let m = 5; m >= 0; m--) {
-      const d = new Date(today.getFullYear(), today.getMonth() - m, 1);
-      const yearMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      const label = d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
-      const seconds = this.allSessions().filter(s => s.date.startsWith(yearMonth)).reduce((a, s) => a + s.durationSeconds, 0);
-      months.push({ label, seconds, percent: 0, isCurrent: m === 0 });
-    }
-
-    const maxSec = Math.max(...months.map(m => m.seconds), 1);
-    return months.map(m => ({ ...m, percent: Math.round((m.seconds / maxSec) * 100) }));
   });
 
   readonly dailyGoalSegments = computed<DailyGoalSegment[]>(() => {

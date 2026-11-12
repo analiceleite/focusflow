@@ -98,10 +98,19 @@
 
 // ─── Linha inferior: Atividade + Presets largura total ────────────────────────
 
+// Atividade e presets viram um único cartão de "sessão", com divisória entre as duas partes
 .bottom-widgets {
     display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
+    align-items: stretch;
+    background: color-mix(in srgb, var(--bg-tertiary) 80%, transparent);
+    backdrop-filter: blur(16px);
+    border: 1px solid color-mix(in srgb, var(--border-color) 65%, transparent);
+    border-radius: 18px;
+    overflow: hidden;
+
+    @media (max-width: 768px) {
+        flex-direction: column;
+    }
 }
 
 // ─── Timer card ───────────────────────────────────────────────────────────────
@@ -921,18 +930,24 @@
 
 // ─── Activity / Presets widgets ───────────────────────────────────────────────
 
+// Partes do cartão de sessão: sem fundo próprio, dividem a largura
 .activity-widget,
 .presets-widget {
-    width: 100%;
-    background: color-mix(in srgb, var(--bg-tertiary) 80%, transparent);
-    backdrop-filter: blur(16px);
-    border: 1px solid color-mix(in srgb, var(--border-color) 65%, transparent);
-    border-radius: 18px;
-    overflow: hidden;
-    transition: box-shadow 0.2s;
+    flex: 1 1 0;
+    min-width: 0;
 
-    &:hover {
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    @media (max-width: 768px) {
+        flex: none;
+        width: 100%;
+    }
+}
+
+.presets-widget {
+    border-left: 1px solid color-mix(in srgb, var(--border-color) 50%, transparent);
+
+    @media (max-width: 768px) {
+        border-left: none;
+        border-top: 1px solid color-mix(in srgb, var(--border-color) 50%, transparent);
     }
 }
 
