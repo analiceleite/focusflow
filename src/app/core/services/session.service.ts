@@ -17,6 +17,12 @@ import { ActivityType, Preset, Session } from '../interfaces/timer.interface';
 import { AuthService } from './auth.service';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { AvatarConfig } from '../game/game-data';
+
+export interface GameProfile {
+  avatar: AvatarConfig | null;
+  equippedWeapon: string | null;
+}
 
 @Injectable({ providedIn: 'root' })
 export class SessionService {
@@ -122,6 +128,26 @@ export class SessionService {
     const userMetaDoc = doc(this.firestore, `userMeta/${this.uid}`);
     return docData(userMetaDoc).pipe(
       map((data: any) => data?.dailyGoalMinutes ?? null)
+    );
+  }
+
+  // ─── Perfil do jogador (avatar e arma equipada) ─────────────────────────────
+
+  getGameProfile$(): Observable<GameProfile> {
+    const userMetaDoc = doc(this.firestore, `userMeta/${this.uid}`);
+    return docData(userMetaDoc).pipe(
+      map((data: any) => ({
+        avatar: data?.avatar ?? null,
+        equippedWeapon: data?.equippedWeapon ?? null,
+      }))
+    );
+  }
+
+  async updateGameProfile(patch: Partial<GameProfile>): Promise<void> {
+    await setDoc(
+      doc(this.firestore, `userMeta/${this.uid}`),
+      patch,
+      { merge: true }
     );
   }
 

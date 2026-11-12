@@ -15,12 +15,16 @@ import { Session } from 'src/app/core/interfaces/timer.interface';
 import { AuthService } from '../../core/services/auth.service';
 import { computeWeeklyBoss } from '../../core/game/weekly-boss';
 import { computeStreakInfo } from '../../core/game/streak';
+import { AvatarConfig, DEFAULT_AVATAR, findWeapon } from '../../core/game/game-data';
+import { computeTotalXp, computeVictories, levelFromXp, ownedWeapons } from '../../core/game/progress';
 import { BossBattleComponent } from './boss-battle/boss-battle.component';
+import { GamePanelComponent } from './game-panel/game-panel.component';
+import { GameProfile } from '../../core/services/session.service';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, FontAwesomeModule, NavbarComponent, ThemeToggleComponent, BossBattleComponent],
+  imports: [CommonModule, RouterLink, FormsModule, FontAwesomeModule, NavbarComponent, ThemeToggleComponent, BossBattleComponent, GamePanelComponent],
   styleUrls: ['./dashboard.component.scss'],
   templateUrl: './dashboard.component.html',
 })
@@ -50,6 +54,23 @@ export class DashboardComponent implements OnInit, OnDestroy {
   sessionToDelete = signal<string | null>(null);
 
   private sub?: Subscription;
+  private profileSub?: Subscription;
+
+  profile = signal<GameProfile>({ avatar: null, equippedWeapon: null });
+
+  readonly avatar = computed<AvatarConfig>(() => this.profile().avatar ?? DEFAULT_AVATAR);
+
+  readonly victories = computed(() => computeVictories(this.sessions(), this.streakInfo()));
+
+  readonly ownedWeaponIds = computed(() => new Set(ownedWeapons(this.victories()).map(w => w.id)));
+
+  /** Arma equipada só vale se ainda estiver conquistada. */
+  readonly equippedWeapon = computed(() => {
+    const id = this.profile().equippedWeapon;
+    return id && this.ownedWeaponIds().has(id) ? findWeapon(id) : null;
+  });
+
+  readonly levelInfo = computed(() => levelFromXp(computeTotalXp(this.sessions(), this.streakInfo())));
 
   // ─── Helpers de data (parse local, sem offset UTC) ────────────────────────
 
@@ -245,10 +266,24 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.sub = this.sessionSvc.getSessions$().subscribe(s => this.sessions.set(s));
+    this.profileSub = this.sessionSvc.getGameProfile$().subscribe(p => this.profile.set(p));
   }
 
   ngOnDestroy(): void {
     this.sub?.unsubscribe();
+    this.profileSub?.unsubscribe();
+  }
+
+  // ─── Perfil do herói (Fase 3) ─────────────────────────────────────────────
+
+  onAvatarChange(avatar: AvatarConfig): void {
+    this.profile.update(p => ({ ...p, avatar }));
+    this.sessionSvc.updateGameProfile({ avatar }).catch(() => alert('Erro ao salvar o visual do herói.'));
+  }
+
+  onWeaponChange(id: string | null): void {
+    this.profile.update(p => ({ ...p, equippedWeapon: id }));
+    this.sessionSvc.updateGameProfile({ equippedWeapon: id }).catch(() => alert('Erro ao equipar a arma.'));
   }
 
   // ─── Métodos utilitários ──────────────────────────────────────────────────

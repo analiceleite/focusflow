@@ -1,75 +1,14 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { WeeklyBossState } from '../../../core/game/weekly-boss';
-
-interface Pixel {
-  x: number;
-  y: number;
-  fill: string;
-}
-
-interface Sprite {
-  width: number;
-  height: number;
-  pixels: Pixel[];
-}
-
-/** Converte um desenho em texto (uma string por linha) em retângulos SVG. */
-function buildSprite(rows: string[], palette: Record<string, string>): Sprite {
-  const width = rows[0].length;
-  rows.forEach((row, i) => {
-    if (row.length !== width) {
-      throw new Error(`Sprite inconsistente na linha ${i}: ${row.length} != ${width}`);
-    }
-  });
-  const pixels: Pixel[] = [];
-  rows.forEach((row, y) => {
-    [...row].forEach((ch, x) => {
-      const fill = palette[ch];
-      if (fill) pixels.push({ x, y, fill });
-    });
-  });
-  return { width, height: rows.length, pixels };
-}
-
-// Herói: '.' transparente, h cabelo, s pele, e olho, c camiseta, p calça, b tênis
-const HERO = buildSprite(
-  [
-    '...hhhh...',
-    '..hhhhhh..',
-    '..ssssss..',
-    '..sesses..',
-    '...ssss...',
-    '..cccccc..',
-    'sccccccs..',
-    '..pp..pp..',
-    '..pp..pp..',
-    '.bbb..bbb.',
-  ],
-  { h: '#3B2A20', s: '#F2C9A0', e: '#1c1c1e', c: '#6C63FF', p: '#2F3B52', b: '#43D9AD' }
-);
-
-// Chefe: g corpo, G sombra, r olhos, w dentes, d chifres
-const MONSTER = buildSprite(
-  [
-    'd..........d',
-    'dd........dd',
-    'dggggggggggd',
-    'ggrrggggrrgg',
-    'ggrrggggrrgg',
-    'gggggggggggg',
-    'gwgwgwgwgwgg',
-    'gggggggggggg',
-    'GGggggggggGG',
-    'GG.GG..GG.GG',
-  ],
-  { d: '#3d1c4a', g: '#7BD389', G: '#4E9C5A', r: '#ff4d6d', w: '#f5f5f7' }
-);
+import { AvatarConfig, Weapon, DEFAULT_AVATAR } from '../../../core/game/game-data';
+import { Sprite, buildHeroSprite, buildMonsterSprite } from '../../../core/game/sprites';
+import { PixelSpriteComponent } from '../../../shared/pixel-sprite/pixel-sprite.component';
 
 @Component({
   selector: 'app-boss-battle',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, PixelSpriteComponent],
   template: `
     <section class="boss-card" [class.defeated]="state?.defeated">
       <header class="boss-header">
@@ -79,24 +18,15 @@ const MONSTER = buildSprite(
         }
       </header>
 
-      @if (state) {
+      @if (state && hero && monster) {
         <div class="arena">
-          <svg class="sprite hero" [attr.viewBox]="'0 0 ' + hero.width + ' ' + hero.height"
-               shape-rendering="crispEdges" aria-label="Seu personagem">
-            @for (p of hero.pixels; track $index) {
-              <rect [attr.x]="p.x" [attr.y]="p.y" width="1" height="1" [attr.fill]="p.fill"/>
-            }
-          </svg>
+          <app-pixel-sprite class="hero" [sprite]="hero" label="Seu personagem"></app-pixel-sprite>
 
           <span class="vs" aria-hidden="true">⚔</span>
 
           <div class="monster-wrap">
-            <svg class="sprite monster" [attr.viewBox]="'0 0 ' + monster.width + ' ' + monster.height"
-                 shape-rendering="crispEdges" aria-label="Chefe da semana">
-              @for (p of monster.pixels; track $index) {
-                <rect [attr.x]="p.x" [attr.y]="p.y" width="1" height="1" [attr.fill]="p.fill"/>
-              }
-            </svg>
+            <app-pixel-sprite class="monster" [sprite]="monster" [label]="state.monster.name"></app-pixel-sprite>
+            <span class="monster-name">{{ state.monster.name }}</span>
           </div>
         </div>
 
@@ -162,20 +92,26 @@ const MONSTER = buildSprite(
       min-height: 150px;
     }
 
-    .sprite {
-      width: 96px;
-      height: auto;
-      image-rendering: pixelated;
-      display: block;
+    .hero {
+      width: 110px;
+      animation: idle 1.2s steps(2) infinite;
     }
 
-    .hero {
-      animation: idle 1.2s steps(2) infinite;
+    .monster-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.3rem;
     }
 
     .monster {
       width: 144px;
       animation: idle 1.6s steps(2) infinite;
+    }
+
+    .monster-name {
+      font-size: 0.75rem;
+      color: var(--text-muted);
     }
 
     .vs {
@@ -244,13 +180,9 @@ const MONSTER = buildSprite(
       color: var(--text-muted);
     }
 
-    .hint, .victory {
+    .victory {
       margin: 0;
       font-size: 0.8rem;
-      color: var(--text-muted);
-    }
-
-    .victory {
       color: var(--accent-success);
       font-weight: 600;
     }
@@ -265,11 +197,18 @@ const MONSTER = buildSprite(
     }
   `],
 })
-export class BossBattleComponent {
+export class BossBattleComponent implements OnChanges {
   @Input() state: WeeklyBossState | null = null;
+  @Input() avatar: AvatarConfig = DEFAULT_AVATAR;
+  @Input() weapon: Weapon | null = null;
 
-  readonly hero = HERO;
-  readonly monster = MONSTER;
+  hero: Sprite | null = null;
+  monster: Sprite | null = null;
+
+  ngOnChanges(): void {
+    this.hero = buildHeroSprite(this.avatar, this.weapon);
+    this.monster = this.state ? buildMonsterSprite(this.state.monster) : null;
+  }
 
   formatWeek(start: string, end: string): string {
     const fmt = (s: string) => s.slice(8, 10) + '/' + s.slice(5, 7);

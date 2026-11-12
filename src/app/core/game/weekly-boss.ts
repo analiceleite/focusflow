@@ -1,5 +1,6 @@
 import { Session } from '../interfaces/timer.interface';
-import { StreakInfo, comboMultiplier, computeStreakInfo, toDateKey } from './streak';
+import { StreakInfo, comboMultiplier, computeStreakInfo, parseDateKey, toDateKey, weekStartKey } from './streak';
+import { MONSTER_VARIANTS, MonsterVariant } from './game-data';
 
 /** Meta semanal que define o HP do chefe: 10 h de foco = 600 HP. */
 export const BOSS_HP_MINUTES = 600;
@@ -21,6 +22,41 @@ export interface WeeklyBossState {
   streak: number;
   /** Se ainda há escudo nesta semana. */
   shieldAvailable: boolean;
+  monster: MonsterVariant;
+}
+
+/** Dano causado entre duas datas (YYYY-MM-DD, inclusive). Combo aplicado por dia. */
+export function damageInRange(
+  sessions: Session[],
+  streak: StreakInfo,
+  start: string,
+  end: string
+): number {
+  const secondsByDay = new Map<string, number>();
+  for (const s of sessions) {
+    if (s.date >= start && s.date <= end) {
+      secondsByDay.set(s.date, (secondsByDay.get(s.date) ?? 0) + s.durationSeconds);
+    }
+  }
+
+  let damage = 0;
+  for (const [date, seconds] of secondsByDay) {
+    const minutes = Math.floor(seconds / 60);
+    const combo = streak.comboByDate.get(date) ?? 1;
+    damage += Math.floor(minutes * DAMAGE_PER_MINUTE * combo);
+  }
+  return damage;
+}
+
+/** Número inteiro da semana desde a época: define a variante do monstro. */
+export function weekNumber(weekStart: string): number {
+  return Math.round(parseDateKey(weekStart).getTime() / (7 * 24 * 60 * 60 * 1000));
+}
+
+export function monsterForWeek(weekStart: string): MonsterVariant {
+  const n = weekNumber(weekStart);
+  const idx = ((n % MONSTER_VARIANTS.length) + MONSTER_VARIANTS.length) % MONSTER_VARIANTS.length;
+  return MONSTER_VARIANTS[idx];
 }
 
 /**
@@ -32,31 +68,12 @@ export function computeWeeklyBoss(
   now: Date = new Date(),
   streak: StreakInfo = computeStreakInfo(sessions, now)
 ): WeeklyBossState {
-  const weekStartDate = new Date(now);
-  weekStartDate.setHours(0, 0, 0, 0);
-  weekStartDate.setDate(weekStartDate.getDate() - weekStartDate.getDay());
-
-  const weekEndDate = new Date(weekStartDate);
+  const weekStart = weekStartKey(now);
+  const weekEndDate = parseDateKey(weekStart);
   weekEndDate.setDate(weekEndDate.getDate() + 6);
-
-  const weekStart = toDateKey(weekStartDate);
   const weekEnd = toDateKey(weekEndDate);
 
-  // Segundos por dia dentro da semana. Datas são YYYY-MM-DD, então a comparação é segura.
-  const secondsByDay = new Map<string, number>();
-  for (const s of sessions) {
-    if (s.date >= weekStart && s.date <= weekEnd) {
-      secondsByDay.set(s.date, (secondsByDay.get(s.date) ?? 0) + s.durationSeconds);
-    }
-  }
-
-  let damage = 0;
-  for (const [date, seconds] of secondsByDay) {
-    const minutes = Math.floor(seconds / 60);
-    const combo = streak.comboByDate.get(date) ?? 1;
-    damage += Math.floor(minutes * DAMAGE_PER_MINUTE * combo);
-  }
-
+  const damage = damageInRange(sessions, streak, weekStart, weekEnd);
   const hpLeft = Math.max(0, BOSS_HP_MINUTES - damage);
 
   return {
@@ -70,5 +87,6 @@ export function computeWeeklyBoss(
     combo: comboMultiplier(streak.current),
     streak: streak.current,
     shieldAvailable: streak.shieldAvailableThisWeek,
+    monster: monsterForWeek(weekStart),
   };
 }
