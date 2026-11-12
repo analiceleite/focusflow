@@ -13,11 +13,13 @@ import { ActivityStat } from 'src/app/core/interfaces/dashboard.interface';
 import { SessionService } from '../../core/services/session.service';
 import { Session } from 'src/app/core/interfaces/timer.interface';
 import { AuthService } from '../../core/services/auth.service';
+import { computeWeeklyBoss } from '../../core/game/weekly-boss';
+import { BossBattleComponent } from './boss-battle/boss-battle.component';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, FontAwesomeModule, NavbarComponent, ThemeToggleComponent],
+  imports: [CommonModule, RouterLink, FormsModule, FontAwesomeModule, NavbarComponent, ThemeToggleComponent, BossBattleComponent],
   styleUrls: ['./dashboard.component.scss'],
   templateUrl: './dashboard.component.html',
 })
@@ -158,6 +160,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }, { allowSignalWrites: true });
 
   // ─── Computed: métricas ───────────────────────────────────────────────────
+
+  // Chefe da semana (Fase 1 da gamificação): depende só das sessões já carregadas
+  readonly weeklyBoss = computed(() => computeWeeklyBoss(this.sessions()));
 
   readonly totalSeconds = computed(() =>
     this.filteredSessions().reduce((acc, s) => acc + s.durationSeconds, 0)
