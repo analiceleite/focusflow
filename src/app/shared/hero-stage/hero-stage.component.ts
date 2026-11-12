@@ -75,6 +75,12 @@ const FLOAT_MS = 1200;
       }
 
       <span class="scene-name">{{ scenario?.name }}</span>
+      @if (bossName) {
+        <span class="boss-label">
+          <strong>{{ bossName }}</strong>
+          @if (bossTitle) { <small>{{ bossTitle }}</small> }
+        </span>
+      }
     </div>
   `,
   styles: [`
@@ -203,6 +209,37 @@ const FLOAT_MS = 1200;
     }
     .float.xp { color: var(--xp); left: auto; right: 0; }
 
+    .boss-label {
+      position: absolute;
+      right: 8px;
+      top: 8px;
+      z-index: 5;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+      max-width: 55%;
+      text-align: right;
+
+      strong, small {
+        padding: 2px 6px;
+        color: #fff;
+        background: rgba(10, 11, 14, 0.6);
+      }
+
+      strong {
+        font-family: var(--font-pixel);
+        font-size: 0.85rem;
+        font-weight: 600;
+      }
+
+      small {
+        font-family: var(--font-hud);
+        font-size: 0.5rem;
+        text-transform: uppercase;
+      }
+    }
+
     .scene-name {
       position: absolute;
       left: 8px; top: 8px;
@@ -271,6 +308,11 @@ export class HeroStageComponent implements OnChanges, OnDestroy {
   @Input() elapsedMinutes = 0;
   /** Dano por minuto (combo). */
   @Input() combo = 1;
+  /** Golpe disparado de fora (ex.: sessão salva com a Jornada aberta). Mude o id para golpear de novo. */
+  @Input() hitEvent: { id: number; value: number } | null = null;
+  /** Rótulo opcional do chefe (nome e epíteto) sobre o palco. */
+  @Input() bossName = '';
+  @Input() bossTitle = '';
 
   hero: Sprite | null = null;
   monster: Sprite | null = null;
@@ -298,6 +340,9 @@ export class HeroStageComponent implements OnChanges, OnDestroy {
       const prev = changes['elapsedMinutes'].previousValue as number;
       if (this.state === 'running' && this.elapsedMinutes > prev) this.strike();
     }
+    if (changes['hitEvent'] && !changes['hitEvent'].firstChange && this.hitEvent) {
+      this.strike(`-${this.hitEvent.value}`);
+    }
     this.rebuildHero();
   }
 
@@ -324,9 +369,9 @@ export class HeroStageComponent implements OnChanges, OnDestroy {
     }
   }
 
-  private strike(): void {
+  private strike(text?: string): void {
     this.hitting = true;
-    this.pushFloat(`-${Math.floor(this.combo) === this.combo ? this.combo : this.combo.toFixed(1)}`, 'dmg');
+    this.pushFloat(text ?? `-${Math.floor(this.combo) === this.combo ? this.combo : this.combo.toFixed(1)}`, 'dmg');
     if (this.hitTimer) clearTimeout(this.hitTimer);
     this.hitTimer = setTimeout(() => (this.hitting = false), HIT_MS);
   }
