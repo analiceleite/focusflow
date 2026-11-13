@@ -122,7 +122,6 @@ const CELEBRATE_MS = 1800;
     .next-label {
       font-family: var(--font-hud);
       font-size: 0.55rem;
-      text-transform: uppercase;
       color: var(--text-muted);
     }
 

@@ -14,7 +14,7 @@ import { IconComponent, IconName } from '../icon/icon.component';
       [title]="getButtonTitle()"
       [attr.aria-label]="getButtonTitle()"
     >
-      <app-icon [name]="getIcon()" [size]="18"></app-icon>
+      <app-icon [name]="getIcon()" [size]="24"></app-icon>
     </button>
   `,
   styles: [`

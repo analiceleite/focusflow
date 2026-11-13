@@ -24,7 +24,7 @@
                 </div>
                 <div class="hud-xp-text">
                     <span>{{ levelInfo().xp }} XP</span>
-                    <span>faltam {{ xpToNext() }}</span>
+                    <span>Faltam {{ xpToNext() }}</span>
                 </div>
             </div>
 
@@ -89,7 +89,7 @@
                 </header>
 
                 <div class="clock">
-                    <div class="timer-time" aria-live="off">{{ timerSvc.formattedTime() }}</div>
+                    <div class="timer-time" [class.long]="timerSvc.formattedTime().length > 5" aria-live="off">{{ timerSvc.formattedTime() }}</div>
                     <div class="clock-sub">
                         @if (timerSvc.mode() === 'pomodoro') {
                         Pomodoro · {{ currentMinutes() }} min
@@ -162,7 +162,7 @@
                 <div class="mode-toggle" role="tablist" aria-label="Modo do timer">
                     <button role="tab" [attr.aria-selected]="timerSvc.mode() === 'pomodoro'"
                         [class.active]="timerSvc.mode() === 'pomodoro'" (click)="setMode('pomodoro')">
-                        <app-icon name="focus" [size]="14"></app-icon>Pomodoro</button>
+                        <app-icon name="focus" [size]="12"></app-icon>Pomodoro</button>
                     <button role="tab" [attr.aria-selected]="timerSvc.mode() === 'stopwatch'"
                         [class.active]="timerSvc.mode() === 'stopwatch'" (click)="setMode('stopwatch')">
                         <app-icon name="stopwatch" [size]="14"></app-icon>Cronômetro</button>
@@ -205,6 +205,7 @@
                     <div class="custom-time">
                         <input type="number" [(ngModel)]="customMinutes" aria-label="Minutos personalizados" min="1"
                             max="480" [disabled]="isTimerRunning()" (keyup.enter)="applyCustomTime()" />
+                        <span class="unit" aria-hidden="true">min</span>
                         <button [disabled]="isTimerRunning()" (click)="applyCustomTime()">OK</button>
                     </div>
                 </div>

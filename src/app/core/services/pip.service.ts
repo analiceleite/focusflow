@@ -37,15 +37,15 @@ const HIT_MS = 420;
 const FLOAT_MS = 1200;
 
 const STATE_STYLE: Record<string, { label: string; color: string }> = {
-  idle: { label: 'PRONTO', color: '#8a8780' },
-  running: { label: 'EM FOCO', color: '#f26b3a' },
-  paused: { label: 'PAUSADO', color: '#f5b841' },
-  finished: { label: 'CONCLUÍDO', color: '#5fa889' },
+  idle: { label: 'Pronto', color: '#8a8780' },
+  running: { label: 'Em foco', color: '#f26b3a' },
+  paused: { label: 'Pausado', color: '#f5b841' },
+  finished: { label: 'Concluído', color: '#5fa889' },
 };
 
 /**
  * Janela Picture-in-Picture em linguagem pixel:
- * quadro na cor do estado · relógio em Pixelify · barra de 24 segmentos ·
+ * quadro na cor do estado · relógio em Press Start 2P · barra de 24 segmentos ·
  * faixa de palco com o herói andando e golpeando o chefe a cada minuto.
  */
 @Injectable({ providedIn: 'root' })
@@ -224,7 +224,7 @@ export class PipService {
     const blinkOff = state === 'running' && Math.floor(now / 500) % 2 === 1;
     ctx.fillStyle = st.color;
     if (!blinkOff) ctx.fillRect(10, 11, 6, 6);
-    ctx.font = '8px Silkscreen, monospace';
+    ctx.font = '8px "Press Start 2P", monospace';
     ctx.textBaseline = 'middle';
     ctx.textAlign = 'left';
     ctx.fillText(st.label, 20, 14);
@@ -236,7 +236,7 @@ export class PipService {
     // Atividade à direita: ícone pixel (ou inicial) + nome
     const label = this.activityLabel.trim();
     if (!label) return;
-    ctx.font = '600 11px "Pixelify Sans", sans-serif';
+    ctx.font = '8px "Press Start 2P", monospace';
     const maxW = this.rightEdge() - (modeX + 14) - 30;
     const text = this.ellipsize(ctx, label, maxW);
     const tw = Math.ceil(ctx.measureText(text).width);
@@ -253,7 +253,7 @@ export class PipService {
       ctx.fillStyle = this.activityColor;
       ctx.fillRect(iconCx - 6, 8, 12, 12);
       ctx.fillStyle = '#15171c';
-      ctx.font = '7px Silkscreen, monospace';
+      ctx.font = '8px "Press Start 2P", monospace';
       ctx.textAlign = 'center';
       ctx.fillText(label[0].toUpperCase(), iconCx, 14);
     }
@@ -264,8 +264,9 @@ export class PipService {
 
   private drawClock(ctx: CanvasRenderingContext2D, st: { color: string }, t: ThemeColors): void {
     const time = this.timerSvc.formattedTime();
-    const size = time.length > 5 ? 34 : 42;
-    ctx.font = `700 ${size}px "Pixelify Sans", sans-serif`;
+    // Press Start 2P: monoespaçada, ~1em por caractere
+    const size = time.length > 5 ? 20 : 28;
+    ctx.font = `${size}px "Press Start 2P", monospace`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'alphabetic';
     // Sombra dura deslocada na cor do estado
@@ -375,7 +376,7 @@ export class PipService {
     }
 
     // Floats (dano / XP)
-    ctx.font = '700 12px "Pixelify Sans", sans-serif';
+    ctx.font = '8px "Press Start 2P", monospace';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'alphabetic';
     this.floats = this.floats.filter(f => now - f.born < FLOAT_MS);
@@ -469,7 +470,7 @@ export class PipService {
   }
 
   private drawBubble(ctx: CanvasRenderingContext2D, text: string, x: number, y: number): void {
-    ctx.font = '8px Silkscreen, monospace';
+    ctx.font = '8px "Press Start 2P", monospace';
     const w = Math.ceil(ctx.measureText(text).width) + 8;
     ctx.fillStyle = '#0a0b0e';
     ctx.fillRect(x - 1, y - 1, w + 2, 14);
@@ -491,9 +492,8 @@ export class PipService {
   private async loadFonts(): Promise<void> {
     if (!document.fonts?.load) return;
     const wait = Promise.all([
-      document.fonts.load('700 42px "Pixelify Sans"'),
-      document.fonts.load('600 11px "Pixelify Sans"'),
-      document.fonts.load('8px Silkscreen'),
+      document.fonts.load('28px "Press Start 2P"'),
+      document.fonts.load('8px "Press Start 2P"'),
     ]).catch(() => undefined);
     // Não segura a abertura do PiP por mais de 800 ms
     await Promise.race([wait, new Promise(r => setTimeout(r, 800))]);

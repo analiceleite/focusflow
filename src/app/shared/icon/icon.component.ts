@@ -66,11 +66,130 @@ const ICONS: Record<string, Shape[]> = {
 
 export type IconName = keyof typeof ICONS;
 
+/**
+ * Glifos pixel monocromáticos (grade 12×12, '#' = pixel aceso) desenhados em currentColor,
+ * para ícones de interface que precisam seguir a cor do tema / hover.
+ * Use tamanhos múltiplos de 12 (12, 24, 36) para pixels nítidos.
+ */
+const PIXEL_GLYPHS: Partial<Record<string, string[]>> = {
+  focus: [
+    '....####....',
+    '..##....##..',
+    '.#........#.',
+    '.#..####..#.',
+    '#..#....#..#',
+    '#..#.##.#..#',
+    '#..#.##.#..#',
+    '#..#....#..#',
+    '.#..####..#.',
+    '.#........#.',
+    '..##....##..',
+    '....####....',
+  ],
+  sword: [
+    '..........##',
+    '.........###',
+    '........###.',
+    '.......###..',
+    '......###...',
+    '.#...###....',
+    '.##.###.....',
+    '..####......',
+    '...##.......',
+    '..#.##......',
+    '.##..#......',
+    '##..........',
+  ],
+  sun: [
+    '.....##.....',
+    '.#...##...#.',
+    '..#......#..',
+    '....####....',
+    '...######...',
+    '##.######.##',
+    '##.######.##',
+    '...######...',
+    '....####....',
+    '..#......#..',
+    '.#...##...#.',
+    '.....##.....',
+  ],
+  moon: [
+    '...####.....',
+    '..###.......',
+    '.###........',
+    '.##.........',
+    '##.......#..',
+    '##..........',
+    '##..........',
+    '##.........#',
+    '.##.......##',
+    '.###....###.',
+    '..########..',
+    '...######...',
+  ],
+  monitor: [
+    '............',
+    '############',
+    '#..........#',
+    '#.##.......#',
+    '#.#........#',
+    '#..........#',
+    '#..........#',
+    '############',
+    '.....##.....',
+    '.....##.....',
+    '...######...',
+    '............',
+  ],
+  logout: [
+    '#######.....',
+    '#.....#.....',
+    '#.....#.....',
+    '#.......#...',
+    '#.......##..',
+    '#..#########',
+    '#..#########',
+    '#.......##..',
+    '#.......#...',
+    '#.....#.....',
+    '#.....#.....',
+    '#######.....',
+  ],
+};
+
+interface GlyphRun { x: number; y: number; w: number; }
+
+/** Converte as linhas do glifo em retângulos (uma corrida horizontal por <rect>). */
+function glyphRuns(rows: string[]): GlyphRun[] {
+  const runs: GlyphRun[] = [];
+  rows.forEach((row, y) => {
+    let x = 0;
+    while (x < row.length) {
+      if (row[x] !== '#') { x++; continue; }
+      const start = x;
+      while (x < row.length && row[x] === '#') x++;
+      runs.push({ x: start, y, w: x - start });
+    }
+  });
+  return runs;
+}
+const glyphCache = new Map<string, GlyphRun[]>();
+
+
 @Component({
   selector: 'app-icon',
   standalone: true,
   imports: [CommonModule],
   template: `
+    @if (glyph; as runs) {
+    <svg class="icon" viewBox="0 0 12 12" [attr.width]="size" [attr.height]="size" aria-hidden="true"
+         focusable="false" fill="currentColor" shape-rendering="crispEdges">
+      @for (r of runs; track $index) {
+        <rect [attr.x]="r.x" [attr.y]="r.y" [attr.width]="r.w" height="1" />
+      }
+    </svg>
+    } @else {
     <svg class="icon" viewBox="0 0 24 24" [attr.width]="size" [attr.height]="size" aria-hidden="true"
          focusable="false" fill="none" stroke="currentColor" stroke-width="1.8"
          stroke-linecap="round" stroke-linejoin="round">
@@ -90,6 +209,7 @@ export type IconName = keyof typeof ICONS;
         }
       }
     </svg>
+    }
   `,
   styles: [`
     :host { display: inline-flex; align-items: center; justify-content: center; line-height: 0; flex-shrink: 0; }
@@ -99,6 +219,18 @@ export type IconName = keyof typeof ICONS;
 export class IconComponent {
   @Input({ required: true }) name!: IconName;
   @Input() size = 18;
+
+  /** Glifo pixel, quando o ícone tem versão pixel. */
+  get glyph(): GlyphRun[] | null {
+    const rows = PIXEL_GLYPHS[this.name];
+    if (!rows) return null;
+    let runs = glyphCache.get(this.name);
+    if (!runs) {
+      runs = glyphRuns(rows);
+      glyphCache.set(this.name, runs);
+    }
+    return runs;
+  }
 
   get shapes(): Shape[] {
     return ICONS[this.name] ?? [];

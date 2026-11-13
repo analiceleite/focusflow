@@ -22,8 +22,8 @@
 
     @media (max-width: 768px) {
         margin-top: 0;
-        margin-bottom: 64px;
-        padding: 1rem;
+        // Reserva a barra fixa inferior (68px + sombra 4px) e a área segura do aparelho
+        padding: 1rem 1rem calc(72px + 1rem + env(safe-area-inset-bottom));
         gap: 1rem;
         margin-inline: 0;
     }
@@ -345,7 +345,6 @@
         color: var(--text-muted);
         font-size: 0.75rem;
         font-weight: 500;
-        text-transform: uppercase;
         letter-spacing: 0.5px;
     }
 }
@@ -362,7 +361,6 @@
     color: var(--text-muted);
     font-size: 0.75rem;
     font-weight: 600;
-    text-transform: uppercase;
     letter-spacing: 0.8px;
 }
 
@@ -890,7 +888,6 @@
     border-radius: 0 !important;
     font-family: var(--font-hud) !important;
     font-size: 0.6rem !important;
-    text-transform: uppercase;
     letter-spacing: 0.04em;
     box-shadow: none !important;
 
@@ -923,7 +920,6 @@
     .card-label {
         font-family: var(--font-hud);
         font-size: 0.58rem;
-        text-transform: uppercase;
         letter-spacing: 0.04em;
     }
 }
@@ -939,7 +935,6 @@
 .section-label {
     font-family: var(--font-hud) !important;
     font-size: 0.62rem !important;
-    text-transform: uppercase;
     letter-spacing: 0.05em;
     color: var(--text-muted) !important;
 }
@@ -988,7 +983,6 @@
     border-radius: 0 !important;
     font-family: var(--font-hud);
     font-size: 0.62rem;
-    text-transform: uppercase;
     box-shadow: 3px 3px 0 var(--px-shadow-color);
 
     &:active { transform: translate(3px, 3px); box-shadow: none; }

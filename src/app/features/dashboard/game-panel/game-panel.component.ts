@@ -200,7 +200,7 @@ interface OptionPreview {
 
       h3 { margin: 0; font-family: var(--font-pixel); font-size: 1.2rem; font-weight: 600; color: var(--text-primary); }
       .level {
-        font-family: var(--font-hud); font-size: 0.7rem; text-transform: uppercase;
+        font-family: var(--font-hud); font-size: 0.7rem;
         padding: 0.3rem 0.5rem; color: #15171c; background: var(--xp);
         border: 2px solid #0a0b0e; box-shadow: 2px 2px 0 #0a0b0e;
       }
@@ -266,7 +266,6 @@ interface OptionPreview {
         min-height: 30px;
         font-family: var(--font-hud);
         font-size: 0.55rem;
-        text-transform: uppercase;
         color: var(--text-muted);
         background: none;
         border: none;
@@ -306,7 +305,6 @@ interface OptionPreview {
         gap: 3px;
         font-family: var(--font-hud);
         font-size: 0.5rem;
-        text-transform: uppercase;
         color: var(--text-muted);
         white-space: nowrap;
       }
@@ -354,7 +352,6 @@ interface OptionPreview {
       margin: 0 0 0.5rem;
       font-family: var(--font-hud);
       font-weight: 400;
-      text-transform: uppercase;
       font-size: 0.6rem;
       color: var(--text-secondary);
     }

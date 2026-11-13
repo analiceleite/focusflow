@@ -236,7 +236,6 @@ const FLOAT_MS = 1200;
       small {
         font-family: var(--font-hud);
         font-size: 0.5rem;
-        text-transform: uppercase;
       }
     }
 
@@ -247,7 +246,6 @@ const FLOAT_MS = 1200;
       font-family: var(--font-hud);
       font-size: 0.55rem;
       letter-spacing: 0.06em;
-      text-transform: uppercase;
       color: #fff;
       background: rgba(10, 11, 14, 0.55);
       padding: 2px 6px;

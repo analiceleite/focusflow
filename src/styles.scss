@@ -5,6 +5,49 @@
  * Cores de atividade são definidas pelo usuário e não usam estes tokens.
  * Linguagem pixel: cantos em degrau, sombras duras deslocadas, barras segmentadas.
  * ════════════════════════════════════════════════════════════════════════════ */
+/* Fonte principal: Press Start 2P (Google Fonts, OFL).
+ * Declarada como "Brasa Pixel" com size-adjust porque ela é ~2× mais larga que
+ * as fontes pixel anteriores; assim os tamanhos já definidos no app continuam
+ * equilibrados. O relógio usa a família original sem ajuste (--font-digits). */
+@font-face {
+  font-family: 'Brasa Pixel';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  size-adjust: 62%;
+  src: url(https://fonts.gstatic.com/s/pressstart2p/v16/e3t4euO8T-267oIAQAu6jDQyK3nbivN04w.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Brasa Pixel';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  size-adjust: 62%;
+  src: url(https://fonts.gstatic.com/s/pressstart2p/v16/e3t4euO8T-267oIAQAu6jDQyK3nVivM.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* Rótulos curtos de HUD (maiúsculas pequenas) precisam de mais corpo para ler bem */
+@font-face {
+  font-family: 'Brasa HUD';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  size-adjust: 80%;
+  src: url(https://fonts.gstatic.com/s/pressstart2p/v16/e3t4euO8T-267oIAQAu6jDQyK3nbivN04w.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Brasa HUD';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  size-adjust: 80%;
+  src: url(https://fonts.gstatic.com/s/pressstart2p/v16/e3t4euO8T-267oIAQAu6jDQyK3nVivM.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 :root {
   /* Default (Dark Theme) */
   --bg-primary: #15171c;
@@ -65,8 +108,9 @@
 
   /* Tipografia */
   --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-pixel: 'Pixelify Sans', 'Inter', system-ui, sans-serif;
-  --font-hud: 'Silkscreen', 'Pixelify Sans', monospace;
+  --font-pixel: 'Brasa Pixel', 'Press Start 2P', monospace;
+  --font-hud: 'Brasa HUD', 'Press Start 2P', monospace;
+  --font-digits: 'Press Start 2P', monospace; /* dígitos do relógio: monoespaçada e legível */
 
   --fs-micro: 0.68rem;
   --fs-xs: 0.75rem;
@@ -207,7 +251,6 @@ input[type="number"] {
   font-family: var(--font-hud);
   font-size: 0.625rem;
   letter-spacing: 0.06em;
-  text-transform: uppercase;
   color: var(--text-muted);
   line-height: 1.2;
 }
@@ -229,7 +272,6 @@ input[type="number"] {
   font-family: var(--font-hud);
   font-size: 0.75rem;
   letter-spacing: 0.04em;
-  text-transform: uppercase;
   cursor: pointer;
   box-shadow: inset -3px -3px 0 rgba(0, 0, 0, 0.22), inset 3px 3px 0 rgba(255, 255, 255, 0.12), 3px 3px 0 var(--btn-edge);
   transition: transform 0.06s steps(1), box-shadow 0.06s steps(1), filter 0.15s;
