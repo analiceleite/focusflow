@@ -71,7 +71,7 @@ Focus 1 minute  →  1 damage to the weekly boss (× combo)  →  XP for your he
 
 ### 🎨 Pixel art design
 
-- Custom design system: Pixelify Sans and Silkscreen typefaces, notched panels, hard shadows and segmented bars.
+- Custom design system: Press Start 2P typeface (with a monospaced clock), notched panels, hard shadows and segmented bars.
 - **Own pixel icon set** (no system emojis), including an icon picker for activities.
 - Light, dark and system themes. Responsive layouts for desktop, tablet and mobile.
 
